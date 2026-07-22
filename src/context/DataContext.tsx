@@ -174,11 +174,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (newNotifications.length > 0) {
-      setNotifications(prev => {
-        const existingIds = new Set(prev.map(n => n.id));
-        const filtered = newNotifications.filter(n => !existingIds.has(n.id));
-        if (filtered.length === 0) return prev;
-        
+      const existingIds = new Set(notifications.map(n => n.id));
+      const filtered = newNotifications.filter(n => !existingIds.has(n.id));
+      if (filtered.length > 0) {
+        setNotifications(prev => [...filtered, ...prev]);
+
         filtered.forEach(async (n) => {
           try {
             await setDoc(doc(db, 'notifications', n.id), n);
@@ -186,9 +186,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.warn('Error pushing overdue notification to firestore:', e);
           }
         });
-
-        return [...filtered, ...prev];
-      });
+      }
     }
   };
 
@@ -471,9 +469,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       for (const colName of collectionsToWipe) {
         try {
           const snap = await getDocs(collection(db, colName));
-          snap.forEach(async (d) => {
-            await deleteDoc(doc(db, colName, d.id));
-          });
+          const deletePromises = snap.docs.map(d => deleteDoc(doc(db, colName, d.id)));
+          await Promise.all(deletePromises);
         } catch (e) {
           console.warn(`Error wiping collection ${colName}:`, e);
         }

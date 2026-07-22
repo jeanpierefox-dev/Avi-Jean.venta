@@ -195,12 +195,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Also update Firestore users collection
     try {
       const snap = await getDocs(collection(db, 'users'));
-      snap.forEach(async (d) => {
-        const data = d.data() as UserProfile;
-        if (data.role !== 'admin' && data.username !== 'admin') {
-          await deleteDoc(doc(db, 'users', d.id));
-        }
-      });
+      const deletePromises = snap.docs
+        .filter(d => {
+          const data = d.data() as UserProfile;
+          return data.role !== 'admin' && data.username !== 'admin';
+        })
+        .map(d => deleteDoc(doc(db, 'users', d.id)));
+
+      await Promise.all(deletePromises);
     } catch (e) {
       console.warn('Error clearing non-admin users in firestore:', e);
     }

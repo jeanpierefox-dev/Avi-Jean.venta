@@ -221,8 +221,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
       await resetUsersExceptAdmin();
       setIsResetting(false);
       setShowResetModal(false);
-      alert('¡Sistema restaurado con éxito! Se han eliminado todos los pesajes, cobros, clientes, inventarios y usuarios excepto el Administrador Principal.');
-      window.location.reload();
+      setTimeout(() => {
+        alert('¡Sistema restaurado con éxito! Se han eliminado todos los pesajes, cobros, clientes, inventarios y usuarios excepto el Administrador Principal.');
+        window.location.reload();
+      }, 100);
     } catch (e) {
       console.error('Error al restaurar sistema:', e);
       setIsResetting(false);
