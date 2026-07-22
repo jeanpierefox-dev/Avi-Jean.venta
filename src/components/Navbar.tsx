@@ -67,8 +67,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const navItems = [
+    { id: 'pesa', label: '⚖️ Pesa Rápida', icon: Scale, roles: ['admin', 'empresa'], isPriority: true },
     { id: 'dashboard', label: 'Menú', icon: LayoutGrid, roles: ['admin', 'empresa', 'cliente'] },
-    { id: 'pesa', label: 'Pesa', icon: Scale, roles: ['admin', 'empresa'] },
     { id: 'cuentas', label: 'Cobranza', icon: Receipt, roles: ['admin', 'empresa'] },
     { id: 'clientes', label: 'Clientes', icon: Users, roles: ['admin', 'empresa'] },
     { id: 'inventario', label: 'Galpones', icon: Package, roles: ['admin', 'empresa'] },
@@ -118,6 +118,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
+              const isPriority = (item as any).isPriority;
+
               return (
                 <button
                   key={item.id}
@@ -125,11 +127,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   title={item.label}
                   className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                     isActive
-                      ? 'bg-blue-700 text-white shadow-md shadow-blue-950 border border-blue-500/40'
+                      ? 'bg-blue-700 text-white shadow-md shadow-blue-950 border border-blue-400'
+                      : isPriority
+                      ? 'bg-blue-950 text-blue-300 hover:bg-blue-900 border border-blue-700/80 shadow-sm'
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white border border-transparent hover:border-slate-700'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : isPriority ? 'text-blue-400' : 'text-blue-400'}`} />
                   <span>{item.label}</span>
                 </button>
               );

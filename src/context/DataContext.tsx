@@ -46,6 +46,7 @@ interface DataContextType {
   updateClient: (id: string, clientData: Partial<Client>) => Promise<void>;
   addCompany: (companyData: Omit<Company, 'id' | 'createdAt'>) => Promise<Company>;
   updateCompany: (id: string, companyData: Partial<Company>) => Promise<void>;
+  deleteCompany: (id: string) => Promise<void>;
   addInventoryItem: (itemData: Omit<InventoryItem, 'id' | 'updatedAt'>) => Promise<InventoryItem>;
   updateInventoryItem: (id: string, itemData: Partial<InventoryItem>) => Promise<void>;
   markNotificationRead: (id: string) => Promise<void>;
@@ -380,6 +381,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteCompany = async (id: string) => {
+    setCompanies(prev => prev.filter(c => c.id !== id));
+    try {
+      await deleteDoc(doc(db, 'companies', id));
+    } catch (e) {
+      console.warn('Firestore company delete error:', e);
+    }
+  };
+
   // Add & Update Clients
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt'>): Promise<Client> => {
     const newClient: Client = {
@@ -556,6 +566,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateClient,
       addCompany,
       updateCompany,
+      deleteCompany,
       addInventoryItem,
       updateInventoryItem,
       markNotificationRead,

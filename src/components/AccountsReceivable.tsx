@@ -153,28 +153,28 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-4 pb-8">
       
       {/* Header Banner */}
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center space-x-4">
+      <div className="bg-slate-900 border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center space-x-3">
           {onSelectTab && (
             <button
               onClick={() => onSelectTab('dashboard')}
-              className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-colors flex items-center justify-center shrink-0"
+              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-colors flex items-center justify-center shrink-0"
               title="Volver al Menú"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </button>
           )}
-          <div className="p-3 bg-blue-700/20 border border-blue-500/30 rounded-xl text-blue-400 shrink-0">
-            <Receipt className="w-7 h-7" />
+          <div className="p-2 bg-blue-700/20 border border-blue-500/30 rounded-xl text-blue-400 shrink-0">
+            <Receipt className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Cuentas por Cobrar y Reporte de Pagos
+            <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              Cuentas por Cobrar y Cobranzas
             </h1>
-            <p className="text-xs text-slate-400 font-medium">
+            <p className="text-[11px] text-slate-400 font-medium">
               Gestión corporativa de abonos en Soles (S/), comprobantes y estados de cuenta.
             </p>
           </div>
@@ -184,106 +184,118 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
           {onSelectTab && (
             <button
               onClick={() => onSelectTab('dashboard')}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 border border-slate-700 transition-colors"
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1 border border-slate-700 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Volver al Menú</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Volver</span>
             </button>
           )}
 
           <button
             onClick={checkOverduePayments}
-            className="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-2 border border-slate-700 transition-colors"
+            className="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 border border-slate-700 transition-colors"
           >
-            <AlertTriangle className="w-4 h-4" />
+            <AlertTriangle className="w-3.5 h-3.5" />
             <span>Verificar Vencidos</span>
           </button>
 
           <button
             onClick={handleExportPaymentsPDF}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-emerald-900/40 transition-transform active:scale-95"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-emerald-900/40 transition-transform active:scale-95"
           >
-            <FileDown className="w-4 h-4" />
-            <span>Descargar Reporte Pagos (PDF)</span>
+            <FileDown className="w-3.5 h-3.5" />
+            <span>Reporte PDF</span>
           </button>
         </div>
       </div>
 
       {/* Metric Cards in Peruvian Soles S/ */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-1">
-          <span className="text-xs font-semibold text-slate-400">Total Saldo Pendiente (S/)</span>
-          <div className="text-2xl font-black text-amber-400 font-mono">
-            S/ {totalPendingBalance.toFixed(2)}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-slate-900 border border-slate-800 p-3 sm:p-3.5 rounded-xl shadow-md flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-semibold text-slate-400">Saldo Pendiente:</span>
+            <div className="text-lg sm:text-xl font-black text-amber-400 font-mono">
+              S/ {totalPendingBalance.toFixed(2)}
+            </div>
           </div>
-          <p className="text-[11px] text-slate-500">{pendingTickets.length} tickets por cobrar</p>
+          <span className="text-[10px] bg-slate-950 text-slate-400 border border-slate-800 px-2 py-1 rounded-lg font-mono">
+            {pendingTickets.length} tck
+          </span>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-1">
-          <span className="text-xs font-semibold text-slate-400">Saldo Vencido Crítico (S/)</span>
-          <div className="text-2xl font-black text-rose-500 font-mono">
-            S/ {totalOverdueBalance.toFixed(2)}
+        <div className="bg-slate-900 border border-slate-800 p-3 sm:p-3.5 rounded-xl shadow-md flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-semibold text-slate-400">Saldo Vencido Crítico:</span>
+            <div className="text-lg sm:text-xl font-black text-rose-500 font-mono">
+              S/ {totalOverdueBalance.toFixed(2)}
+            </div>
           </div>
-          <p className="text-[11px] text-rose-400 font-semibold">{overdueTickets.length} con alerta de vencimiento</p>
+          <span className="text-[10px] bg-rose-950/80 text-rose-300 border border-rose-800/60 px-2 py-1 rounded-lg font-mono font-bold">
+            {overdueTickets.length} vencidos
+          </span>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-1">
-          <span className="text-xs font-semibold text-slate-400">Total Abonos Recaudados (S/)</span>
-          <div className="text-2xl font-black text-emerald-400 font-mono">
-            S/ {totalCollectedSoles.toFixed(2)}
+        <div className="bg-slate-900 border border-slate-800 p-3 sm:p-3.5 rounded-xl shadow-md flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-semibold text-slate-400">Total Abonos Recaudados:</span>
+            <div className="text-lg sm:text-xl font-black text-emerald-400 font-mono">
+              S/ {totalCollectedSoles.toFixed(2)}
+            </div>
           </div>
-          <p className="text-[11px] text-slate-500">{companyPayments.length} abonos/recibos emitidos</p>
+          <span className="text-[10px] bg-slate-950 text-slate-400 border border-slate-800 px-2 py-1 rounded-lg font-mono">
+            {companyPayments.length} rec
+          </span>
         </div>
       </div>
 
       {/* Main Tabs: Cobros vs Reporte de Pagos */}
-      <div className="flex border-b border-slate-800 space-x-4">
+      <div className="flex border-b border-slate-800 space-x-3 text-xs">
         <button
           onClick={() => setActiveTab('cobros')}
-          className={`pb-3 font-extrabold text-sm flex items-center space-x-2 border-b-2 transition-colors ${
+          className={`pb-2 font-extrabold flex items-center space-x-1.5 border-b-2 transition-colors ${
             activeTab === 'cobros' 
               ? 'border-emerald-500 text-emerald-400' 
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
-          <Receipt className="w-4 h-4" />
+          <Receipt className="w-3.5 h-3.5" />
           <span>Tickets y Saldos Pendientes</span>
         </button>
 
         <button
           onClick={() => setActiveTab('reporte_pagos')}
-          className={`pb-3 font-extrabold text-sm flex items-center space-x-2 border-b-2 transition-colors ${
+          className={`pb-2 font-extrabold flex items-center space-x-1.5 border-b-2 transition-colors ${
             activeTab === 'reporte_pagos' 
               ? 'border-emerald-500 text-emerald-400' 
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
-          <History className="w-4 h-4" />
-          <span>Reporte de Todos los Pagos Realizados ({companyPayments.length})</span>
+          <History className="w-3.5 h-3.5" />
+          <span>Reporte de Pagos Realizados ({companyPayments.length})</span>
         </button>
       </div>
 
       {/* TAB 1: COBROS Y TICKETS */}
       {activeTab === 'cobros' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-64">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por ticket o cliente..."
-                className="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl pl-10 pr-4 py-2.5 text-xs outline-none focus:border-emerald-500"
+                placeholder="Buscar ticket o cliente..."
+                className="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl pl-9 pr-3 py-1.5 text-xs outline-none focus:border-emerald-500"
               />
             </div>
 
-            <div className="flex bg-slate-900 p-1.5 rounded-xl border border-slate-800 w-full sm:w-auto overflow-x-auto">
+            <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 w-full sm:w-auto overflow-x-auto">
               {['todos', 'pendientes', 'vencidos', 'pagados'].map((st) => (
                 <button
                   key={st}
                   onClick={() => setFilterStatus(st)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-colors ${
                     filterStatus === st ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -293,22 +305,22 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
             </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
+            <div className="max-h-[480px] overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-slate-700">
               <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
+                <thead className="sticky top-0 z-10 bg-slate-950 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
                   <tr>
-                    <th className="p-4">Ticket / Fecha</th>
-                    <th className="p-4">Cliente</th>
-                    <th className="p-4">Pollos / Kilos</th>
-                    <th className="p-4">Total S/</th>
-                    <th className="p-4">Saldo Pendiente</th>
-                    <th className="p-4">Vencimiento</th>
-                    <th className="p-4">Estado</th>
-                    <th className="p-4 text-right">Acciones</th>
+                    <th className="py-2.5 px-3">Ticket / Fecha</th>
+                    <th className="py-2.5 px-3">Cliente</th>
+                    <th className="py-2.5 px-3">Pollos / Kilos</th>
+                    <th className="py-2.5 px-3">Total S/</th>
+                    <th className="py-2.5 px-3">Saldo Pendiente</th>
+                    <th className="py-2.5 px-3">Vencimiento</th>
+                    <th className="py-2.5 px-3">Estado</th>
+                    <th className="py-2.5 px-3 text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800">
+                <tbody className="divide-y divide-slate-800/80">
                   {filteredWeighings.length === 0 && (
                     <tr>
                       <td colSpan={8} className="p-8 text-center text-slate-500 italic">
@@ -321,22 +333,22 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
 
                     return (
                       <tr key={w.id} className="hover:bg-slate-800/50 transition-colors">
-                        <td className="p-4">
+                        <td className="py-2.5 px-3">
                           <div className="font-bold text-white">{w.ticketNumber}</div>
                           <div className="text-[10px] text-slate-500">{new Date(w.createdAt).toLocaleDateString('es-ES')}</div>
                         </td>
-                        <td className="p-4 font-semibold text-slate-200">{w.clientName}</td>
-                        <td className="p-4 font-mono">
+                        <td className="py-2.5 px-3 font-semibold text-slate-200">{w.clientName}</td>
+                        <td className="py-2.5 px-3 font-mono">
                           {w.chickenCount} pollos ({w.netWeight.toFixed(1)} kg)
                         </td>
-                        <td className="p-4 font-bold font-mono text-slate-100">S/ {w.totalAmount.toFixed(2)}</td>
-                        <td className="p-4 font-bold font-mono text-rose-400">
+                        <td className="py-2.5 px-3 font-bold font-mono text-slate-100">S/ {w.totalAmount.toFixed(2)}</td>
+                        <td className="py-2.5 px-3 font-bold font-mono text-rose-400">
                           S/ {w.pendingAmount.toFixed(2)}
                         </td>
-                        <td className="p-4 font-mono text-slate-400">
+                        <td className="py-2.5 px-3 font-mono text-slate-400">
                           {w.dueDate || 'Contado'}
                         </td>
-                        <td className="p-4">
+                        <td className="py-2.5 px-3">
                           {isOverdue ? (
                             <span className="bg-rose-950 text-rose-400 border border-rose-800 px-2 py-0.5 rounded-full font-bold uppercase text-[9px] flex items-center space-x-1 w-max">
                               <AlertTriangle className="w-3 h-3" />

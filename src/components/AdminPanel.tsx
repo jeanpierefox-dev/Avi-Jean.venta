@@ -29,7 +29,7 @@ interface AdminPanelProps {
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   const { companies, createUserProfile, updateUserProfile, deleteUserProfile, resetUsersExceptAdmin, currentUser, allUsers, activeCompany, setActiveCompanyId } = useAuth();
-  const { addCompany, updateCompany, resetSystemToDefault, appName, updateAppName } = useData();
+  const { addCompany, updateCompany, deleteCompany, resetSystemToDefault, appName, updateAppName } = useData();
 
   const [activeSubTab, setActiveSubTab] = useState<'empresas' | 'usuarios' | 'permisos'>('empresas');
   const [appNameInput, setAppNameInput] = useState(appName);
@@ -44,6 +44,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   const [compPhone, setCompPhone] = useState('');
   const [compAddress, setCompAddress] = useState('');
   const [compLogoUrl, setCompLogoUrl] = useState('');
+
+  // Company Edit Modal State
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [editCompName, setEditCompName] = useState('');
+  const [editCompTaxId, setEditCompTaxId] = useState('');
+  const [editCompPhone, setEditCompPhone] = useState('');
+  const [editCompAddress, setEditCompAddress] = useState('');
+  const [editCompLogoUrl, setEditCompLogoUrl] = useState('');
 
   // Logo Edit Modal State
   const [editingCompanyLogo, setEditingCompanyLogo] = useState<Company | null>(null);
@@ -98,6 +106,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
     setCompAddress('');
     setCompLogoUrl('');
     setShowCompModal(false);
+  };
+
+  const handleStartEditCompany = (comp: Company) => {
+    setEditingCompany(comp);
+    setEditCompName(comp.name);
+    setEditCompTaxId(comp.taxId || '');
+    setEditCompPhone(comp.phone || '');
+    setEditCompAddress(comp.address || '');
+    setEditCompLogoUrl(comp.logoUrl || '');
+  };
+
+  const handleSaveEditCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCompany || !editCompName.trim()) return;
+
+    await updateCompany(editingCompany.id, {
+      name: editCompName,
+      taxId: editCompTaxId,
+      phone: editCompPhone,
+      address: editCompAddress,
+      logoUrl: editCompLogoUrl || undefined,
+    });
+
+    setEditingCompany(null);
+    alert('¡Empresa actualizada con éxito!');
+  };
+
+  const handleDeleteCompany = async (comp: Company) => {
+    if (companies.length <= 1) {
+      alert('No se puede eliminar la única empresa registrada en el sistema.');
+      return;
+    }
+    if (confirm(`¿Está seguro de eliminar permanentemente la empresa "${comp.name}"?`)) {
+      await deleteCompany(comp.id);
+      alert('Empresa eliminada correctamente.');
+    }
   };
 
   const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'create' | 'edit') => {
@@ -404,19 +448,41 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
                 className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl space-y-3 relative flex flex-col justify-between"
               >
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    {comp.logoUrl ? (
-                      <div className="w-12 h-12 bg-slate-950 border border-slate-700 rounded-2xl p-1 flex items-center justify-center overflow-hidden">
-                        <img src={comp.logoUrl} alt="Logo Empresa" className="w-full h-full object-contain rounded-xl" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      {comp.logoUrl ? (
+                        <div className="w-12 h-12 bg-slate-950 border border-slate-700 rounded-2xl p-1 flex items-center justify-center overflow-hidden">
+                          <img src={comp.logoUrl} alt="Logo Empresa" className="w-full h-full object-contain rounded-xl" />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-purple-950/80 text-purple-400 border border-purple-800/60 rounded-2xl">
+                          <Building2 className="w-6 h-6" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-extrabold text-base text-white">{comp.name}</h3>
+                        <p className="text-[11px] text-slate-400 font-mono">RUC/RIF: {comp.taxId || 'N/A'}</p>
                       </div>
-                    ) : (
-                      <div className="p-3 bg-purple-950/80 text-purple-400 border border-purple-800/60 rounded-2xl">
-                        <Building2 className="w-6 h-6" />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-extrabold text-base text-white">{comp.name}</h3>
-                      <p className="text-[11px] text-slate-400 font-mono">RUC/RIF: {comp.taxId || 'N/A'}</p>
+                    </div>
+
+                    {/* Action buttons for company */}
+                    <div className="flex items-center space-x-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditCompany(comp)}
+                        title="Editar Empresa"
+                        className="p-2 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-xl border border-slate-700 transition-colors"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCompany(comp)}
+                        title="Eliminar Empresa"
+                        className="p-2 bg-slate-800 hover:bg-rose-950 text-rose-400 rounded-xl border border-slate-700 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
 
@@ -723,6 +789,82 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
                   className="w-1/2 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-purple-900/40"
                 >
                   Guardar Empresa
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Company Editing */}
+      {editingCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-blue-400" />
+                Editar Empresa: {editingCompany.name}
+              </h2>
+              <button onClick={() => setEditingCompany(null)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCompany} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Nombre de la Empresa *</label>
+                <input
+                  type="text"
+                  required
+                  value={editCompName}
+                  onChange={(e) => setEditCompName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">RUC / NIT Tax ID</label>
+                <input
+                  type="text"
+                  value={editCompTaxId}
+                  onChange={(e) => setEditCompTaxId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Teléfono</label>
+                <input
+                  type="text"
+                  value={editCompPhone}
+                  onChange={(e) => setEditCompPhone(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Dirección</label>
+                <input
+                  type="text"
+                  value={editCompAddress}
+                  onChange={(e) => setEditCompAddress(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCompany(null)}
+                  className="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-blue-900/40"
+                >
+                  Guardar Cambios
                 </button>
               </div>
             </form>

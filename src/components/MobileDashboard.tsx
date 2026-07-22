@@ -150,6 +150,41 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
         </div>
       </div>
 
+      {/* Direct Quick Weight Priority Hero Banner */}
+      {currentUser?.role !== 'cliente' && (
+        <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-slate-900 border-2 border-blue-500/80 p-5 rounded-3xl shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+          
+          <div className="flex items-center space-x-3.5 z-10">
+            <div className="p-3.5 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-950 ring-2 ring-blue-400/30 shrink-0">
+              <Scale className="w-7 h-7 stroke-[2.5]" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-mono font-bold tracking-widest px-2 py-0.5 rounded bg-blue-900 text-blue-200 border border-blue-700 uppercase">
+                  Acceso Prioritario
+                </span>
+                <span className="text-[10px] font-bold text-emerald-400">● Listo para pesaje</span>
+              </div>
+              <h3 className="font-black text-base text-white tracking-tight mt-1">
+                Ingreso Rápido de Pesas (Balanza + Foto)
+              </h3>
+              <p className="text-xs text-slate-300">
+                Abono inmediato, descuento automático de galpón e impresión de ticket.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => onSelectTab('pesa')}
+            className="bg-blue-600 hover:bg-blue-500 text-white font-black px-6 py-3 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-xl shadow-blue-950 active:scale-95 transition-all self-start sm:self-auto shrink-0 border border-blue-400/50"
+          >
+            <Camera className="w-4 h-4" />
+            <span>INGRESAR PESA RÁPIDA AHORA</span>
+          </button>
+        </div>
+      )}
+
       {/* Grid title */}
       <div className="flex items-center justify-between px-1">
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -191,31 +226,6 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
           );
         })}
       </div>
-
-      {/* Direct Quick Weight Shortcut Card */}
-      {currentUser?.role !== 'cliente' && (
-        <div className="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-800/50 p-5 rounded-3xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg shadow-emerald-900/50">
-              <Camera className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-sm text-white">Ingreso Rápido de Pesa con Foto</h3>
-              <p className="text-xs text-slate-400">
-                Inicie la balanza, ingrese cantidad de pollos y adjunte la foto de la pesa para el cliente.
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => onSelectTab('pesa')}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-5 py-2.5 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/40 active:scale-95 transition-all self-start sm:self-auto"
-          >
-            <Scale className="w-4 h-4" />
-            <span>Abrir Balanza Móvil</span>
-          </button>
-        </div>
-      )}
 
     </div>
   );
