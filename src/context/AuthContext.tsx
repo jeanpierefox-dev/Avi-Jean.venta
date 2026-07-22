@@ -32,11 +32,51 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null); // Start at login or admin
-  const [allUsers, setAllUsers] = useState<UserProfile[]>(INITIAL_USERS);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>(() => {
+    if (localStorage.getItem('system_wiped') === 'true') {
+      return [INITIAL_USERS[0]];
+    }
+    return INITIAL_USERS;
+  });
   const [loading, setLoading] = useState<boolean>(false);
-  const [companies, setCompanies] = useState<Company[]>(INITIAL_COMPANIES);
-  const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
+  const [companies, setCompanies] = useState<Company[]>(() => {
+    if (localStorage.getItem('system_wiped') === 'true') {
+      return [INITIAL_COMPANIES[0]];
+    }
+    return INITIAL_COMPANIES;
+  });
+  const [clients, setClients] = useState<Client[]>(() => {
+    if (localStorage.getItem('system_wiped') === 'true') {
+      return [];
+    }
+    return INITIAL_CLIENTS;
+  });
   const [activeCompanyId, setActiveCompanyIdState] = useState<string>('comp_galpon_real');
+
+  // Realtime Firestore Users Sync
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(collection(db, 'users'), (snap) => {
+        const isWiped = localStorage.getItem('system_wiped') === 'true';
+        if (!snap.empty) {
+          const docs = snap.docs
+            .map(d => ({ uid: d.id, ...d.data() } as UserProfile))
+            .filter(u => !(u as any).deleted);
+          if (docs.length > 0) {
+            setAllUsers(docs);
+          } else if (isWiped) {
+            setAllUsers([INITIAL_USERS[0]]);
+          }
+        } else if (isWiped) {
+          setAllUsers([INITIAL_USERS[0]]);
+        }
+      }, (err) => console.warn('Users snapshot listener:', err));
+
+      return () => unsub();
+    } catch (e) {
+      console.warn('User listener error:', e);
+    }
+  }, []);
 
   const login = async (emailOrUser: string, pass: string): Promise<boolean> => {
     const cleanInput = emailOrUser.trim().toLowerCase();
@@ -188,17 +228,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetUsersExceptAdmin = async () => {
-    const adminOnlyUsers = allUsers.filter(u => u.role === 'admin' || u.username === 'admin');
-    const defaultAdminList = adminOnlyUsers.length > 0 ? adminOnlyUsers : [INITIAL_USERS[0]];
+    localStorage.setItem('system_wiped', 'true');
+    const adminUser = allUsers.find(u => u.role === 'admin' || u.username === 'admin') || INITIAL_USERS[0];
+    const defaultAdminList = [adminUser];
     setAllUsers(defaultAdminList);
+    setCurrentUser(adminUser);
     
     // Also update Firestore users collection
     try {
+      // 1. Mark wiped in system settings
+      await setDoc(doc(db, 'system_settings', 'general'), { wiped: true, wipedAt: new Date().toISOString() }, { merge: true });
+
+      // 2. Ensure admin document exists in Firestore
+      const adminDocId = adminUser.uid || 'demo_admin';
+      await setDoc(doc(db, 'users', adminDocId), adminUser);
+
+      // 3. Clear all other non-admin users in Firestore
       const snap = await getDocs(collection(db, 'users'));
       const deletePromises = snap.docs
         .filter(d => {
           const data = d.data() as UserProfile;
-          return data.role !== 'admin' && data.username !== 'admin';
+          return data.role !== 'admin' && data.username !== 'admin' && d.id !== adminDocId;
         })
         .map(d => deleteDoc(doc(db, 'users', d.id)));
 

@@ -63,12 +63,30 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, activeCompany } = useAuth();
 
-  const [weighings, setWeighings] = useState<WeighingRecord[]>(INITIAL_WEIGHINGS);
-  const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
-  const [companies, setCompanies] = useState<Company[]>(INITIAL_COMPANIES);
-  const [payments, setPayments] = useState<PaymentRecord[]>(INITIAL_PAYMENTS);
-  const [inventory, setInventory] = useState<InventoryItem[]>(INITIAL_INVENTORY);
-  const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
+  const [weighings, setWeighings] = useState<WeighingRecord[]>(() => {
+    if (localStorage.getItem('system_wiped') === 'true') return [];
+    return INITIAL_WEIGHINGS;
+  });
+  const [clients, setClients] = useState<Client[]>(() => {
+    if (localStorage.getItem('system_wiped') === 'true') return [];
+    return INITIAL_CLIENTS;
+  });
+  const [companies, setCompanies] = useState<Company[]>(() => {
+    if (localStorage.getItem('system_wiped') === 'true') return [INITIAL_COMPANIES[0]];
+    return INITIAL_COMPANIES;
+  });
+  const [payments, setPayments] = useState<PaymentRecord[]>(() => {
+    if (localStorage.getItem('system_wiped') === 'true') return [];
+    return INITIAL_PAYMENTS;
+  });
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => {
+    if (localStorage.getItem('system_wiped') === 'true') return [];
+    return INITIAL_INVENTORY;
+  });
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+    if (localStorage.getItem('system_wiped') === 'true') return [];
+    return INITIAL_NOTIFICATIONS;
+  });
   const [appName, setAppName] = useState<string>(() => {
     return localStorage.getItem('app_system_name') || 'Jean-Barsa Avícola System';
   });
@@ -93,49 +111,78 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Firestore Realtime Listeners with local fallback
   useEffect(() => {
     try {
+      const unsubSettings = onSnapshot(doc(db, 'system_settings', 'general'), (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.appName) setAppName(data.appName);
+          if (data.wiped) {
+            localStorage.setItem('system_wiped', 'true');
+          }
+        }
+      });
+
       const unsubWeighings = onSnapshot(collection(db, 'weighings'), (snap) => {
+        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as WeighingRecord));
           setWeighings(docs);
+        } else if (isWiped) {
+          setWeighings([]);
         }
       }, (err) => console.warn('Weighings listener error:', err));
 
       const unsubClients = onSnapshot(collection(db, 'clients'), (snap) => {
+        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Client));
           setClients(docs);
+        } else if (isWiped) {
+          setClients([]);
         }
       }, (err) => console.warn('Clients listener error:', err));
 
       const unsubCompanies = onSnapshot(collection(db, 'companies'), (snap) => {
+        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Company));
           setCompanies(docs);
+        } else if (isWiped) {
+          setCompanies([INITIAL_COMPANIES[0]]);
         }
       }, (err) => console.warn('Companies listener error:', err));
 
       const unsubPayments = onSnapshot(collection(db, 'payments'), (snap) => {
+        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as PaymentRecord));
           setPayments(docs);
+        } else if (isWiped) {
+          setPayments([]);
         }
       }, (err) => console.warn('Payments listener error:', err));
 
       const unsubInventory = onSnapshot(collection(db, 'inventory'), (snap) => {
+        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem));
           setInventory(docs);
+        } else if (isWiped) {
+          setInventory([]);
         }
       }, (err) => console.warn('Inventory listener error:', err));
 
       const unsubNotifs = onSnapshot(collection(db, 'notifications'), (snap) => {
+        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppNotification));
           setNotifications(docs);
+        } else if (isWiped) {
+          setNotifications([]);
         }
       }, (err) => console.warn('Notifications listener error:', err));
 
       return () => {
+        unsubSettings();
         unsubWeighings();
         unsubClients();
         unsubCompanies();
@@ -457,12 +504,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetSystemToDefault = async () => {
     try {
-      localStorage.clear();
+      localStorage.setItem('system_wiped', 'true');
       setWeighings([]);
       setClients([]);
       setPayments([]);
       setInventory([]);
       setNotifications([]);
+      setCompanies([INITIAL_COMPANIES[0]]);
+
+      // Save wiped flag to system_settings in Firestore
+      try {
+        await setDoc(doc(db, 'system_settings', 'general'), { wiped: true, wipedAt: new Date().toISOString() }, { merge: true });
+      } catch (e) {
+        console.warn('Error marking system_settings wiped:', e);
+      }
+
+      // Ensure default company doc exists
+      try {
+        await setDoc(doc(db, 'companies', INITIAL_COMPANIES[0].id), INITIAL_COMPANIES[0]);
+      } catch (e) {
+        console.warn('Error setting default company doc:', e);
+      }
 
       // Attempt to clear Firestore collections
       const collectionsToWipe = ['weighings', 'clients', 'payments', 'inventory', 'notifications'];
