@@ -28,12 +28,14 @@ interface AdminPanelProps {
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
-  const { companies, createUserProfile, updateUserProfile, deleteUserProfile, currentUser, allUsers, activeCompany, setActiveCompanyId } = useAuth();
+  const { companies, createUserProfile, updateUserProfile, deleteUserProfile, resetUsersExceptAdmin, currentUser, allUsers, activeCompany, setActiveCompanyId } = useAuth();
   const { addCompany, updateCompany, resetSystemToDefault, appName, updateAppName } = useData();
 
   const [activeSubTab, setActiveSubTab] = useState<'empresas' | 'usuarios' | 'permisos'>('empresas');
   const [appNameInput, setAppNameInput] = useState(appName);
   const [appSavedSuccess, setAppSavedSuccess] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Company Creation Form
   const [showCompModal, setShowCompModal] = useState(false);
@@ -212,6 +214,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
 
   const displayUsers = allUsers;
 
+  const handleFullSystemReset = async () => {
+    setIsResetting(true);
+    try {
+      await resetSystemToDefault();
+      await resetUsersExceptAdmin();
+      setIsResetting(false);
+      setShowResetModal(false);
+      alert('¡Sistema restaurado con éxito! Se han eliminado todos los pesajes, cobros, clientes, inventarios y usuarios excepto el Administrador Principal.');
+      window.location.reload();
+    } catch (e) {
+      console.error('Error al restaurar sistema:', e);
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       
@@ -298,44 +315,67 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
       </div>
 
       {/* App Name Customization Box */}
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded-xl">
-            <Sparkles className="w-5 h-5" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg flex flex-col items-start justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-blue-950 text-blue-400 border border-blue-800 rounded-xl">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Nombre del Sistema / App</h3>
+              <p className="text-[11px] text-slate-400">Personalice el título de la aplicación que aparece en la barra superior.</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Nombre del Sistema / App</h3>
-            <p className="text-[11px] text-slate-400">Personalice el título de la aplicación que aparece en la barra superior y pantalla de inicio.</p>
-          </div>
-        </div>
-        <form 
-          onSubmit={(e) => {
-            e.preventDefault();
-            updateAppName(appNameInput);
-            setAppSavedSuccess(true);
-            setTimeout(() => setAppSavedSuccess(false), 3000);
-          }}
-          className="flex items-center gap-2 w-full sm:w-auto"
-        >
-          <input
-            type="text"
-            value={appNameInput}
-            onChange={(e) => setAppNameInput(e.target.value)}
-            placeholder="Ej. Mi Sistema Avícola..."
-            className="bg-slate-950 border border-slate-700 text-white font-bold text-xs px-3 py-2 rounded-xl outline-none focus:border-emerald-500 w-full sm:w-64"
-          />
-          <button
-            type="submit"
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-4 py-2 rounded-xl transition-transform active:scale-95 shrink-0 shadow-md shadow-emerald-950"
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateAppName(appNameInput);
+              setAppSavedSuccess(true);
+              setTimeout(() => setAppSavedSuccess(false), 3000);
+            }}
+            className="flex items-center gap-2 w-full"
           >
-            Guardar Nombre
+            <input
+              type="text"
+              value={appNameInput}
+              onChange={(e) => setAppNameInput(e.target.value)}
+              placeholder="Ej. Mi Sistema Avícola..."
+              className="bg-slate-950 border border-slate-700 text-white font-bold text-xs px-3 py-2 rounded-xl outline-none focus:border-blue-500 w-full"
+            />
+            <button
+              type="submit"
+              className="bg-blue-700 hover:bg-blue-600 text-white font-extrabold text-xs px-4 py-2 rounded-xl transition-transform active:scale-95 shrink-0 shadow-md shadow-blue-950"
+            >
+              Guardar
+            </button>
+            {appSavedSuccess && (
+              <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-800 px-2 py-1 rounded-lg animate-fade-in shrink-0">
+                ¡OK!
+              </span>
+            )}
+          </form>
+        </div>
+
+        {/* System Restoration & Wipe Card */}
+        <div className="bg-slate-900 border border-rose-900/40 p-4 rounded-2xl shadow-lg flex flex-col items-start justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-rose-950 text-rose-400 border border-rose-800 rounded-xl">
+              <RotateCcw className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Restaurar Sistema (Borrado Total)</h3>
+              <p className="text-[11px] text-slate-400">Elimina todos los datos (pesajes, cobros, clientes, inventarios y usuarios) conservando únicamente la cuenta Admin.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowResetModal(true)}
+            className="w-full bg-rose-700 hover:bg-rose-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl uppercase tracking-wider transition-transform active:scale-95 shadow-md shadow-rose-950 flex items-center justify-center gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>Restaurar Sistema (Conservar Solo Admin)</span>
           </button>
-          {appSavedSuccess && (
-            <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-800 px-2.5 py-1 rounded-lg animate-fade-in">
-              ¡Guardado!
-            </span>
-          )}
-        </form>
+        </div>
       </div>
 
       {/* SUBTAB 1: EMPRESAS & LOGO MANAGEMENT */}
@@ -891,6 +931,59 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal for System Reset / Wipe */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+          <div className="bg-slate-900 border border-rose-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 text-white">
+            <div className="flex items-center space-x-3 text-rose-400 border-b border-slate-800 pb-3">
+              <div className="p-2.5 bg-rose-950 border border-rose-800 rounded-xl">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-base font-extrabold">¿Restaurar el Sistema?</h2>
+                <p className="text-[11px] text-slate-400">Acción irreversible de limpieza general</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <p className="font-semibold text-rose-300">
+                Se eliminarán permanentemente de la base de datos:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-slate-400">
+                <li>Todos los registros de pesaje de pollos y tickets</li>
+                <li>Todos los cobros, abonos e historial de pagos</li>
+                <li>Todos los clientes y empresas secundarias</li>
+                <li>Todo el inventario y galpones cargados</li>
+                <li>Todos los usuarios creados (supervisores, operadores, clientes)</li>
+              </ul>
+              <p className="pt-2 text-emerald-400 font-bold border-t border-slate-800">
+                ✓ ÚNICA EXCEPCIÓN: La cuenta de Administrador Principal permanecerá intacta e iniciada.
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowResetModal(false)}
+                disabled={isResetting}
+                className="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl transition-colors text-xs"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleFullSystemReset}
+                disabled={isResetting}
+                className="w-1/2 bg-rose-700 hover:bg-rose-600 disabled:opacity-50 text-white font-extrabold py-3 rounded-xl shadow-lg shadow-rose-950 text-xs uppercase tracking-wider flex items-center justify-center space-x-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>{isResetting ? 'Restaurando...' : 'Sí, Borrar Todo'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

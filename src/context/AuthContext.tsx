@@ -7,7 +7,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged 
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, query, where, deleteDoc } from 'firebase/firestore';
 import { INITIAL_USERS, INITIAL_COMPANIES, INITIAL_CLIENTS } from '../lib/demoData';
 
 interface AuthContextType {
@@ -20,6 +20,7 @@ interface AuthContextType {
   createUserProfile: (userData: Omit<UserProfile, 'uid' | 'createdAt'> & { password?: string; username?: string }) => Promise<UserProfile>;
   updateUserProfile: (uid: string, updates: Partial<UserProfile>) => Promise<void>;
   deleteUserProfile: (uid: string) => Promise<void>;
+  resetUsersExceptAdmin: () => Promise<void>;
   companies: Company[];
   clients: Client[];
   activeCompany: Company | null;
@@ -186,6 +187,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetUsersExceptAdmin = async () => {
+    const adminOnlyUsers = allUsers.filter(u => u.role === 'admin' || u.username === 'admin');
+    const defaultAdminList = adminOnlyUsers.length > 0 ? adminOnlyUsers : [INITIAL_USERS[0]];
+    setAllUsers(defaultAdminList);
+    
+    // Also update Firestore users collection
+    try {
+      const snap = await getDocs(collection(db, 'users'));
+      snap.forEach(async (d) => {
+        const data = d.data() as UserProfile;
+        if (data.role !== 'admin' && data.username !== 'admin') {
+          await deleteDoc(doc(db, 'users', d.id));
+        }
+      });
+    } catch (e) {
+      console.warn('Error clearing non-admin users in firestore:', e);
+    }
+  };
+
   const setActiveCompanyId = (id: string) => {
     setActiveCompanyIdState(id);
   };
@@ -203,6 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createUserProfile,
       updateUserProfile,
       deleteUserProfile,
+      resetUsersExceptAdmin,
       companies,
       clients,
       activeCompany,

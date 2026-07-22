@@ -18,6 +18,7 @@ import {
   updateDoc, 
   deleteDoc, 
   setDoc, 
+  getDocs,
   query, 
   where,
   orderBy 
@@ -459,16 +460,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetSystemToDefault = async () => {
     try {
       localStorage.clear();
-      setWeighings(INITIAL_WEIGHINGS);
-      setClients(INITIAL_CLIENTS);
-      setCompanies(INITIAL_COMPANIES);
-      setPayments(INITIAL_PAYMENTS);
-      setInventory(INITIAL_INVENTORY);
-      setNotifications(INITIAL_NOTIFICATIONS);
-      window.location.reload();
+      setWeighings([]);
+      setClients([]);
+      setPayments([]);
+      setInventory([]);
+      setNotifications([]);
+
+      // Attempt to clear Firestore collections
+      const collectionsToWipe = ['weighings', 'clients', 'payments', 'inventory', 'notifications'];
+      for (const colName of collectionsToWipe) {
+        try {
+          const snap = await getDocs(collection(db, colName));
+          snap.forEach(async (d) => {
+            await deleteDoc(doc(db, colName, d.id));
+          });
+        } catch (e) {
+          console.warn(`Error wiping collection ${colName}:`, e);
+        }
+      }
     } catch (e) {
       console.error('Reset error:', e);
-      window.location.reload();
     }
   };
 
