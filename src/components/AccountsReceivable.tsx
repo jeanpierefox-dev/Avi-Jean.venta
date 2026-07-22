@@ -1,0 +1,773 @@
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+import { WeighingRecord, PaymentRecord, Client } from '../types';
+import { 
+  Receipt, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Calendar, 
+  Clock, 
+  Send, 
+  Search,
+  FileText,
+  FileDown,
+  History,
+  QrCode,
+  CreditCard,
+  Camera,
+  Upload,
+  X,
+  Eye,
+  ArrowLeft,
+  Trash2
+} from 'lucide-react';
+import { 
+  downloadPaymentReceiptPDF, 
+  generatePaymentsReportPDF,
+  downloadTicketPDF,
+  downloadCobranzaTicketPDF
+} from '../lib/pdfGenerator';
+
+interface AccountsReceivableProps {
+  onSelectTab?: (tab: string) => void;
+}
+
+export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelectTab }) => {
+  const { activeCompany } = useAuth();
+
+  const { weighings, clients, payments, addPayment, deleteWeighing, checkOverduePayments } = useData();
+
+  const [activeTab, setActiveTab] = useState<'cobros' | 'reporte_pagos'>('cobros');
+  const [filterStatus, setFilterStatus] = useState<string>('todos');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [paymentsSearch, setPaymentsSearch] = useState<string>('');
+  const [activeZoomImage, setActiveZoomImage] = useState<string | null>(null);
+
+  // Payment modal state
+  const [selectedWeighing, setSelectedWeighing] = useState<WeighingRecord | null>(null);
+  const [viewPaymentsTicket, setViewPaymentsTicket] = useState<WeighingRecord | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<'yape' | 'plim' | 'transferencia' | 'efectivo'>('yape');
+  const [reference, setReference] = useState('');
+  const [paymentNotes, setPaymentNotes] = useState('');
+  const [voucherUrl, setVoucherUrl] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const companyWeighings = weighings.filter(w => w.companyId === (activeCompany?.id || 'comp_galpon_real'));
+  const companyPayments = payments.filter(p => p.companyId === (activeCompany?.id || 'comp_galpon_real'));
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const pendingTickets = companyWeighings.filter(w => w.paymentStatus !== 'pagado');
+  const overdueTickets = pendingTickets.filter(w => w.dueDate && w.dueDate < today);
+
+  const totalPendingBalance = pendingTickets.reduce((sum, w) => sum + w.pendingAmount, 0);
+  const totalOverdueBalance = overdueTickets.reduce((sum, w) => sum + w.pendingAmount, 0);
+  const totalCollectedSoles = companyPayments.reduce((sum, p) => sum + p.amount, 0);
+
+  const filteredWeighings = companyWeighings.filter(w => {
+    const matchesSearch = w.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          w.ticketNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (filterStatus === 'vencidos') return w.dueDate && w.dueDate < today && w.paymentStatus !== 'pagado';
+    if (filterStatus === 'pendientes') return w.paymentStatus === 'pendiente' || w.paymentStatus === 'parcial';
+    if (filterStatus === 'pagados') return w.paymentStatus === 'pagado';
+    return true;
+  });
+
+  const filteredPayments = companyPayments.filter(p => 
+    (p.clientName || '').toLowerCase().includes(paymentsSearch.toLowerCase()) ||
+    (p.reference || '').toLowerCase().includes(paymentsSearch.toLowerCase()) ||
+    p.method.toLowerCase().includes(paymentsSearch.toLowerCase())
+  );
+
+  const handleOpenPaymentModal = (weighing: WeighingRecord) => {
+    setSelectedWeighing(weighing);
+    setPaymentAmount(weighing.pendingAmount);
+    setReference('');
+    setPaymentNotes('');
+    setVoucherUrl('');
+  };
+
+  const handleVoucherUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setVoucherUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProcessPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedWeighing || paymentAmount <= 0 || isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const newPaymentRecord = {
+        companyId: selectedWeighing.companyId,
+        clientId: selectedWeighing.clientId,
+        clientName: selectedWeighing.clientName,
+        weighingId: selectedWeighing.id,
+        amount: paymentAmount,
+        method: paymentMethod,
+        reference: reference || `REC-${Math.floor(Math.random() * 899999 + 100000)}`,
+        notes: paymentNotes,
+        voucherUrl: voucherUrl || undefined
+      };
+
+      const createdPayment = await addPayment(newPaymentRecord);
+
+      const clientObj = clients.find(c => c.id === selectedWeighing.clientId);
+      
+      // Auto download payment receipt PDF
+      downloadPaymentReceiptPDF(createdPayment, clientObj, activeCompany || undefined);
+
+      alert(`¡Abono registrado con éxito por S/ ${paymentAmount.toFixed(2)}! Se ha descargado el recibo oficial.`);
+      setSelectedWeighing(null);
+    } catch (err) {
+      console.error('Error procesando pago:', err);
+      alert('Error al procesar el abono.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSendReminderWhatsApp = (w: WeighingRecord) => {
+    const text = `*RECORDATORIO DE PAGO PENDIENTE - ${activeCompany?.name || 'JEAN-BARSA AVÍCOLA SYSTEM'}*%0A` +
+      `Estimado cliente ${w.clientName}, le recordamos el saldo pendiente del Ticket #${w.ticketNumber}.%0A` +
+      `Monto Pendiente: *S/ ${w.pendingAmount.toFixed(2)}*%0A` +
+      `Fecha Vencimiento: ${w.dueDate}%0A%0A` +
+      `Agradecemos coordinar el pago por Yape / Plim / Transferencia. ¡Muchas gracias!`;
+
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
+  const handleExportPaymentsPDF = () => {
+    generatePaymentsReportPDF(companyPayments, activeCompany || undefined);
+  };
+
+  return (
+    <div className="space-y-6 pb-12">
+      
+      {/* Header Banner */}
+      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center space-x-4">
+          {onSelectTab && (
+            <button
+              onClick={() => onSelectTab('dashboard')}
+              className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-colors flex items-center justify-center shrink-0"
+              title="Volver al Menú"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <div className="p-3 bg-blue-700/20 border border-blue-500/30 rounded-xl text-blue-400 shrink-0">
+            <Receipt className="w-7 h-7" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Cuentas por Cobrar y Reporte de Pagos
+            </h1>
+            <p className="text-xs text-slate-400 font-medium">
+              Gestión corporativa de abonos en Soles (S/), comprobantes y estados de cuenta.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {onSelectTab && (
+            <button
+              onClick={() => onSelectTab('dashboard')}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 border border-slate-700 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Volver al Menú</span>
+            </button>
+          )}
+
+          <button
+            onClick={checkOverduePayments}
+            className="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-2 border border-slate-700 transition-colors"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            <span>Verificar Vencidos</span>
+          </button>
+
+          <button
+            onClick={handleExportPaymentsPDF}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-emerald-900/40 transition-transform active:scale-95"
+          >
+            <FileDown className="w-4 h-4" />
+            <span>Descargar Reporte Pagos (PDF)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Metric Cards in Peruvian Soles S/ */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-1">
+          <span className="text-xs font-semibold text-slate-400">Total Saldo Pendiente (S/)</span>
+          <div className="text-2xl font-black text-amber-400 font-mono">
+            S/ {totalPendingBalance.toFixed(2)}
+          </div>
+          <p className="text-[11px] text-slate-500">{pendingTickets.length} tickets por cobrar</p>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-1">
+          <span className="text-xs font-semibold text-slate-400">Saldo Vencido Crítico (S/)</span>
+          <div className="text-2xl font-black text-rose-500 font-mono">
+            S/ {totalOverdueBalance.toFixed(2)}
+          </div>
+          <p className="text-[11px] text-rose-400 font-semibold">{overdueTickets.length} con alerta de vencimiento</p>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-1">
+          <span className="text-xs font-semibold text-slate-400">Total Abonos Recaudados (S/)</span>
+          <div className="text-2xl font-black text-emerald-400 font-mono">
+            S/ {totalCollectedSoles.toFixed(2)}
+          </div>
+          <p className="text-[11px] text-slate-500">{companyPayments.length} abonos/recibos emitidos</p>
+        </div>
+      </div>
+
+      {/* Main Tabs: Cobros vs Reporte de Pagos */}
+      <div className="flex border-b border-slate-800 space-x-4">
+        <button
+          onClick={() => setActiveTab('cobros')}
+          className={`pb-3 font-extrabold text-sm flex items-center space-x-2 border-b-2 transition-colors ${
+            activeTab === 'cobros' 
+              ? 'border-emerald-500 text-emerald-400' 
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Receipt className="w-4 h-4" />
+          <span>Tickets y Saldos Pendientes</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('reporte_pagos')}
+          className={`pb-3 font-extrabold text-sm flex items-center space-x-2 border-b-2 transition-colors ${
+            activeTab === 'reporte_pagos' 
+              ? 'border-emerald-500 text-emerald-400' 
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <History className="w-4 h-4" />
+          <span>Reporte de Todos los Pagos Realizados ({companyPayments.length})</span>
+        </button>
+      </div>
+
+      {/* TAB 1: COBROS Y TICKETS */}
+      {activeTab === 'cobros' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por ticket o cliente..."
+                className="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl pl-10 pr-4 py-2.5 text-xs outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="flex bg-slate-900 p-1.5 rounded-xl border border-slate-800 w-full sm:w-auto overflow-x-auto">
+              {['todos', 'pendientes', 'vencidos', 'pagados'].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setFilterStatus(st)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-colors ${
+                    filterStatus === st ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
+                  <tr>
+                    <th className="p-4">Ticket / Fecha</th>
+                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Pollos / Kilos</th>
+                    <th className="p-4">Total S/</th>
+                    <th className="p-4">Saldo Pendiente</th>
+                    <th className="p-4">Vencimiento</th>
+                    <th className="p-4">Estado</th>
+                    <th className="p-4 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {filteredWeighings.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="p-8 text-center text-slate-500 italic">
+                        No se encontraron registros de cobro con los filtros seleccionados.
+                      </td>
+                    </tr>
+                  )}
+                  {filteredWeighings.map((w) => {
+                    const isOverdue = w.dueDate && w.dueDate < today && w.paymentStatus !== 'pagado';
+
+                    return (
+                      <tr key={w.id} className="hover:bg-slate-800/50 transition-colors">
+                        <td className="p-4">
+                          <div className="font-bold text-white">{w.ticketNumber}</div>
+                          <div className="text-[10px] text-slate-500">{new Date(w.createdAt).toLocaleDateString('es-ES')}</div>
+                        </td>
+                        <td className="p-4 font-semibold text-slate-200">{w.clientName}</td>
+                        <td className="p-4 font-mono">
+                          {w.chickenCount} pollos ({w.netWeight.toFixed(1)} kg)
+                        </td>
+                        <td className="p-4 font-bold font-mono text-slate-100">S/ {w.totalAmount.toFixed(2)}</td>
+                        <td className="p-4 font-bold font-mono text-rose-400">
+                          S/ {w.pendingAmount.toFixed(2)}
+                        </td>
+                        <td className="p-4 font-mono text-slate-400">
+                          {w.dueDate || 'Contado'}
+                        </td>
+                        <td className="p-4">
+                          {isOverdue ? (
+                            <span className="bg-rose-950 text-rose-400 border border-rose-800 px-2 py-0.5 rounded-full font-bold uppercase text-[9px] flex items-center space-x-1 w-max">
+                              <AlertTriangle className="w-3 h-3" />
+                              <span>VENCIDO</span>
+                            </span>
+                          ) : (
+                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase text-[9px] ${
+                              w.paymentStatus === 'pagado' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' :
+                              w.paymentStatus === 'parcial' ? 'bg-amber-950 text-amber-400 border border-amber-800' :
+                              'bg-slate-800 text-slate-300 border border-slate-700'
+                            }`}>
+                              {w.paymentStatus}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right space-x-1.5 flex items-center justify-end">
+                          <button
+                            onClick={() => setViewPaymentsTicket(w)}
+                            title="Ver Historial de Abonos de esta Deuda"
+                            className="bg-slate-800 hover:bg-slate-700 text-sky-400 p-1.5 rounded-xl border border-slate-700 inline-flex items-center text-[11px] font-bold space-x-1"
+                          >
+                            <History className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Abonos</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              const ticketPayments = payments.filter(p => p.weighingId === w.id);
+                              downloadCobranzaTicketPDF(w, activeCompany || undefined, ticketPayments);
+                            }}
+                            title="Imprimir Ticket de Cobranza y Abonos"
+                            className="bg-amber-950/80 hover:bg-amber-900 text-amber-300 p-1.5 rounded-xl border border-amber-800/80 inline-flex items-center text-[11px] font-bold space-x-1"
+                          >
+                            <Receipt className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Ticket Cobranza</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              downloadTicketPDF(w, activeCompany || undefined);
+                            }}
+                            title="Imprimir Ticket de Venta Directa"
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-200 p-1.5 rounded-xl border border-slate-700 inline-flex items-center text-[11px] font-bold space-x-1"
+                          >
+                            <FileDown className="w-3.5 h-3.5" />
+                            <span>Ticket Venta</span>
+                          </button>
+
+                          {w.pendingAmount > 0 && (
+                            <>
+                              <button
+                                onClick={() => handleOpenPaymentModal(w)}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl font-bold text-[11px] shadow transition-colors"
+                              >
+                                Registrar Abono (S/)
+                              </button>
+
+                              <button
+                                onClick={() => handleSendReminderWhatsApp(w)}
+                                title="Enviar recordatorio WhatsApp"
+                                className="bg-slate-800 hover:bg-slate-700 text-emerald-400 p-1.5 rounded-xl border border-slate-700 inline-flex items-center"
+                              >
+                                <Send className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`¿Desea ELIMINAR/QUITAR este ticket de pesaje ${w.ticketNumber}?`)) {
+                                deleteWeighing(w.id);
+                              }
+                            }}
+                            title="Quitar / Eliminar Ticket"
+                            className="bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 p-1.5 rounded-xl border border-slate-700 hover:border-rose-900 inline-flex items-center transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: REPORTE COMPLETO DE PAGOS REALIZADOS */}
+      {activeTab === 'reporte_pagos' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+              <input
+                type="text"
+                value={paymentsSearch}
+                onChange={(e) => setPaymentsSearch(e.target.value)}
+                placeholder="Buscar por cliente, referencia o método..."
+                className="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl pl-10 pr-4 py-2.5 text-xs outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <button
+              onClick={handleExportPaymentsPDF}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 shadow-lg"
+            >
+              <FileDown className="w-4 h-4" />
+              <span>Exportar Reporte Completo (PDF)</span>
+            </button>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
+                  <tr>
+                    <th className="p-4">Fecha / Hora</th>
+                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Método de Pago</th>
+                    <th className="p-4">Referencia / Nº Op.</th>
+                    <th className="p-4">Voucher</th>
+                    <th className="p-4">Monto Abonado (S/)</th>
+                    <th className="p-4 text-right">Comprobante / Recibo</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {filteredPayments.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-slate-500 italic">
+                        No hay registros de pagos recibidos.
+                      </td>
+                    </tr>
+                  )}
+                  {filteredPayments.map((p) => {
+                    const clientObj = clients.find(c => c.id === p.clientId);
+
+                    return (
+                      <tr key={p.id} className="hover:bg-slate-800/50 transition-colors">
+                        <td className="p-4 font-mono text-slate-400">
+                          {new Date(p.createdAt).toLocaleDateString('es-ES')} {new Date(p.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="p-4 font-bold text-white">{p.clientName || 'Cliente General'}</td>
+                        <td className="p-4">
+                          <span className="bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase text-emerald-400 flex items-center space-x-1 w-max">
+                            <QrCode className="w-3 h-3 text-emerald-400" />
+                            <span>{p.method}</span>
+                          </span>
+                        </td>
+                        <td className="p-4 font-mono text-slate-300">{p.reference || 'N/A'}</td>
+                        <td className="p-4">
+                          {p.voucherUrl ? (
+                            <button
+                              onClick={() => setActiveZoomImage(p.voucherUrl!)}
+                              className="flex items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-700 px-2 py-1 rounded-lg text-xs text-sky-400 font-semibold"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Ver Voucher</span>
+                            </button>
+                          ) : (
+                            <span className="text-slate-500 text-[10px] italic">Sin voucher</span>
+                          )}
+                        </td>
+                        <td className="p-4 font-black font-mono text-emerald-400 text-sm">
+                          S/ {p.amount.toFixed(2)}
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => downloadPaymentReceiptPDF(p, clientObj, activeCompany || undefined)}
+                            className="bg-slate-800 hover:bg-slate-700 text-emerald-300 px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-bold inline-flex items-center space-x-1.5 transition-colors"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Recibo PDF</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {selectedWeighing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="font-bold text-base text-white">Registrar Abono o Pago (Soles)</h3>
+                <p className="text-xs text-slate-400">{selectedWeighing.ticketNumber} - {selectedWeighing.clientName}</p>
+              </div>
+              <button
+                onClick={() => setSelectedWeighing(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleProcessPayment} className="space-y-4 text-xs">
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center font-mono">
+                <span className="text-slate-400">Saldo Pendiente Actual:</span>
+                <span className="text-base font-extrabold text-amber-400">S/ {selectedWeighing.pendingAmount.toFixed(2)}</span>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Monto del Abono (S/)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  max={selectedWeighing.pendingAmount}
+                  required
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
+                  className="w-full bg-slate-950 border border-slate-700 text-emerald-400 text-lg font-extrabold font-mono rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Método de Pago (Perú)</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'yape', label: 'Yape' },
+                    { id: 'plim', label: 'Plim' },
+                    { id: 'transferencia', label: 'Transferencia' },
+                    { id: 'efectivo', label: 'Efectivo' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setPaymentMethod(m.id as any)}
+                      className={`py-2 px-3 rounded-xl font-bold border text-xs transition-all ${
+                        paymentMethod === m.id
+                          ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-950'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Número de Operación / Referencia</label>
+                <input
+                  type="text"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                  placeholder="ej. OP-192837 / Yape 9823"
+                  className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              {/* Voucher Image Upload */}
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Adjuntar Foto de Voucher / Recibo</label>
+                {voucherUrl ? (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+                    <img src={voucherUrl} alt="Voucher" className="w-full h-32 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setVoucherUrl('')}
+                      className="absolute top-2 right-2 p-1 bg-rose-600 text-white rounded-full shadow"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer bg-slate-950 border border-dashed border-emerald-500/50 hover:border-emerald-400 p-3 rounded-xl flex items-center justify-center space-x-2 text-center text-slate-300">
+                    <Camera className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs font-semibold">Subir Foto o Captura de Voucher</span>
+                    <input type="file" accept="image/*" onChange={handleVoucherUpload} className="hidden" />
+                  </label>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedWeighing(null)}
+                  className="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition-colors shadow-lg shadow-emerald-900/40"
+                >
+                  {isSubmitting ? 'Procesando...' : 'Confirmar Abono'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Ver Historial de Pagos y Abonos de la Deuda/Ticket */}
+      {viewPaymentsTicket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-emerald-600/20 text-emerald-400 rounded-xl">
+                  <History className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-white">Historial de Abonos / Pagos</h3>
+                  <p className="text-xs text-slate-400">
+                    Ticket <span className="text-emerald-400 font-mono font-bold">{viewPaymentsTicket.ticketNumber}</span> - {viewPaymentsTicket.clientName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setViewPaymentsTicket(null)}
+                className="text-slate-400 hover:text-white p-2 hover:bg-slate-800 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Total Summary Row */}
+            <div className="grid grid-cols-3 gap-2 bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-center font-mono">
+              <div>
+                <span className="text-[10px] text-slate-400 block">TOTAL VENTA</span>
+                <span className="text-xs font-bold text-slate-100">S/ {viewPaymentsTicket.totalAmount.toFixed(2)}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-emerald-400 block">ABONADO</span>
+                <span className="text-xs font-bold text-emerald-400">S/ {viewPaymentsTicket.paidAmount.toFixed(2)}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-rose-400 block">RESTANTE</span>
+                <span className="text-xs font-bold text-rose-400">S/ {viewPaymentsTicket.pendingAmount.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* List of payments */}
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {payments.filter(p => p.weighingId === viewPaymentsTicket.id || (p.clientId === viewPaymentsTicket.clientId && !p.weighingId)).length === 0 ? (
+                <div className="p-6 text-center text-slate-500 italic bg-slate-950/50 rounded-2xl border border-slate-800">
+                  No se registran abonos aún para esta deuda.
+                </div>
+              ) : (
+                payments
+                  .filter(p => p.weighingId === viewPaymentsTicket.id || (p.clientId === viewPaymentsTicket.clientId && !p.weighingId))
+                  .map((p) => (
+                    <div key={p.id} className="bg-slate-950 border border-slate-800/80 p-3 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-bold text-slate-200 uppercase">{p.method}</span>
+                          <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md font-mono">
+                            {p.reference || 'S/N'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-0.5">
+                          {new Date(p.createdAt).toLocaleString('es-ES')} - por {p.createdBy}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        {p.voucherUrl && (
+                          <button
+                            onClick={() => setActiveZoomImage(p.voucherUrl!)}
+                            title="Ver Captura Voucher"
+                            className="p-1.5 bg-slate-800 text-slate-300 hover:text-white rounded-lg border border-slate-700"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                          </button>
+                        )}
+                        <span className="text-xs font-black font-mono text-emerald-400">
+                          S/ {p.amount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+
+            <div className="pt-2 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  const ticketPayments = payments.filter(p => p.weighingId === viewPaymentsTicket.id);
+                  downloadTicketPDF(viewPaymentsTicket, activeCompany || undefined, ticketPayments);
+                }}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 border border-slate-700 transition-colors"
+              >
+                <FileDown className="w-4 h-4 text-emerald-400" />
+                <span>Imprimir Ticket con Pagos (PDF)</span>
+              </button>
+
+              <button
+                onClick={() => setViewPaymentsTicket(null)}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Zoom Modal for Vouchers */}
+      {activeZoomImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in">
+          <div className="relative max-w-xl w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden p-3 shadow-2xl">
+            <button
+              onClick={() => setActiveZoomImage(null)}
+              className="absolute top-4 right-4 p-2 bg-slate-950/80 hover:bg-rose-600 text-white rounded-full transition-colors z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img 
+              src={activeZoomImage} 
+              alt="Voucher Ampliado" 
+              className="w-full max-h-[80vh] object-contain rounded-2xl" 
+            />
+            <div className="p-2 text-center text-xs text-slate-400 font-mono">
+              Comprobante de Voucher Registrado
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+

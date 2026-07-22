@@ -1,0 +1,7 @@
+{
+  "name": "Jean-Barsa Avícola System",
+  "description": "Sistema corporativo de pesa de pollos en soles, tiqueteado, control de galpones e inventarios, cuentas por cobrar y vouchers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

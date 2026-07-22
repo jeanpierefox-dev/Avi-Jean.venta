@@ -1,0 +1,238 @@
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+import { BarChart3, Calendar, FileDown, TrendingUp, Scale, DollarSign, Users, ArrowLeft } from 'lucide-react';
+import { generateMonthlyReportPDF, downloadTicketPDF } from '../lib/pdfGenerator';
+
+interface MonthlyReportsProps {
+  onSelectTab?: (tab: string) => void;
+}
+
+export const MonthlyReports: React.FC<MonthlyReportsProps> = ({ onSelectTab }) => {
+  const { activeCompany } = useAuth();
+  const { weighings } = useData();
+
+
+  const [selectedMonth, setSelectedMonth] = useState<string>('2026-07');
+
+  const companyWeighings = weighings.filter(w => w.companyId === (activeCompany?.id || 'comp_galpon_real'));
+
+  // Filter weighings by selected YYYY-MM
+  const monthWeighings = companyWeighings.filter(w => {
+    return w.createdAt.startsWith(selectedMonth);
+  });
+
+  const totalChickens = monthWeighings.reduce((sum, w) => sum + w.chickenCount, 0);
+  const totalNetWeight = monthWeighings.reduce((sum, w) => sum + w.netWeight, 0);
+  const totalAmount = monthWeighings.reduce((sum, w) => sum + w.totalAmount, 0);
+  const totalPaid = monthWeighings.reduce((sum, w) => sum + w.paidAmount, 0);
+  const totalPending = monthWeighings.reduce((sum, w) => sum + w.pendingAmount, 0);
+
+  const cashSales = monthWeighings.filter(w => w.paymentType === 'contado').reduce((sum, w) => sum + w.totalAmount, 0);
+  const creditSales = monthWeighings.filter(w => w.paymentType === 'credito').reduce((sum, w) => sum + w.totalAmount, 0);
+
+  const avgPricePerKg = totalNetWeight > 0 ? (totalAmount / totalNetWeight) : 0;
+  const avgWeightPerChicken = totalChickens > 0 ? (totalNetWeight / totalChickens) : 0;
+
+  const handleExportPDF = () => {
+    if (!activeCompany) return;
+    generateMonthlyReportPDF(selectedMonth, activeCompany, monthWeighings);
+  };
+
+  return (
+    <div className="space-y-6 pb-12">
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+        <div className="flex items-center space-x-4">
+          {onSelectTab && (
+            <button
+              onClick={() => onSelectTab('dashboard')}
+              className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-colors flex items-center justify-center shrink-0"
+              title="Volver al Menú"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <div className="p-3 bg-emerald-600/20 border border-emerald-500/30 rounded-2xl text-emerald-400 shrink-0">
+            <BarChart3 className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">
+              Reportes Detallados Mensuales
+            </h1>
+            <p className="text-xs text-slate-400">
+              Análisis completo de volumen de pesaje, ventas, kilos totales e indicadores.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {onSelectTab && (
+            <button
+              onClick={() => onSelectTab('dashboard')}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 border border-slate-700 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Volver al Menú</span>
+            </button>
+          )}
+
+          {/* Month Selector */}
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-emerald-500"
+          />
+
+          <button
+            onClick={handleExportPDF}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/40 transition-transform active:scale-95"
+          >
+            <FileDown className="w-4 h-4" />
+            <span>Exportar PDF</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Monthly KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-2">
+          <div className="flex justify-between items-center text-slate-400 text-xs">
+            <span>Aves Pesadas</span>
+            <Scale className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div className="text-2xl font-black text-white font-mono">
+            {totalChickens.toLocaleString()} <span className="text-xs font-normal">aves</span>
+          </div>
+          <p className="text-[11px] text-slate-500">Promedios: {avgWeightPerChicken.toFixed(2)} kg / pollo</p>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-2">
+          <div className="flex justify-between items-center text-slate-400 text-xs">
+            <span>Kilos Netos Vendidos</span>
+            <TrendingUp className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div className="text-2xl font-black text-emerald-400 font-mono">
+            {totalNetWeight.toFixed(1)} <span className="text-xs font-normal">kg</span>
+          </div>
+          <p className="text-[11px] text-slate-500">Precio Promedio: S/ {avgPricePerKg.toFixed(2)} / kg</p>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-2">
+          <div className="flex justify-between items-center text-slate-400 text-xs">
+            <span>Monto Total Ventas</span>
+            <DollarSign className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div className="text-2xl font-black text-white font-mono">
+            S/ {totalAmount.toFixed(2)}
+          </div>
+          <p className="text-[11px] text-emerald-400">Total Recaudado: S/ {totalPaid.toFixed(2)}</p>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-2">
+          <div className="flex justify-between items-center text-slate-400 text-xs">
+            <span>Pendiente de Cobro</span>
+            <DollarSign className="w-4 h-4 text-amber-400" />
+          </div>
+          <div className="text-2xl font-black text-amber-400 font-mono">
+            S/ {totalPending.toFixed(2)}
+          </div>
+          <p className="text-[11px] text-slate-500">{monthWeighings.filter(w => w.pendingAmount > 0).length} tickets con saldo</p>
+        </div>
+      </div>
+
+      {/* Contado vs Credito Financial Breakdown Bar */}
+      <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="p-3 bg-slate-800 text-emerald-400 rounded-xl border border-slate-700">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-sm text-white">Desglose Modalidad de Venta</h3>
+            <p className="text-xs text-slate-400">Resumen de colocación al Contado vs Crédito en el período</p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4 font-mono text-xs">
+          <div className="bg-slate-950 border border-emerald-500/30 px-4 py-2 rounded-xl text-center">
+            <span className="text-[10px] text-emerald-400 block font-sans font-bold">AL CONTADO</span>
+            <span className="text-sm font-extrabold text-white">S/ {cashSales.toFixed(2)}</span>
+          </div>
+
+          <div className="bg-slate-950 border border-amber-500/30 px-4 py-2 rounded-xl text-center">
+            <span className="text-[10px] text-amber-400 block font-sans font-bold">A CRÉDITO</span>
+            <span className="text-sm font-extrabold text-white">S/ {creditSales.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Activity Table Breakdown */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+        <div className="p-4 border-b border-slate-800 font-bold text-sm text-white flex justify-between items-center">
+          <span>Detalle de Operaciones en el Mes</span>
+          <span className="text-xs text-slate-400 font-mono">{monthWeighings.length} Registros</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-300">
+            <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
+              <tr>
+                <th className="p-4">Fecha</th>
+                <th className="p-4">Ticket</th>
+                <th className="p-4">Cliente</th>
+                <th className="p-4">Pollos</th>
+                <th className="p-4">Peso Neto</th>
+                <th className="p-4">Precio/kg</th>
+                <th className="p-4">Monto Total</th>
+                <th className="p-4">Estado</th>
+                <th className="p-4 text-right">Comprobante</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {monthWeighings.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="p-8 text-center text-slate-500 italic">
+                    No hay pesajes registrados en el mes seleccionado ({selectedMonth}).
+                  </td>
+                </tr>
+              )}
+              {monthWeighings.map((w) => (
+                <tr key={w.id} className="hover:bg-slate-800/50 transition-colors">
+                  <td className="p-4 font-mono text-slate-400">
+                    {new Date(w.createdAt).toLocaleDateString('es-ES')}
+                  </td>
+                  <td className="p-4 font-bold text-white">{w.ticketNumber}</td>
+                  <td className="p-4 font-semibold text-slate-200">{w.clientName}</td>
+                  <td className="p-4 font-mono">{w.chickenCount} aves</td>
+                  <td className="p-4 font-bold font-mono text-emerald-400">{w.netWeight.toFixed(1)} kg</td>
+                  <td className="p-4 font-mono">S/ {w.unitPrice.toFixed(2)}</td>
+                  <td className="p-4 font-bold font-mono text-white">S/ {w.totalAmount.toFixed(2)}</td>
+                  <td className="p-4">
+                    <span className={`px-2 py-0.5 rounded font-bold uppercase text-[9px] ${
+                      w.paymentStatus === 'pagado' ? 'bg-emerald-950 text-emerald-400' : 'bg-amber-950 text-amber-400'
+                    }`}>
+                      {w.paymentStatus}
+                    </span>
+                  </td>
+                  <td className="p-4 text-right">
+                    <button
+                      onClick={() => downloadTicketPDF(w, activeCompany || undefined)}
+                      title="Ver / Descargar Ticket de esta Venta"
+                      className="bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 font-bold px-2.5 py-1.5 rounded-xl border border-slate-700 text-[11px] inline-flex items-center space-x-1 transition-colors"
+                    >
+                      <FileDown className="w-3.5 h-3.5" />
+                      <span>Ticket Venta</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  );
+};
