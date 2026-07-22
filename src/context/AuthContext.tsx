@@ -7,7 +7,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged 
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, getDocs, query, where, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, query, where, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { INITIAL_USERS, INITIAL_COMPANIES, INITIAL_CLIENTS } from '../lib/demoData';
 
 interface AuthContextType {
@@ -75,6 +75,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return () => unsub();
     } catch (e) {
       console.warn('User listener error:', e);
+    }
+  }, []);
+
+  // Realtime Firestore Companies Sync
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(collection(db, 'companies'), (snap) => {
+        const isWiped = localStorage.getItem('system_wiped') === 'true';
+        if (!snap.empty) {
+          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Company));
+          if (docs.length > 0) {
+            setCompanies(docs);
+          } else if (isWiped) {
+            setCompanies([INITIAL_COMPANIES[0]]);
+          }
+        } else if (isWiped) {
+          setCompanies([INITIAL_COMPANIES[0]]);
+        }
+      }, (err) => console.warn('Companies snapshot listener:', err));
+
+      return () => unsub();
+    } catch (e) {
+      console.warn('Companies listener error:', e);
     }
   }, []);
 
