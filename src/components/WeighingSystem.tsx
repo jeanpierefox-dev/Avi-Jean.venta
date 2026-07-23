@@ -20,7 +20,9 @@ import {
   ShieldAlert,
   Camera,
   Image as ImageIcon,
-  X
+  X,
+  FolderOpen,
+  Eye
 } from 'lucide-react';
 import { downloadTicketPDF } from '../lib/pdfGenerator';
 import { TicketModal } from './TicketModal';
@@ -48,13 +50,15 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   const [quickClientPhone, setQuickClientPhone] = useState('');
   const [quickClientLimit, setQuickClientLimit] = useState<number>(5000);
 
+  const currentCompanyId = activeCompany?.id || currentUser?.companyId || '';
+
   const handleCreateQuickClient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickClientName.trim()) return;
 
     try {
       const newClient = await addClient({
-        companyId: activeCompany?.id || 'comp_galpon_real',
+        companyId: currentCompanyId,
         name: quickClientName,
         phone: quickClientPhone,
         creditLimit: quickClientLimit,
@@ -88,8 +92,8 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filter clients and galpones by active company
-  const companyClients = clients.filter(c => c.companyId === (activeCompany?.id || 'comp_galpon_real'));
-  const galponesList = inventory.filter(i => i.companyId === (activeCompany?.id || 'comp_galpon_real') && (i.category === 'pollo_vivo' || i.unit === 'aves'));
+  const companyClients = clients.filter(c => c.companyId === currentCompanyId);
+  const galponesList = inventory.filter(i => i.companyId === currentCompanyId && (i.category === 'pollo_vivo' || i.unit === 'aves'));
 
   useEffect(() => {
     if (companyClients.length > 0 && !selectedClientId) {
@@ -176,7 +180,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
 
     try {
       const newTicket = await addWeighing({
-        companyId: activeCompany?.id || 'comp_galpon_real',
+        companyId: currentCompanyId,
         clientId: selectedClient.id,
         clientName: selectedClient.name,
         chickenCount: totalChickens,
@@ -204,34 +208,66 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
     }
   };
 
+  const handlePreviewTicket = () => {
+    if (!selectedClient) {
+      alert('Por favor seleccione un cliente para visualizar el ticket.');
+      return;
+    }
+    const client = clients.find(c => c.id === selectedClient);
+    const mockRecord: WeighingRecord = {
+      id: `preview_${Date.now()}`,
+      ticketNumber: `TKT-PREVIO`,
+      companyId: currentCompanyId,
+      clientId: selectedClient,
+      clientName: client?.name || 'Cliente de Prueba',
+      chickenCount: totalChickens,
+      grossWeight: totalGrossWeight,
+      tareWeight: 0,
+      netWeight: totalNetWeight,
+      unitPrice: unitPrice,
+      totalAmount: totalAmountToCharge,
+      paidAmount: paymentType === 'contado' ? totalAmountToCharge : 0,
+      pendingAmount: paymentType === 'credito' ? totalAmountToCharge : 0,
+      paymentType: paymentType,
+      paymentStatus: paymentType === 'contado' ? 'pagado' : 'pendiente',
+      creditDays: creditDays,
+      dueDate: calculateDueDate(),
+      scaleImageUrl: scaleImageUrl || undefined,
+      notes: notes || 'Vista Previa del Ticket',
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser?.displayName || 'Operador',
+    };
+    setCreatedTicket(mockRecord);
+  };
+
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       
       {/* Mobile Top Header Banner with Back Button */}
       {/* Module Title Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl text-white">
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-sm text-slate-900">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center space-x-3.5">
             {onSelectTab && (
               <button
                 onClick={() => onSelectTab('dashboard')}
-                className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors border border-slate-700 flex items-center justify-center"
+                className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition-colors border border-slate-200 flex items-center justify-center"
                 title="Volver al Menú"
               >
                 <ArrowRight className="w-5 h-5 rotate-180" />
               </button>
             )}
-            <div className="p-3 bg-blue-700 rounded-xl text-white shadow-md shadow-blue-950 border border-blue-500/30">
+            <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-sm">
               <Scale className="w-6 h-6 stroke-[2.5]" />
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
                 Pesa Directa de Pollos
-                <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-800 px-2.5 py-0.5 rounded-md font-mono font-bold">
+                <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-md font-mono font-bold">
                   Soles Peruanos (S/)
                 </span>
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5 font-medium">
+              <p className="text-xs text-slate-500 mt-0.5 font-medium">
                 Ingreso directo de pollos y kilo de balanza. Descuento automático de inventario por Galpón.
               </p>
             </div>
@@ -240,7 +276,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
           {onSelectTab && (
             <button
               onClick={() => onSelectTab('dashboard')}
-              className="self-start md:self-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-blue-300 font-bold text-xs rounded-xl border border-slate-700 flex items-center gap-2"
+              className="self-start md:self-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-blue-700 font-bold text-xs rounded-2xl border border-slate-200 flex items-center gap-2"
             >
               <ArrowRight className="w-4 h-4 rotate-180" />
               <span>Volver al Menú Principal</span>
@@ -255,9 +291,9 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
         <div className="lg:col-span-7 space-y-6">
           
           {/* Client & Price Configuration Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-400" />
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm space-y-4">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+              <User className="w-4 h-4 text-blue-600" />
               1. Seleccionar Cliente y Galpón de Origen
             </h2>
 
@@ -265,13 +301,13 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
               {/* Client Selector */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-300">
+                  <label className="block text-xs font-bold text-slate-700">
                     Cliente Destinatario
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowQuickClientModal(true)}
-                    className="text-[11px] font-bold text-blue-400 hover:text-blue-300 hover:underline flex items-center space-x-1"
+                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center space-x-1"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Crear Cliente Directo</span>
@@ -280,7 +316,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                 <select
                   value={selectedClientId}
                   onChange={(e) => setSelectedClientId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-3.5 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-2xl px-3.5 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 >
                   {companyClients.length === 0 && (
                     <option value="">⚠️ Sin clientes registrados</option>
@@ -293,12 +329,12 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                 </select>
 
                 {companyClients.length === 0 && (
-                  <div className="mt-2 bg-amber-950/80 border border-amber-800 text-amber-200 p-2.5 rounded-xl text-xs flex items-center justify-between">
+                  <div className="mt-2 bg-amber-50 border border-amber-200 text-amber-800 p-2.5 rounded-2xl text-xs flex items-center justify-between">
                     <span>No hay clientes en esta empresa.</span>
                     <button
                       type="button"
                       onClick={() => setShowQuickClientModal(true)}
-                      className="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1 rounded-lg font-extrabold text-[11px] shrink-0"
+                      className="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded-lg font-extrabold text-[11px] shrink-0"
                     >
                       + Crear Ahora
                     </button>
@@ -308,13 +344,13 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
 
               {/* Galpón Inventory Origin Selector */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Galpón / Lote de Origen (Inventario)
                 </label>
                 <select
                   value={selectedGalponId}
                   onChange={(e) => setSelectedGalponId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 text-sky-300 rounded-xl px-3.5 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 text-blue-800 rounded-2xl px-3.5 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 >
                   {galponesList.length === 0 && (
                     <option value="">Galpón General de Granja</option>
@@ -332,19 +368,19 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
               {/* Unit Price Input */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Precio por Kilo en Soles (S/ / kg)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-3 text-slate-400 font-mono font-black text-xs">S/</span>
+                  <span className="absolute left-3.5 top-3 text-slate-500 font-mono font-black text-xs">S/</span>
                   <input
                     type="number"
                     step="0.10"
                     value={unitPrice}
                     onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
                     onFocus={() => setActiveField('price')}
-                    className={`w-full bg-slate-950 border text-slate-100 rounded-xl pl-9 pr-3 py-2.5 text-sm font-black font-mono outline-none ${
-                      activeField === 'price' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-700'
+                    className={`w-full bg-slate-50 border text-slate-900 rounded-2xl pl-9 pr-3 py-2.5 text-sm font-black font-mono outline-none ${
+                      activeField === 'price' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-300'
                     }`}
                   />
                 </div>
@@ -352,17 +388,17 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
 
               {/* Payment Type Selection */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Tipo de Venta
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setPaymentType('contado')}
-                    className={`py-2.5 px-2 rounded-xl border text-xs font-extrabold transition-all flex items-center justify-center space-x-1 ${
+                    className={`py-2.5 px-2 rounded-2xl border text-xs font-extrabold transition-all flex items-center justify-center space-x-1 ${
                       paymentType === 'contado'
-                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-900/30'
-                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                        : 'bg-slate-50 text-slate-600 border-slate-300 hover:border-slate-400'
                     }`}
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -372,10 +408,10 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   <button
                     type="button"
                     onClick={() => setPaymentType('credito')}
-                    className={`py-2.5 px-2 rounded-xl border text-xs font-extrabold transition-all flex items-center justify-center space-x-1 ${
+                    className={`py-2.5 px-2 rounded-2xl border text-xs font-extrabold transition-all flex items-center justify-center space-x-1 ${
                       paymentType === 'credito'
-                        ? 'bg-amber-600 text-white border-amber-500 shadow-md shadow-amber-900/30'
-                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                        : 'bg-slate-50 text-slate-600 border-slate-300 hover:border-slate-400'
                     }`}
                   >
                     <Clock className="w-3.5 h-3.5" />
@@ -387,8 +423,8 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
 
             {/* Credit Days Selector Options: 7, 15, 30 días */}
             {paymentType === 'credito' && (
-              <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl space-y-2">
-                <label className="block text-xs font-bold text-amber-400">
+              <div className="bg-amber-50/80 border border-amber-200 p-3.5 rounded-2xl space-y-2">
+                <label className="block text-xs font-bold text-amber-900">
                   Plazo de Crédito Otorgado
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -399,44 +435,44 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                       onClick={() => setCreditDays(days)}
                       className={`py-2 rounded-xl text-xs font-extrabold border transition-all ${
                         creditDays === days
-                          ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md'
-                          : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-amber-500/50'
+                          ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-amber-200 hover:border-amber-400'
                       }`}
                     >
                       {days} Días
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-400 text-right">
-                  Fecha Vencimiento: <strong className="text-amber-300 font-mono">{calculateDueDate()}</strong>
+                <p className="text-[10px] text-amber-800 text-right">
+                  Fecha Vencimiento: <strong className="text-amber-900 font-mono">{calculateDueDate()}</strong>
                 </p>
               </div>
             )}
           </div>
 
           {/* Direct Chicken & Scale Weight Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-            <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-emerald-400" />
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm space-y-4">
+            <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-emerald-600" />
               2. Datos del Pesaje Directo (Pollos y Balanza)
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   Cantidad de Pollos (Aves)
                 </label>
                 <input
                   type="number"
                   value={bulkChickens}
                   onChange={(e) => setBulkChickens(e.target.value === '' ? '' : parseInt(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-2xl px-3.5 py-3 text-xl font-black font-mono outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-2xl px-3.5 py-3 text-xl font-black font-mono outline-none focus:border-emerald-600"
                   placeholder="ej. 120"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   Peso Directo Balanza (kg)
                 </label>
                 <input
@@ -444,7 +480,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   step="0.1"
                   value={bulkGrossWeight}
                   onChange={(e) => setBulkGrossWeight(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-700 text-emerald-400 rounded-2xl px-3.5 py-3 text-xl font-black font-mono outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 border border-slate-300 text-emerald-700 rounded-2xl px-3.5 py-3 text-xl font-black font-mono outline-none focus:border-emerald-600"
                   placeholder="ej. 288.0"
                 />
               </div>
@@ -452,14 +488,14 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
           </div>
 
           {/* Foto de la Pesa / Comprobante */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
-            <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <Camera className="w-4 h-4 text-emerald-400" />
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm space-y-3">
+            <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+              <Camera className="w-4 h-4 text-blue-600" />
               3. Imagen / Foto de la Balanza Pesa
             </h2>
 
             {scaleImageUrl ? (
-              <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
                 <img 
                   src={scaleImageUrl} 
                   alt="Foto Balanza" 
@@ -468,21 +504,21 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                 <button
                   type="button"
                   onClick={() => setScaleImageUrl('')}
-                  className="absolute top-2 right-2 p-1.5 bg-rose-600/90 text-white rounded-full shadow-lg hover:bg-rose-500"
+                  className="absolute top-2 right-2 p-1.5 bg-rose-600 text-white rounded-full shadow-md hover:bg-rose-700"
                 >
                   <X className="w-4 h-4" />
                 </button>
-                <div className="p-2 bg-slate-950/90 text-[11px] text-emerald-400 font-mono font-bold text-center border-t border-slate-800">
+                <div className="p-2 bg-slate-100 text-[11px] text-emerald-700 font-mono font-bold text-center border-t border-slate-200">
                   ✓ Foto de la pesa adjuntada para el cliente
                 </div>
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="cursor-pointer bg-slate-950 border border-dashed border-emerald-500/50 hover:border-emerald-400 p-4 rounded-2xl flex flex-col items-center justify-center text-center space-y-2 transition-all">
-                    <Camera className="w-6 h-6 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">Tomar Foto / Subir Imagen</span>
-                    <span className="text-[10px] text-slate-500">Abre la cámara en móvil</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <label className="cursor-pointer bg-slate-50 border border-dashed border-blue-300 hover:border-blue-500 p-3.5 rounded-2xl flex flex-col items-center justify-center text-center space-y-1.5 transition-all">
+                    <Camera className="w-5 h-5 text-blue-600" />
+                    <span className="text-xs font-bold text-slate-900">Tomar Foto</span>
+                    <span className="text-[10px] text-slate-500">Cámara en móvil</span>
                     <input 
                       type="file" 
                       accept="image/*" 
@@ -492,14 +528,26 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                     />
                   </label>
 
+                  <label className="cursor-pointer bg-blue-50/70 border border-dashed border-blue-400 hover:border-blue-600 p-3.5 rounded-2xl flex flex-col items-center justify-center text-center space-y-1.5 transition-all">
+                    <FolderOpen className="w-5 h-5 text-blue-700" />
+                    <span className="text-xs font-extrabold text-blue-900">Buscar en Carpeta</span>
+                    <span className="text-[10px] text-blue-700 font-medium">Archivos / Galería</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageUpload} 
+                      className="hidden" 
+                    />
+                  </label>
+
                   <button
                     type="button"
                     onClick={handlePresetScalePhoto}
-                    className="bg-slate-950 border border-slate-800 hover:border-slate-700 p-4 rounded-2xl flex flex-col items-center justify-center text-center space-y-2 transition-all"
+                    className="bg-slate-50 border border-slate-200 hover:border-slate-300 p-3.5 rounded-2xl flex flex-col items-center justify-center text-center space-y-1.5 transition-all"
                   >
-                    <ImageIcon className="w-6 h-6 text-sky-400" />
-                    <span className="text-xs font-bold text-slate-300">Usar Foto de Muestra</span>
-                    <span className="text-[10px] text-slate-500">Simula comprobante balanza</span>
+                    <ImageIcon className="w-5 h-5 text-slate-600" />
+                    <span className="text-xs font-bold text-slate-800">Foto Muestra</span>
+                    <span className="text-[10px] text-slate-500">Simula balanza</span>
                   </button>
                 </div>
               </div>
@@ -507,8 +555,8 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
           </div>
 
           {/* Notes / Observation */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-            <label className="block text-xs font-bold text-slate-400 mb-1">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs">
+            <label className="block text-xs font-bold text-slate-600 mb-1">
               Observaciones del Pesaje (Opcional)
             </label>
             <input
@@ -516,7 +564,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="ej. Galpón 1 Norte - Pollo en pie de calidad"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 outline-none focus:border-slate-700"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-blue-500"
             />
           </div>
 
@@ -525,54 +573,53 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
         {/* RIGHT COLUMN: Real-Time Total Calculations & Ticket Generator */}
         <div className="lg:col-span-5 space-y-6">
           
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden space-y-6 sticky top-20">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-md relative overflow-hidden space-y-6 sticky top-20">
 
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-200/90 pb-4">
               <div className="flex items-center space-x-3">
-                <Receipt className="w-6 h-6 text-blue-400" />
+                <Receipt className="w-6 h-6 text-blue-600" />
                 <div>
-                  <h3 className="font-extrabold text-white text-base">
+                  <h3 className="font-extrabold text-slate-900 text-base">
                     Monto a Cobrar (Soles)
                   </h3>
-                  <p className="text-xs text-slate-400 font-medium">
+                  <p className="text-xs text-slate-500 font-medium">
                     Cálculo Automático
                   </p>
                 </div>
               </div>
 
-              <span className="text-[10px] font-mono px-2.5 py-1 bg-slate-800 text-blue-300 font-bold rounded-lg border border-slate-700">
+              <span className="text-[10px] font-mono px-2.5 py-1 bg-slate-100 text-blue-700 font-bold rounded-lg border border-slate-200">
                 {paymentType.toUpperCase()}
               </span>
             </div>
 
             {/* Main Calculation Cards */}
             <div className="space-y-3">
-              <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400">Cantidad de Pollos</span>
-                <span className="text-xl font-black text-white font-mono">{totalChickens} aves</span>
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-600">Cantidad de Pollos</span>
+                <span className="text-xl font-black text-slate-900 font-mono">{totalChickens} aves</span>
               </div>
 
-              <div className="bg-slate-800/80 border border-blue-600/40 p-4 rounded-xl flex items-center justify-between">
+              <div className="bg-blue-50/80 border border-blue-200 p-4 rounded-2xl flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-extrabold uppercase text-blue-300 block">Peso Neto Balanza</span>
-                  <span className="text-[11px] text-slate-400">Promedio: {averageWeightPerChicken.toFixed(2)} kg/ave</span>
+                  <span className="text-xs font-extrabold uppercase text-blue-800 block">Peso Neto Balanza</span>
+                  <span className="text-[11px] text-slate-500">Promedio: {averageWeightPerChicken.toFixed(2)} kg/ave</span>
                 </div>
-                <span className="text-2xl font-black text-blue-200 font-mono">
+                <span className="text-2xl font-black text-blue-900 font-mono">
                   {totalNetWeight.toFixed(2)} <span className="text-xs font-normal">kg</span>
                 </span>
               </div>
             </div>
 
             {/* Total Amount Big Banner */}
-            <div className="bg-slate-950 border-2 border-blue-600/60 p-5 rounded-xl text-center space-y-1 shadow-lg">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
+            <div className="bg-slate-900 border-2 border-blue-600 p-5 rounded-2xl text-center space-y-1 shadow-sm text-white">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-300">
                 Monto Total a Cobrar en Soles
               </span>
               <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
                 S/ {totalAmountToCharge.toFixed(2)}
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-300">
                 {totalNetWeight.toFixed(1)} kg × S/ {unitPrice.toFixed(2)}/kg
               </p>
             </div>
@@ -581,9 +628,19 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
             <div className="space-y-3 pt-2">
               <button
                 type="button"
+                onClick={handlePreviewTicket}
+                disabled={totalNetWeight <= 0 || !selectedClient}
+                className="w-full bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-blue-700 font-extrabold rounded-2xl py-3 text-xs uppercase tracking-wider flex items-center justify-center space-x-2 border border-blue-200 transition-all shadow-xs"
+              >
+                <Eye className="w-4 h-4 text-blue-600" />
+                <span>VISUALIZAR TICKET ANTES DE REGISTRAR</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleSubmitWeighing}
                 disabled={isSubmitting || totalNetWeight <= 0 || !selectedClient}
-                className="w-full bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white font-extrabold rounded-xl py-4 text-xs uppercase tracking-wider shadow-xl shadow-blue-950 flex items-center justify-center space-x-3 transition-transform active:scale-95"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold rounded-2xl py-4 text-xs uppercase tracking-wider shadow-md flex items-center justify-center space-x-3 transition-transform active:scale-95"
               >
                 <Receipt className="w-5 h-5" />
                 <span>{isSubmitting ? 'Generando Ticket...' : 'GENERAR TICKET Y REGISTRAR'}</span>
@@ -592,7 +649,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-2xl py-2.5 text-xs flex items-center justify-center space-x-1.5"
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl py-2.5 text-xs flex items-center justify-center space-x-1.5"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Reiniciar Pesa</span>
@@ -614,16 +671,16 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
 
       {/* Quick Client Creation Modal */}
       {showQuickClientModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-slate-200/90 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200/90 pb-3">
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-600" />
                 Crear Cliente Directo para Pesa
               </h2>
               <button
                 onClick={() => setShowQuickClientModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -631,7 +688,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
 
             <form onSubmit={handleCreateQuickClient} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">
+                <label className="block text-slate-700 mb-1 font-semibold">
                   Nombre Completo del Cliente *
                 </label>
                 <input
@@ -640,12 +697,12 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   value={quickClientName}
                   onChange={(e) => setQuickClientName(e.target.value)}
                   placeholder="ej. Distribuidora San Juan / Pollería El Rancho"
-                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 font-bold"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 font-bold"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">
+                <label className="block text-slate-700 mb-1 font-semibold">
                   Teléfono / WhatsApp
                 </label>
                 <input
@@ -653,12 +710,12 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   value={quickClientPhone}
                   onChange={(e) => setQuickClientPhone(e.target.value)}
                   placeholder="+51 987 654 321"
-                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2.5 outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">
+                <label className="block text-slate-700 mb-1 font-semibold">
                   Límite de Crédito Inicial (S/)
                 </label>
                 <input
@@ -666,7 +723,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   value={quickClientLimit}
                   onChange={(e) => setQuickClientLimit(Number(e.target.value))}
                   placeholder="5000"
-                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 font-mono"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 font-mono"
                 />
               </div>
 
@@ -674,13 +731,13 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                 <button
                   type="button"
                   onClick={() => setShowQuickClientModal(false)}
-                  className="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-2xl"
+                  className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="w-1/2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3 rounded-2xl shadow-lg shadow-blue-900/40"
+                  className="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 rounded-2xl shadow-sm"
                 >
                   Guardar y Seleccionar
                 </button>

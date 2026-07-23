@@ -93,7 +93,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
     setIsSubmittingPay(true);
     try {
       await addPayment({
-        companyId: activeCompany?.id || 'comp_galpon_real',
+        companyId: activeCompany?.id || currentUser?.companyId || clientInfo.companyId || '',
         clientId: clientInfo.id,
         clientName: clientInfo.name,
         amount: amountNum,

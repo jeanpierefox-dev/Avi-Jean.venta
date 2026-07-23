@@ -40,34 +40,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [companies, setCompanies] = useState<Company[]>(() => {
-    if (localStorage.getItem('system_wiped') === 'true') {
-      return [INITIAL_COMPANIES[0]];
-    }
     return INITIAL_COMPANIES;
   });
   const [clients, setClients] = useState<Client[]>(() => {
-    if (localStorage.getItem('system_wiped') === 'true') {
-      return [];
-    }
     return INITIAL_CLIENTS;
   });
-  const [activeCompanyId, setActiveCompanyIdState] = useState<string>('comp_galpon_real');
+  const [activeCompanyId, setActiveCompanyIdState] = useState<string>('');
 
   // Realtime Firestore Users Sync
   useEffect(() => {
     try {
       const unsub = onSnapshot(collection(db, 'users'), (snap) => {
-        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs
             .map(d => ({ uid: d.id, ...d.data() } as UserProfile))
             .filter(u => !(u as any).deleted);
           if (docs.length > 0) {
             setAllUsers(docs);
-          } else if (isWiped) {
+          } else {
             setAllUsers([INITIAL_USERS[0]]);
           }
-        } else if (isWiped) {
+        } else {
           setAllUsers([INITIAL_USERS[0]]);
         }
       }, (err) => console.warn('Users snapshot listener:', err));
@@ -82,16 +75,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     try {
       const unsub = onSnapshot(collection(db, 'companies'), (snap) => {
-        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Company));
-          if (docs.length > 0) {
-            setCompanies(docs);
-          } else if (isWiped) {
-            setCompanies([INITIAL_COMPANIES[0]]);
-          }
-        } else if (isWiped) {
-          setCompanies([INITIAL_COMPANIES[0]]);
+          setCompanies(docs);
+        } else {
+          setCompanies([]);
         }
       }, (err) => console.warn('Companies snapshot listener:', err));
 
@@ -148,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       username: role,
       displayName: role === 'admin' ? 'Administrador Principal' : role === 'empresa' ? 'Avícola Galpón Real' : 'Cliente Distribuidora',
       role: role,
-      companyId: companyId || 'comp_galpon_real',
+      companyId: companyId || activeCompanyId || (companies[0]?.id || ''),
       clientId: clientId || (role === 'cliente' ? 'cli_san_juan' : undefined),
       accessLevel: role === 'admin' ? 'super_admin' : role === 'empresa' ? 'supervisor' : 'operador',
       createdAt: new Date().toISOString()

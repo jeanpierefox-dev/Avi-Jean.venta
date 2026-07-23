@@ -64,30 +64,12 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, activeCompany } = useAuth();
 
-  const [weighings, setWeighings] = useState<WeighingRecord[]>(() => {
-    if (localStorage.getItem('system_wiped') === 'true') return [];
-    return INITIAL_WEIGHINGS;
-  });
-  const [clients, setClients] = useState<Client[]>(() => {
-    if (localStorage.getItem('system_wiped') === 'true') return [];
-    return INITIAL_CLIENTS;
-  });
-  const [companies, setCompanies] = useState<Company[]>(() => {
-    if (localStorage.getItem('system_wiped') === 'true') return [INITIAL_COMPANIES[0]];
-    return INITIAL_COMPANIES;
-  });
-  const [payments, setPayments] = useState<PaymentRecord[]>(() => {
-    if (localStorage.getItem('system_wiped') === 'true') return [];
-    return INITIAL_PAYMENTS;
-  });
-  const [inventory, setInventory] = useState<InventoryItem[]>(() => {
-    if (localStorage.getItem('system_wiped') === 'true') return [];
-    return INITIAL_INVENTORY;
-  });
-  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
-    if (localStorage.getItem('system_wiped') === 'true') return [];
-    return INITIAL_NOTIFICATIONS;
-  });
+  const [weighings, setWeighings] = useState<WeighingRecord[]>(INITIAL_WEIGHINGS);
+  const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
+  const [companies, setCompanies] = useState<Company[]>(INITIAL_COMPANIES);
+  const [payments, setPayments] = useState<PaymentRecord[]>(INITIAL_PAYMENTS);
+  const [inventory, setInventory] = useState<InventoryItem[]>(INITIAL_INVENTORY);
+  const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
   const [appName, setAppName] = useState<string>(() => {
     return localStorage.getItem('app_system_name') || 'Jean-Barsa Avícola System';
   });
@@ -375,7 +357,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateCompany = async (id: string, companyData: Partial<Company>) => {
     setCompanies(prev => prev.map(c => c.id === id ? { ...c, ...companyData } : c));
     try {
-      await updateDoc(doc(db, 'companies', id), companyData);
+      await setDoc(doc(db, 'companies', id), companyData, { merge: true });
     } catch (e) {
       console.warn('Firestore company update error:', e);
     }
@@ -485,7 +467,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const sendCustomNotification = async (title: string, message: string, type: AppNotification['type'] = 'system') => {
     const newN: AppNotification = {
       id: `notif_${Date.now()}_${Math.floor(Math.random() * 100)}`,
-      companyId: activeCompany?.id || 'comp_galpon_real',
+      companyId: activeCompany?.id || currentUser?.companyId || '',
       targetRole: 'empresa',
       title,
       message,

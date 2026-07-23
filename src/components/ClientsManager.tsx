@@ -39,7 +39,8 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
   const [creditLimit, setCreditLimit] = useState<number>(3000);
   const [creditDays, setCreditDays] = useState<number>(15);
 
-  const companyClients = clients.filter(c => c.companyId === (activeCompany?.id || 'comp_galpon_real'));
+  const currentCompanyId = activeCompany?.id || currentUser?.companyId || '';
+  const companyClients = clients.filter(c => c.companyId === currentCompanyId);
 
   const filteredClients = companyClients.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,7 +63,7 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
       });
     } else {
       await addClient({
-        companyId: activeCompany?.id || 'comp_galpon_real',
+        companyId: currentCompanyId,
         name,
         phone,
         email,
@@ -108,25 +109,25 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
     <div className="space-y-6 pb-12">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-slate-200/90 p-5 sm:p-6 rounded-3xl shadow-xs">
         <div className="flex items-center space-x-4">
           {onSelectTab && (
             <button
               onClick={() => onSelectTab('dashboard')}
-              className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-colors flex items-center justify-center shrink-0"
+              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 transition-colors flex items-center justify-center shrink-0"
               title="Volver al Menú"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <div className="p-3 bg-blue-700/20 border border-blue-500/30 rounded-xl text-blue-400 shrink-0">
-            <Users className="w-7 h-7" />
+          <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-xs shrink-0">
+            <Users className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
               Gestión de Clientes
             </h1>
-            <p className="text-xs text-slate-400 font-medium">
+            <p className="text-xs text-slate-500 font-medium">
               Directorio comercial, límites de crédito y estados de cuenta corporativos.
             </p>
           </div>
@@ -136,7 +137,7 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
           {onSelectTab && (
             <button
               onClick={() => onSelectTab('dashboard')}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 border border-slate-700 transition-colors"
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 border border-slate-200 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Volver al Menú</span>
@@ -148,7 +149,7 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
               resetForm();
               setShowAddModal(true);
             }}
-            className="bg-blue-700 hover:bg-blue-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg shadow-blue-950 transition-transform active:scale-95"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-xs transition-transform active:scale-95"
           >
             <UserPlus className="w-4 h-4" />
             <span>Registrar Nuevo Cliente</span>
@@ -158,13 +159,13 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+        <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Buscar cliente por nombre, teléfono o email..."
-          className="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl pl-10 pr-4 py-2.5 text-xs outline-none focus:border-emerald-500"
+          className="w-full bg-white border border-slate-200 text-slate-900 rounded-2xl pl-10 pr-4 py-2.5 text-xs outline-none focus:border-blue-500 shadow-xs"
         />
       </div>
 
@@ -178,63 +179,63 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
           return (
             <div 
               key={client.id}
-              className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 shadow-lg space-y-4 relative flex flex-col justify-between"
+              className="bg-white border border-slate-200/90 hover:border-blue-300 rounded-3xl p-5 shadow-xs space-y-4 relative flex flex-col justify-between transition-all"
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-bold text-base text-white">{client.name}</h3>
-                    <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                      <Clock className="w-3 h-3 text-emerald-400" />
+                    <h3 className="font-extrabold text-base text-slate-900">{client.name}</h3>
+                    <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                      <Clock className="w-3 h-3 text-emerald-600" />
                       Crédito: {client.creditDays} días
                     </p>
                   </div>
                   <button
                     onClick={() => startEdit(client)}
-                    className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="space-y-1.5 text-xs text-slate-300">
+                <div className="space-y-1.5 text-xs text-slate-600">
                   {client.phone && (
                     <div className="flex items-center space-x-2">
-                      <Phone className="w-3.5 h-3.5 text-slate-500" />
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
                       <span>{client.phone}</span>
                     </div>
                   )}
                   {client.email && (
                     <div className="flex items-center space-x-2">
-                      <Mail className="w-3.5 h-3.5 text-slate-500" />
+                      <Mail className="w-3.5 h-3.5 text-slate-400" />
                       <span className="truncate">{client.email}</span>
                     </div>
                   )}
                   {client.address && (
                     <div className="flex items-center space-x-2">
-                      <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
                       <span className="truncate">{client.address}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Financial Summary */}
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Límite de Crédito:</span>
-                    <span className="font-bold text-slate-200">S/ {client.creditLimit.toFixed(2)}</span>
+                    <span className="text-slate-500 font-medium">Límite de Crédito:</span>
+                    <span className="font-bold text-slate-800">S/ {client.creditLimit.toFixed(2)}</span>
                   </div>
 
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-slate-400">Saldo Pendiente:</span>
-                    <span className={`font-mono ${totalDebt > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    <span className="text-slate-500 font-medium">Saldo Pendiente:</span>
+                    <span className={`font-mono ${totalDebt > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                       S/ {totalDebt.toFixed(2)}
                     </span>
                   </div>
 
                   {isOverLimit && (
-                    <div className="flex items-center space-x-1 text-[10px] text-rose-400 font-semibold bg-rose-950/60 p-1.5 rounded border border-rose-800">
-                      <AlertCircle className="w-3 h-3" />
+                    <div className="flex items-center space-x-1 text-[10px] text-rose-700 font-semibold bg-rose-50 p-1.5 rounded-lg border border-rose-200">
+                      <AlertCircle className="w-3 h-3 text-rose-600" />
                       <span>¡Superó el límite de crédito configurado!</span>
                     </div>
                   )}
@@ -244,9 +245,9 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
               {/* Download Statement Button */}
               <button
                 onClick={() => handleDownloadStatement(client)}
-                className="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center space-x-2 transition-colors"
+                className="w-full mt-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 px-3 rounded-2xl text-xs flex items-center justify-center space-x-2 transition-colors border border-slate-200"
               >
-                <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                <FileText className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Estado de Cuenta (PDF)</span>
               </button>
             </div>
@@ -256,78 +257,78 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
 
       {/* Modal Add / Edit Client */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
-            <h2 className="text-lg font-bold text-white">
-              {editingClient ? 'Editar Cliente' : 'Nuevo Cliente Commercial'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200/90 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
+            <h2 className="text-lg font-bold text-slate-900">
+              {editingClient ? 'Editar Cliente' : 'Nuevo Cliente Comercial'}
             </h2>
 
             <form onSubmit={handleSaveClient} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">Nombre / Razón Social *</label>
+                <label className="block text-slate-700 mb-1 font-semibold">Nombre / Razón Social *</label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="ej. Distribuidora San Juan"
-                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 outline-none focus:border-blue-500 font-medium"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Teléfono</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Teléfono</label>
                   <input
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+51 987-654-321"
-                    className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Email</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Email</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="compras@..."
-                    className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">Dirección</label>
+                <label className="block text-slate-700 mb-1 font-semibold">Dirección</label>
                 <input
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="Mercado Mayorista Galpón B"
-                  className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 outline-none focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Límite de Crédito (S/)</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Límite de Crédito (S/)</label>
                   <input
                     type="number"
                     value={creditLimit}
                     onChange={(e) => setCreditLimit(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-slate-950 border border-slate-700 text-emerald-400 font-bold rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-300 text-emerald-700 font-bold rounded-xl px-3 py-2 outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Días de Crédito</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Días de Crédito</label>
                   <input
                     type="number"
                     value={creditDays}
                     onChange={(e) => setCreditDays(parseInt(e.target.value) || 0)}
-                    className="w-full bg-slate-950 border border-slate-700 text-amber-400 font-bold rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-300 text-amber-700 font-bold rounded-xl px-3 py-2 outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -336,13 +337,13 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition-colors"
+                  className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition-colors shadow-lg shadow-emerald-900/40"
+                  className="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition-colors shadow-xs"
                 >
                   Guardar
                 </button>
