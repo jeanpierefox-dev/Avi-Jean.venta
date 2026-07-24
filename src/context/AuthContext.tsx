@@ -47,8 +47,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [activeCompanyId, setActiveCompanyIdState] = useState<string>('');
 
-  // Realtime Firestore Users Sync
+  // Realtime Firestore Users Sync with initial seed check
   useEffect(() => {
+    const checkAndSeedUsers = async () => {
+      const isWiped = localStorage.getItem('system_wiped') === 'true';
+      if (isWiped) return;
+      try {
+        const userSnap = await getDocs(collection(db, 'users'));
+        if (userSnap.empty) {
+          for (const u of INITIAL_USERS) {
+            await setDoc(doc(db, 'users', u.uid), u);
+          }
+        }
+      } catch (e) {
+        console.warn('Error seeding initial users to cloud:', e);
+      }
+    };
+
+    checkAndSeedUsers();
+
     try {
       const unsub = onSnapshot(collection(db, 'users'), (snap) => {
         if (!snap.empty) {
@@ -63,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           setAllUsers([INITIAL_USERS[0]]);
         }
-      }, (err) => console.warn('Users snapshot listener:', err));
+      }, (err) => console.warn('Users snapshot listener error:', err));
 
       return () => unsub();
     } catch (e) {

@@ -19,10 +19,12 @@ import {
   deleteDoc, 
   setDoc, 
   getDocs,
+  getDocFromServer,
   query, 
   where,
   orderBy 
 } from 'firebase/firestore';
+import { auth } from '../lib/firebase';
 import { 
   INITIAL_WEIGHINGS, 
   INITIAL_CLIENTS, 
@@ -32,6 +34,49 @@ import {
   INITIAL_NOTIFICATIONS 
 } from '../lib/demoData';
 import { useAuth } from './AuthContext';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+  };
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+}
+
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'system_settings', 'general'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Please check your Firebase configuration.");
+    }
+  }
+}
+testConnection();
 
 interface DataContextType {
   weighings: WeighingRecord[];
@@ -92,8 +137,63 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Firestore Realtime Listeners with local fallback
+  // Firestore Realtime Listeners with automatic initial cloud database seeding
   useEffect(() => {
+    // 1) Seed Firestore collections if database is empty on first boot
+    const seedCloudDatabaseIfEmpty = async () => {
+      const isWiped = localStorage.getItem('system_wiped') === 'true';
+      if (isWiped) return;
+
+      try {
+        const compSnap = await getDocs(collection(db, 'companies'));
+        if (compSnap.empty) {
+          for (const c of INITIAL_COMPANIES) {
+            await setDoc(doc(db, 'companies', c.id), c);
+          }
+        }
+
+        const clientSnap = await getDocs(collection(db, 'clients'));
+        if (clientSnap.empty) {
+          for (const cl of INITIAL_CLIENTS) {
+            await setDoc(doc(db, 'clients', cl.id), cl);
+          }
+        }
+
+        const invSnap = await getDocs(collection(db, 'inventory'));
+        if (invSnap.empty) {
+          for (const inv of INITIAL_INVENTORY) {
+            await setDoc(doc(db, 'inventory', inv.id), inv);
+          }
+        }
+
+        const weighSnap = await getDocs(collection(db, 'weighings'));
+        if (weighSnap.empty) {
+          for (const w of INITIAL_WEIGHINGS) {
+            await setDoc(doc(db, 'weighings', w.id), w);
+          }
+        }
+
+        const paySnap = await getDocs(collection(db, 'payments'));
+        if (paySnap.empty) {
+          for (const p of INITIAL_PAYMENTS) {
+            await setDoc(doc(db, 'payments', p.id), p);
+          }
+        }
+
+        const notifSnap = await getDocs(collection(db, 'notifications'));
+        if (notifSnap.empty) {
+          for (const n of INITIAL_NOTIFICATIONS) {
+            await setDoc(doc(db, 'notifications', n.id), n);
+          }
+        }
+      } catch (e) {
+        console.warn('Error seeding initial Firestore cloud database:', e);
+      }
+    };
+
+    seedCloudDatabaseIfEmpty();
+
+    // 2) Listen to real-time changes across all connected devices
     try {
       const unsubSettings = onSnapshot(doc(db, 'system_settings', 'general'), (docSnap) => {
         if (docSnap.exists()) {
@@ -103,27 +203,29 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.setItem('system_wiped', 'true');
           }
         }
-      });
+      }, (err) => handleFirestoreError(err, OperationType.GET, 'system_settings/general'));
 
       const unsubWeighings = onSnapshot(collection(db, 'weighings'), (snap) => {
         const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as WeighingRecord));
+          docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setWeighings(docs);
         } else if (isWiped) {
           setWeighings([]);
         }
-      }, (err) => console.warn('Weighings listener error:', err));
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'weighings'));
 
       const unsubClients = onSnapshot(collection(db, 'clients'), (snap) => {
         const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Client));
+          docs.sort((a, b) => a.name.localeCompare(b.name));
           setClients(docs);
         } else if (isWiped) {
           setClients([]);
         }
-      }, (err) => console.warn('Clients listener error:', err));
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'clients'));
 
       const unsubCompanies = onSnapshot(collection(db, 'companies'), (snap) => {
         const isWiped = localStorage.getItem('system_wiped') === 'true';
@@ -133,17 +235,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (isWiped) {
           setCompanies([INITIAL_COMPANIES[0]]);
         }
-      }, (err) => console.warn('Companies listener error:', err));
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'companies'));
 
       const unsubPayments = onSnapshot(collection(db, 'payments'), (snap) => {
         const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as PaymentRecord));
+          docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setPayments(docs);
         } else if (isWiped) {
           setPayments([]);
         }
-      }, (err) => console.warn('Payments listener error:', err));
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'payments'));
 
       const unsubInventory = onSnapshot(collection(db, 'inventory'), (snap) => {
         const isWiped = localStorage.getItem('system_wiped') === 'true';
@@ -153,17 +256,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (isWiped) {
           setInventory([]);
         }
-      }, (err) => console.warn('Inventory listener error:', err));
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'inventory'));
 
       const unsubNotifs = onSnapshot(collection(db, 'notifications'), (snap) => {
         const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppNotification));
+          docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setNotifications(docs);
         } else if (isWiped) {
           setNotifications([]);
         }
-      }, (err) => console.warn('Notifications listener error:', err));
+      }, (err) => handleFirestoreError(err, OperationType.LIST, 'notifications'));
 
       return () => {
         unsubSettings();
@@ -175,7 +279,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         unsubNotifs();
       };
     } catch (e) {
-      console.warn('Firestore subscription failed, running in local memory state:', e);
+      console.warn('Firestore subscription failed:', e);
     }
   }, []);
 
