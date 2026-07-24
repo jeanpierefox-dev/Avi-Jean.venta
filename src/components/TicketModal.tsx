@@ -37,6 +37,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
   };
 
   const handleShareWhatsApp = () => {
+    const scaleImg = record.scaleImageUrl || 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80';
     const text = `*COMPROBANTE DE PESA - ${activeCompany?.name || 'JEAN-BARSA AVÍCOLA SYSTEM'}*%0A` +
       `Ticket: ${record.ticketNumber}%0A` +
       `Cliente: ${record.clientName}%0A` +
@@ -49,7 +50,9 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
       `----------------------------------%0A` +
       `*TOTAL VENTA: S/ ${record.totalAmount.toFixed(2)}*%0A` +
       `Abonado: S/ ${record.paidAmount.toFixed(2)}%0A` +
-      `*SALDO PENDIENTE: S/ ${record.pendingAmount.toFixed(2)}*%0A%0A` +
+      `*SALDO PENDIENTE: S/ ${record.pendingAmount.toFixed(2)}*%0A` +
+      `----------------------------------%0A` +
+      `📷 *FOTO DE LA PESA EN BALANZA:*%0A${encodeURIComponent(scaleImg)}%0A%0A` +
       `¡Gracias por su preferencia!`;
 
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');

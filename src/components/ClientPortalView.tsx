@@ -30,6 +30,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
   
   const [activeZoomImage, setActiveZoomImage] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [filterMode, setFilterMode] = useState<'todas' | 'cobranza' | 'pagados' | 'vouchers'>('todas');
 
   // Client Payment Form State
   const [payAmount, setPayAmount] = useState<string>('');
@@ -40,12 +41,25 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
   const [isSubmittingPay, setIsSubmittingPay] = useState(false);
 
   // Find client record matching current user
-  const clientInfo = clients.find(c => c.id === currentUser?.clientId || c.name.includes('San Juan')) || clients[0];
+  const clientInfo = clients.find(c => 
+    (currentUser?.clientId && c.id === currentUser.clientId) ||
+    (c.id === currentUser?.clientId) ||
+    (currentUser?.companyId && c.companyId === currentUser.companyId && c.name.toLowerCase() === currentUser.displayName?.toLowerCase())
+  ) || clients.find(c => c.companyId === (activeCompany?.id || currentUser?.companyId)) || clients[0];
 
   const clientWeighings = weighings.filter(w => w.clientId === clientInfo?.id);
   const clientPayments = payments.filter(p => p.clientId === clientInfo?.id);
 
+  const pendingWeighings = clientWeighings.filter(w => w.pendingAmount > 0);
+  const paidWeighings = clientWeighings.filter(w => w.pendingAmount <= 0);
   const totalPendingDebt = clientWeighings.reduce((sum, w) => sum + w.pendingAmount, 0);
+
+  // Filter weighings based on selected sub-tab
+  const displayedWeighings = filterMode === 'cobranza' 
+    ? pendingWeighings 
+    : filterMode === 'pagados' 
+    ? paidWeighings 
+    : clientWeighings;
 
   const handleDownloadPDF = (w: any) => {
     downloadTicketPDF(w, activeCompany || undefined);
@@ -54,6 +68,30 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
   const handleDownloadStatement = () => {
     if (!clientInfo) return;
     generateStatementPDF(clientInfo, clientWeighings, clientPayments, activeCompany || undefined);
+  };
+
+  // WhatsApp Share with Scale Image
+  const handleShareWhatsAppPesa = (w: any) => {
+    const scaleImg = w.scaleImageUrl || 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80';
+    const avgW = w.chickenCount > 0 ? (w.netWeight / w.chickenCount).toFixed(2) : '0.00';
+
+    const text = `*COMPROBANTE DE PESAJE DE POLLOS - TICKET #${w.ticketNumber}*%0A` +
+      `🏢 *Empresa:* ${activeCompany?.name || 'Avícola Galpón Real'}%0A` +
+      `👤 *Cliente:* ${w.clientName}%0A` +
+      `📅 *Fecha:* ${new Date(w.createdAt).toLocaleString('es-ES')}%0A` +
+      `----------------------------------%0A` +
+      `🐔 *Aves:* ${w.chickenCount} pollos vivos%0A` +
+      `⚖️ *Peso Neto:* ${w.netWeight.toFixed(2)} kg (Prom: ${avgW} kg/ave)%0A` +
+      `💲 *Precio/kg:* S/ ${w.unitPrice.toFixed(2)}%0A` +
+      `----------------------------------%0A` +
+      `💰 *MONTO TOTAL VENTA:* S/ ${w.totalAmount.toFixed(2)}%0A` +
+      `💵 *Monto Pagado:* S/ ${w.paidAmount.toFixed(2)}%0A` +
+      `⚠️ *SALDO PENDIENTE COBRANZA:* S/ ${w.pendingAmount.toFixed(2)}%0A` +
+      `----------------------------------%0A` +
+      `📷 *FOTO / IMAGEN DE LA PESA EN BALANZA:*%0A${encodeURIComponent(scaleImg)}%0A%0A` +
+      `¡Muchas gracias por su preferencia!`;
+
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
   // Upload voucher image handler
@@ -204,8 +242,64 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
         </div>
       </div>
 
+      {/* Filter Bar & Sub-Tabs for Cobranza / Mis Pesas */}
+      <div className="flex flex-wrap items-center gap-2 bg-slate-900/90 p-2 rounded-2xl border border-slate-800 shadow-md">
+        <button
+          onClick={() => setFilterMode('todas')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+            filterMode === 'todas'
+              ? 'bg-sky-600 text-white shadow-md'
+              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+          }`}
+        >
+          <Scale className="w-4 h-4" />
+          <span>Todas las Pesas ({clientWeighings.length})</span>
+        </button>
+
+        <button
+          onClick={() => setFilterMode('cobranza')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+            filterMode === 'cobranza'
+              ? 'bg-amber-600 text-white shadow-md'
+              : 'text-amber-400 hover:bg-slate-800'
+          }`}
+        >
+          <Receipt className="w-4 h-4" />
+          <span>Cobranza / Por Cobrar ({pendingWeighings.length})</span>
+          {totalPendingDebt > 0 && (
+            <span className="ml-1 bg-amber-950 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded-full border border-amber-800">
+              S/ {totalPendingDebt.toFixed(0)}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setFilterMode('pagados')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+            filterMode === 'pagados'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+          }`}
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>Pesas Canceladas ({paidWeighings.length})</span>
+        </button>
+
+        <button
+          onClick={() => setFilterMode('vouchers')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+            filterMode === 'vouchers'
+              ? 'bg-purple-600 text-white shadow-md'
+              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+          }`}
+        >
+          <QrCode className="w-4 h-4 text-purple-400" />
+          <span>Mis Abonos & Vouchers ({clientPayments.length})</span>
+        </button>
+      </div>
+
       {/* Submitted Vouchers & Payment Abonos History */}
-      {clientPayments.length > 0 && (
+      {(filterMode === 'vouchers' || filterMode === 'todas') && clientPayments.length > 0 && (
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800 pb-3">
             <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
@@ -257,95 +351,122 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
       )}
 
       {/* Weighing Tickets Cards & Scale Images */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-xl overflow-hidden p-5 space-y-4">
-        <div className="font-extrabold text-sm text-white flex justify-between items-center border-b border-slate-800 pb-3">
-          <span className="flex items-center gap-2">
-            <Camera className="w-4 h-4 text-emerald-400" />
-            Historial de Pesas y Foto de Balanza
-          </span>
-          <span className="text-xs font-mono text-slate-400">{clientWeighings.length} comprobantes</span>
-        </div>
+      {filterMode !== 'vouchers' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-xl overflow-hidden p-5 space-y-4">
+          <div className="font-extrabold text-sm text-white flex justify-between items-center border-b border-slate-800 pb-3">
+            <span className="flex items-center gap-2">
+              <Camera className="w-4 h-4 text-emerald-400" />
+              {filterMode === 'cobranza' ? 'Pesas Pendientes de Cobranza (Por Pagar)' : filterMode === 'pagados' ? 'Pesas Canceladas' : 'Historial de Pesas y Foto de Balanza'}
+            </span>
+            <span className="text-xs font-mono text-slate-400">{displayedWeighings.length} comprobantes</span>
+          </div>
 
-        {/* Mobile-Friendly Cards Grid for Weighings */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {clientWeighings.map((w) => (
-            <div key={w.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
-              
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-xs font-black text-emerald-400 font-mono">{w.ticketNumber}</span>
-                  <p className="text-[10px] text-slate-400">{new Date(w.createdAt).toLocaleString('es-ES')}</p>
-                </div>
-                <span className={`text-[10px] font-extrabold font-mono uppercase px-2 py-0.5 rounded-full ${
-                  w.paymentStatus === 'pagado' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300 border border-rose-800'
-                }`}>
-                  {w.paymentStatus}
-                </span>
-              </div>
-
-              {/* Photo of the Scale */}
-              {w.scaleImageUrl ? (
-                <div 
-                  onClick={() => setActiveZoomImage(w.scaleImageUrl!)}
-                  className="relative group rounded-xl overflow-hidden border border-slate-800 cursor-pointer bg-slate-900"
-                >
-                  <img 
-                    src={w.scaleImageUrl} 
-                    alt="Foto de la Balanza" 
-                    className="w-full h-36 object-cover group-hover:scale-105 transition-transform" 
-                  />
-                  <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-lg flex items-center space-x-1">
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Ver Foto Completa</span>
+          {displayedWeighings.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-xs font-semibold">
+              No hay tickets de pesaje en esta categoría.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {displayedWeighings.map((w) => (
+                <div key={w.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3 hover:border-slate-700 transition-colors">
+                  
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-xs font-black text-emerald-400 font-mono">{w.ticketNumber}</span>
+                      <p className="text-[10px] text-slate-400">{new Date(w.createdAt).toLocaleString('es-ES')}</p>
+                    </div>
+                    <span className={`text-[10px] font-extrabold font-mono uppercase px-2 py-0.5 rounded-full ${
+                      w.paymentStatus === 'pagado' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300 border border-rose-800'
+                    }`}>
+                      {w.paymentStatus}
                     </span>
                   </div>
-                  <div className="absolute bottom-2 left-2 bg-slate-950/80 backdrop-blur-sm text-[9px] text-slate-300 px-2 py-0.5 rounded font-mono">
-                    Foto Balanza Verificada
+
+                  {/* Photo of the Scale */}
+                  {w.scaleImageUrl ? (
+                    <div 
+                      onClick={() => setActiveZoomImage(w.scaleImageUrl!)}
+                      className="relative group rounded-xl overflow-hidden border border-slate-800 cursor-pointer bg-slate-900"
+                    >
+                      <img 
+                        src={w.scaleImageUrl} 
+                        alt="Foto de la Balanza" 
+                        className="w-full h-36 object-cover group-hover:scale-105 transition-transform" 
+                      />
+                      <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <span className="bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-lg flex items-center space-x-1">
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Ver Foto Completa</span>
+                        </span>
+                      </div>
+                      <div className="absolute bottom-2 left-2 bg-slate-950/80 backdrop-blur-sm text-[9px] text-emerald-300 font-bold px-2 py-0.5 rounded font-mono border border-emerald-800/60">
+                        📷 Foto Balanza Verificada
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-24 bg-slate-900/60 rounded-xl border border-slate-800/80 flex items-center justify-center text-slate-500 text-xs">
+                      Sin Foto de Balanza
+                    </div>
+                  )}
+
+                  {/* Weighing Stats Breakdown */}
+                  <div className="grid grid-cols-3 gap-2 bg-slate-900/80 p-2.5 rounded-xl text-center border border-slate-800/60">
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-semibold block">Pollos</span>
+                      <span className="text-xs font-extrabold text-white font-mono">{w.chickenCount} aves</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-semibold block">Peso Neto</span>
+                      <span className="text-xs font-black text-emerald-400 font-mono">{w.netWeight.toFixed(1)} kg</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-semibold block">Precio S/</span>
+                      <span className="text-xs font-bold text-slate-300 font-mono">S/ {w.unitPrice.toFixed(2)}</span>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="h-24 bg-slate-900/60 rounded-xl border border-slate-800/80 flex items-center justify-center text-slate-500 text-xs">
-                  Sin Foto de Balanza
-                </div>
-              )}
 
-              {/* Weighing Stats Breakdown */}
-              <div className="grid grid-cols-3 gap-2 bg-slate-900/80 p-2.5 rounded-xl text-center">
-                <div>
-                  <span className="text-[9px] text-slate-400 font-semibold block">Pollos</span>
-                  <span className="text-xs font-extrabold text-white font-mono">{w.chickenCount} aves</span>
-                </div>
-                <div>
-                  <span className="text-[9px] text-slate-400 font-semibold block">Peso Neto</span>
-                  <span className="text-xs font-black text-emerald-400 font-mono">{w.netWeight.toFixed(1)} kg</span>
-                </div>
-                <div>
-                  <span className="text-[9px] text-slate-400 font-semibold block">Precio S/</span>
-                  <span className="text-xs font-bold text-slate-300 font-mono">S/ {w.unitPrice.toFixed(2)}</span>
-                </div>
-              </div>
+                  {/* Total Row & Actions */}
+                  <div className="flex flex-col gap-2 pt-1 border-t border-slate-900">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-semibold">Total a Pagar</span>
+                        <span className="text-base font-black text-white font-mono">S/ {w.totalAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400 block font-semibold">Saldo Pendiente</span>
+                        <span className={`text-sm font-black font-mono ${w.pendingAmount > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          S/ {w.pendingAmount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
 
-              {/* Total Row & PDF Button */}
-              <div className="flex items-center justify-between pt-1">
-                <div>
-                  <span className="text-[10px] text-slate-400 block font-semibold">Total a Pagar</span>
-                  <span className="text-base font-black text-white font-mono">S/ {w.totalAmount.toFixed(2)}</span>
+                    {/* Action Buttons: WhatsApp with Image, Ticket PDF */}
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <button
+                        onClick={() => handleShareWhatsAppPesa(w)}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-md transition-transform active:scale-95"
+                        title="Compartir ticket e imagen por WhatsApp"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Compartir WP (con Foto)</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleDownloadPDF(w)}
+                        className="bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold px-3 py-2 rounded-xl border border-slate-700 text-xs flex items-center justify-center space-x-1.5"
+                      >
+                        <FileDown className="w-3.5 h-3.5" />
+                        <span>Ticket PDF</span>
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
-
-                <button
-                  onClick={() => handleDownloadPDF(w)}
-                  className="bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold px-3 py-2 rounded-xl border border-slate-700 text-xs flex items-center space-x-1.5"
-                >
-                  <FileDown className="w-3.5 h-3.5" />
-                  <span>Ticket PDF</span>
-                </button>
-              </div>
-
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      </div>
+      )}
 
       {/* Modal: Client Upload Payment Voucher / Abono */}
       {isPaymentModalOpen && (

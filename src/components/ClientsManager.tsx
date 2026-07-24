@@ -62,7 +62,7 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
         creditDays,
       });
     } else {
-      await addClient({
+      const newCli = await addClient({
         companyId: currentCompanyId,
         name,
         phone,
@@ -72,6 +72,8 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
         creditDays,
         currentBalance: 0,
       });
+      const userAssigned = (newCli as any).assignedUsername || 'cliente';
+      alert(`¡Cliente "${newCli.name}" registrado correctamente!\n\n• Usuario Cliente Creado: ${userAssigned}\n• Contraseña: 1234\n\nEl cliente ya puede ingresar al sistema para ver su historial completo de compras, estado de cuenta y descargar sus pesas.`);
     }
 
     resetForm();

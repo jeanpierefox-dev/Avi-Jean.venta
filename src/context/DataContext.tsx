@@ -62,7 +62,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser, activeCompany } = useAuth();
+  const { currentUser, activeCompany, createUserProfile } = useAuth();
 
   const [weighings, setWeighings] = useState<WeighingRecord[]>(INITIAL_WEIGHINGS);
   const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
@@ -374,9 +374,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Add & Update Clients
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt'>): Promise<Client> => {
+    const newClientId = `cli_${Date.now()}`;
     const newClient: Client = {
       ...clientData,
-      id: `cli_${Date.now()}`,
+      id: newClientId,
       currentBalance: clientData.currentBalance || 0,
       createdAt: new Date().toISOString(),
     };
@@ -387,6 +388,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await setDoc(doc(db, 'clients', newClient.id), newClient);
     } catch (e) {
       console.warn('Firestore add client error:', e);
+    }
+
+    // Auto-create Client User Profile so they can log in and see their purchase history
+    if (createUserProfile) {
+      try {
+        const rawName = newClient.name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const cleanPhone = newClient.phone ? newClient.phone.replace(/\D/g, '') : '';
+        const generatedUser = (cleanPhone && cleanPhone.length >= 6) 
+          ? cleanPhone 
+          : rawName.replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').slice(0, 15) || `cliente_${Date.now().toString().slice(-4)}`;
+
+        await createUserProfile({
+          displayName: newClient.name,
+          username: generatedUser,
+          email: newClient.email || `${generatedUser}@aviscontrol.pe`,
+          password: '1234',
+          role: 'cliente',
+          clientId: newClient.id,
+          companyId: newClient.companyId,
+          phone: newClient.phone,
+          accessLevel: 'operador'
+        });
+        (newClient as any).assignedUsername = generatedUser;
+      } catch (err) {
+        console.warn('Error auto-creating client user profile:', err);
+      }
     }
 
     return newClient;

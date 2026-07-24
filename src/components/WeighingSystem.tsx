@@ -70,7 +70,8 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
       setQuickClientName('');
       setQuickClientPhone('');
       setShowQuickClientModal(false);
-      alert(`¡Cliente "${newClient.name}" creado y seleccionado automáticamente!`);
+      const assignedUser = (newClient as any).assignedUsername || 'cliente';
+      alert(`¡Cliente "${newClient.name}" y Usuario Creados Con Éxito!\n\n• Usuario Cliente: ${assignedUser}\n• Contraseña: 1234\n\nEl cliente ya puede ingresar al sistema con su usuario para ver todo su historial de pesajes y descargas de tickets.`);
     } catch (err) {
       console.error('Error creando cliente directo:', err);
       alert('Error al crear el cliente.');

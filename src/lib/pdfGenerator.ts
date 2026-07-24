@@ -1,53 +1,97 @@
 import jsPDF from 'jspdf';
 import { WeighingRecord, Company, Client, PaymentRecord } from '../types';
 
-export function generateTicketPDF(record: WeighingRecord, company?: Company, paymentsHistory?: PaymentRecord[]): jsPDF {
-  const isCobranza = paymentsHistory && paymentsHistory.length > 0;
-  
-  const doc = new jsPDF({
-    unit: 'mm',
-    format: [80, isCobranza ? 230 : 180], // Formato Ticket Térmico 80mm estilo AviControl
-  });
-
+function drawCompanyHeaderLogo(doc: jsPDF, company?: Company, startY: number = 6): number {
+  let y = startY;
   const companyName = company?.name || 'AVICOLA EL GALPÓN REAL S.A.C.';
   const phone = company?.phone || '(+51) 987-654-321';
   const taxId = company?.taxId || 'RUC 20601234567';
   const address = company?.address || 'Av. Panamericana Sur Km 35, Lima - Perú';
 
-  let y = 8;
+  // Box container for Logo & Header
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(30, 41, 59);
+  doc.setLineWidth(0.4);
+  doc.rect(5, y, 70, 24, 'F');
+  doc.rect(5, y, 70, 24);
+
+  let logoSuccess = false;
+  if (company?.logoUrl && company.logoUrl.startsWith('data:image')) {
+    try {
+      const format = company.logoUrl.includes('image/png') ? 'PNG' : company.logoUrl.includes('image/jpeg') ? 'JPEG' : 'PNG';
+      doc.addImage(company.logoUrl, format, 8, y + 2.5, 18, 19);
+      logoSuccess = true;
+    } catch (e) {
+      console.warn('Error rendering base64 company logo in PDF:', e);
+    }
+  }
+
+  if (logoSuccess) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text(companyName.substring(0, 22), 28, y + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text(taxId, 28, y + 10.5);
+    doc.text(`Tel: ${phone}`, 28, y + 14.5);
+    doc.text(address.substring(0, 26), 28, y + 18.5);
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.text(companyName, 40, y + 6, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.text(taxId, 40, y + 10.5, { align: 'center' });
+    doc.text(`Tel: ${phone}`, 40, y + 14.5, { align: 'center' });
+    doc.text(address, 40, y + 18.5, { align: 'center' });
+  }
+
+  return y + 26;
+}
+
+export function generateTicketPDF(record: WeighingRecord, company?: Company, paymentsHistory?: PaymentRecord[]): jsPDF {
+  const isCobranza = paymentsHistory && paymentsHistory.length > 0;
+  const hasScaleImg = record.scaleImageUrl && record.scaleImageUrl.startsWith('data:image');
+  
+  const calculatedHeight = 220 + (isCobranza ? (paymentsHistory.length * 6 + 25) : 0) + (hasScaleImg ? 35 : 0);
+
+  const doc = new jsPDF({
+    unit: 'mm',
+    format: [80, calculatedHeight], // Formato Ticket Térmico 80mm estilo AviControl
+  });
+
+  let y = 5;
 
   // Frame Outer Border
   doc.setLineWidth(0.4);
-  doc.rect(3, 3, 74, isCobranza ? 224 : 174);
+  doc.setDrawColor(15, 23, 42);
+  doc.rect(3, 3, 74, calculatedHeight - 6);
 
-  // Encabezado AviControl
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text(companyName, 40, y, { align: 'center' });
-  y += 4.5;
+  // 1. Company Header Box with Logo (Cuadro 1)
+  y = drawCompanyHeaderLogo(doc, company, y);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.text(`${taxId}`, 40, y, { align: 'center' });
-  y += 3.5;
-  doc.text(`Tel: ${phone}`, 40, y, { align: 'center' });
-  y += 3.5;
-  doc.text(address, 40, y, { align: 'center' });
-  y += 5;
-
-  // Header Box - Ticket Number
+  // 2. Ticket Title Box (Cuadro 2 - Header Navy)
   doc.setFillColor(15, 23, 42); // Navy Dark AviControl
-  doc.rect(5, y, 70, 7, 'F');
+  doc.rect(5, y, 70, 8, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text(isCobranza ? `TICKET DE COBRANZA: ${record.ticketNumber}` : `COMPROBANTE DE VENTA: ${record.ticketNumber}`, 40, y + 4.8, { align: 'center' });
+  doc.text(isCobranza ? `TICKET COBRANZA: ${record.ticketNumber}` : `COMPROBANTE VENTA: ${record.ticketNumber}`, 40, y + 5.2, { align: 'center' });
   
-  y += 9;
+  y += 10;
   doc.setTextColor(0, 0, 0);
 
-  // Client Info Box Grid
-  doc.rect(5, y, 70, 19);
+  // 3. Client & Operation Box (Cuadro 3)
+  doc.setFillColor(241, 245, 249);
+  doc.rect(5, y, 70, 5, 'F');
+  doc.rect(5, y, 70, 5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('DATOS DEL CLIENTE Y OPERACIÓN', 7, y + 3.5);
+
+  y += 5;
+
+  doc.rect(5, y, 70, 20);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.text(`FECHA/HORA: ${new Date(record.createdAt).toLocaleString('es-ES')}`, 7, y + 4);
@@ -55,36 +99,35 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
   doc.text(`CLIENTE: ${record.clientName.substring(0, 28)}`, 7, y + 8);
   doc.setFont('helvetica', 'normal');
   if (record.galponName) {
-    doc.text(`GALPÓN / ORIGEN: ${record.galponName}`, 7, y + 12);
+    doc.text(`ORIGEN / GALPÓN: ${record.galponName}`, 7, y + 12);
   } else {
     doc.text(`CONDICIÓN: ${record.paymentType.toUpperCase()} ${record.creditDays ? `(${record.creditDays} días)` : ''}`, 7, y + 12);
   }
   doc.setFont('helvetica', 'bold');
   const isPaid = record.paymentStatus === 'pagado';
-  doc.text(`ESTADO: ${isPaid ? 'CANCELADO (100% PAGADO)' : `PENDIENTE S/ ${record.pendingAmount.toFixed(2)}`}`, 7, y + 16);
+  doc.text(`ESTADO: ${isPaid ? '100% CANCELADO' : `PENDIENTE S/ ${record.pendingAmount.toFixed(2)}`}`, 7, y + 16);
 
-  y += 22;
+  y += 23;
 
-  // Table Concept Box
+  // 4. Detailed Weights & Price Box (Cuadro 4)
   doc.setFillColor(241, 245, 249);
-  doc.rect(5, y, 70, 6, 'F');
-  doc.rect(5, y, 70, 6);
+  doc.rect(5, y, 70, 5, 'F');
+  doc.rect(5, y, 70, 5);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.text('DETALLE DE BALANZA / PESAGE', 7, y + 4);
-  doc.text('CANT. / PESO', 73, y + 4, { align: 'right' });
+  doc.setFontSize(7.5);
+  doc.text('DETALLE DE BALANZA Y PESO NETO', 7, y + 3.5);
+  doc.text('VALORES', 73, y + 3.5, { align: 'right' });
 
-  y += 6;
+  y += 5;
 
-  // Values Grid Box
   const avgWeight = record.chickenCount > 0 ? (record.netWeight / record.chickenCount).toFixed(2) : '0.00';
 
   const rows = [
-    { label: 'Cantidad de Aves:', val: `${record.chickenCount} aves` },
-    { label: 'Peso Total (Bruto):', val: `${record.grossWeight.toFixed(2)} kg` },
-    ...(record.tareWeight > 0 ? [{ label: 'Descuento / Tara:', val: `-${record.tareWeight.toFixed(2)} kg` }] : []),
+    { label: 'Cantidad de Pollos:', val: `${record.chickenCount} aves` },
+    { label: 'Peso Bruto Balanza:', val: `${record.grossWeight.toFixed(2)} kg` },
+    ...(record.tareWeight > 0 ? [{ label: 'Descuento / Tara Javas:', val: `-${record.tareWeight.toFixed(2)} kg` }] : []),
     { label: 'PESO NETO VENDIDO:', val: `${record.netWeight.toFixed(2)} kg`, bold: true },
-    { label: 'PESO PROMEDIO / POLLO:', val: `${avgWeight} kg/ave`, bold: true },
+    { label: 'PROMEDIO POR POLLO:', val: `${avgWeight} kg/ave`, bold: true },
     { label: 'Precio por Kilo (S/):', val: `S/ ${record.unitPrice.toFixed(2)} / kg` },
   ];
 
@@ -98,26 +141,26 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
     y += 5;
   });
 
-  // TOTAL BOX
+  // 5. Total Monto Box (Cuadro 5 - Full Navy)
   doc.setFillColor(15, 23, 42);
   doc.rect(5, y, 70, 8, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.text('TOTAL VENTA:', 7, y + 5.5);
   doc.text(`S/ ${record.totalAmount.toFixed(2)}`, 73, y + 5.5, { align: 'right' });
 
-  y += 10;
+  y += 11;
   doc.setTextColor(0, 0, 0);
 
-  // If Cobranza ticket with history
+  // 6. Payments History Box (Cuadro 6 - If Cobranza or payments exist)
   if (isCobranza) {
     doc.setFillColor(241, 245, 249);
     doc.rect(5, y, 70, 5, 'F');
     doc.rect(5, y, 70, 5);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
-    doc.text('HISTORIAL DE ABONOS Y COBRANZA', 7, y + 3.5);
+    doc.text('HISTORIAL DE COBRANZA Y ABONOS', 7, y + 3.5);
 
     y += 5;
 
@@ -128,7 +171,7 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
       const pDate = new Date(p.createdAt).toLocaleDateString('es-ES');
       doc.text(`${pDate} - ${p.method.toUpperCase()} (${p.reference || 'S/N'})`, 7, y + 3.5);
       doc.setFont('helvetica', 'bold');
-      doc.text(`S/ ${p.amount.toFixed(2)}`, 73, y + 3.5, { align: 'right' });
+      doc.text(`+ S/ ${p.amount.toFixed(2)}`, 73, y + 3.5, { align: 'right' });
       y += 5;
     });
 
@@ -141,25 +184,43 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
     y += 6;
 
     doc.setFillColor(record.pendingAmount <= 0 ? 220 : 254, record.pendingAmount <= 0 ? 252 : 226, record.pendingAmount <= 0 ? 231 : 226);
-    doc.rect(5, y, 70, 6, 'F');
-    doc.rect(5, y, 70, 6);
+    doc.rect(5, y, 70, 6.5, 'F');
+    doc.rect(5, y, 70, 6.5);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.text('SALDO PENDIENTE:', 7, y + 4.2);
-    doc.text(`S/ ${record.pendingAmount.toFixed(2)}`, 73, y + 4.2, { align: 'right' });
+    doc.text('SALDO PENDIENTE:', 7, y + 4.5);
+    doc.text(`S/ ${record.pendingAmount.toFixed(2)}`, 73, y + 4.5, { align: 'right' });
 
-    y += 9;
+    y += 9.5;
   } else {
-    // Ticket Inicial de Venta Directa
+    // Ticket Direct Sale Condition
     doc.setFillColor(241, 245, 249);
     doc.rect(5, y, 70, 6, 'F');
     doc.rect(5, y, 70, 6);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text('CONDICIÓN DE VENTA:', 7, y + 4.2);
+    doc.setFontSize(7.5);
+    doc.text('CONDICIÓN DE PAGO:', 7, y + 4.2);
     doc.text(record.paymentType === 'contado' ? 'PAGADO AL CONTADO' : `CRÉDITO (${record.creditDays || 0} DÍAS)`, 73, y + 4.2, { align: 'right' });
 
-    y += 9;
+    y += 9.5;
+  }
+
+  // 7. Scale Image Box (If base64 image attached)
+  if (hasScaleImg) {
+    try {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(5, y, 70, 32, 'F');
+      doc.rect(5, y, 70, 32);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.text('FOTO DE BALANZA ELECTRÓNICA ADJUNTA:', 7, y + 4);
+      
+      const format = record.scaleImageUrl!.includes('image/png') ? 'PNG' : 'JPEG';
+      doc.addImage(record.scaleImageUrl!, format, 8, y + 5.5, 64, 24);
+      y += 35;
+    } catch (e) {
+      console.warn('Error adding scale image to PDF:', e);
+    }
   }
 
   doc.setFont('helvetica', 'italic');
@@ -172,49 +233,45 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
 }
 
 export function generateCobranzaTicketPDF(record: WeighingRecord, company?: Company, paymentsHistory: PaymentRecord[] = []): jsPDF {
+  const hasScaleImg = record.scaleImageUrl && record.scaleImageUrl.startsWith('data:image');
+  const calculatedHeight = 230 + (paymentsHistory.length * 6) + (hasScaleImg ? 35 : 0);
+
   const doc = new jsPDF({
     unit: 'mm',
-    format: [80, 240], // Formato Ticket Térmico 80mm para Cobranza y Abonos
+    format: [80, calculatedHeight], // Formato Ticket Térmico 80mm para Cobranza y Abonos
   });
 
-  const companyName = company?.name || 'AVICOLA EL GALPÓN REAL S.A.C.';
-  const phone = company?.phone || '(+51) 987-654-321';
-  const taxId = company?.taxId || 'RUC 20601234567';
-  const address = company?.address || 'Av. Panamericana Sur Km 35, Lima - Perú';
-
-  let y = 8;
+  let y = 5;
 
   // Frame Outer Border
   doc.setLineWidth(0.4);
-  doc.rect(3, 3, 74, 234);
+  doc.setDrawColor(15, 23, 42);
+  doc.rect(3, 3, 74, calculatedHeight - 6);
 
-  // Encabezado AviControl
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text(companyName, 40, y, { align: 'center' });
-  y += 4.5;
+  // 1. Company Header Box with Logo (Cuadro 1)
+  y = drawCompanyHeaderLogo(doc, company, y);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.text(`${taxId}`, 40, y, { align: 'center' });
-  y += 3.5;
-  doc.text(`Tel: ${phone}`, 40, y, { align: 'center' });
-  y += 3.5;
-  doc.text(address, 40, y, { align: 'center' });
-  y += 5;
-
-  // Header Box - Ticket Number
+  // 2. Header Navy Box - Ticket Cobranza
   doc.setFillColor(15, 23, 42); // Navy Dark AviControl
-  doc.rect(5, y, 70, 7, 'F');
+  doc.rect(5, y, 70, 8, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text(`TICKET DE COBRANZA Y ABONOS`, 40, y + 4.8, { align: 'center' });
+  doc.text(`TICKET DE COBRANZA Y ABONOS`, 40, y + 5.2, { align: 'center' });
   
-  y += 9;
+  y += 10;
   doc.setTextColor(0, 0, 0);
 
-  // Client Info Box Grid
+  // 3. Client & Account State Box (Cuadro 3)
+  doc.setFillColor(241, 245, 249);
+  doc.rect(5, y, 70, 5, 'F');
+  doc.rect(5, y, 70, 5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('DATOS DE CLIENTE Y COBRANZA', 7, y + 3.5);
+
+  y += 5;
+
   doc.rect(5, y, 70, 22);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
@@ -223,26 +280,29 @@ export function generateCobranzaTicketPDF(record: WeighingRecord, company?: Comp
   doc.setFont('helvetica', 'bold');
   doc.text(`CLIENTE: ${record.clientName.substring(0, 28)}`, 7, y + 12);
   doc.setFont('helvetica', 'normal');
-  doc.text(`CONDICIÓN VENTA: ${record.paymentType.toUpperCase()} (${record.creditDays || 0} DÍAS)`, 7, y + 16);
+  doc.text(`CONDICIÓN: ${record.paymentType.toUpperCase()} (${record.creditDays || 0} DÍAS)`, 7, y + 16);
   doc.setFont('helvetica', 'bold');
   const isPaid = record.paymentStatus === 'pagado';
   doc.text(`ESTADO DE CUENTA: ${isPaid ? '100% CANCELADO' : 'PENDIENTE DE PAGO'}`, 7, y + 20);
 
   y += 25;
 
-  // Original Venta Summary Box
+  // 4. Original Venta Summary Box (Cuadro 4)
   doc.setFillColor(241, 245, 249);
-  doc.rect(5, y, 70, 6, 'F');
-  doc.rect(5, y, 70, 6);
+  doc.rect(5, y, 70, 5, 'F');
+  doc.rect(5, y, 70, 5);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.text('RESUMEN DE VENTA REGISTRADA', 7, y + 4);
+  doc.setFontSize(7.5);
+  doc.text('RESUMEN DE VENTA REGISTRADA', 7, y + 3.5);
 
-  y += 6;
+  y += 5;
+
+  const avgW = record.chickenCount > 0 ? (record.netWeight / record.chickenCount).toFixed(2) : '0.00';
 
   const rows = [
-    { label: 'Total Aves Vendidas:', val: `${record.chickenCount} aves` },
+    { label: 'Total Pollos Vendidos:', val: `${record.chickenCount} aves` },
     { label: 'Peso Neto Total:', val: `${record.netWeight.toFixed(2)} kg` },
+    { label: 'Promedio por Pollo:', val: `${avgW} kg/ave` },
     { label: 'Precio por Kilo:', val: `S/ ${record.unitPrice.toFixed(2)}` },
     { label: 'MONTO TOTAL VENTA:', val: `S/ ${record.totalAmount.toFixed(2)}`, bold: true },
   ];
@@ -259,13 +319,13 @@ export function generateCobranzaTicketPDF(record: WeighingRecord, company?: Comp
 
   y += 2;
 
-  // ABONOS DETALLADOS
+  // 5. ABONOS DETALLADOS BOX (Cuadro 5)
   doc.setFillColor(15, 23, 42);
   doc.rect(5, y, 70, 6, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.text('DETALLE DE ABONOS Y COBRANZAS', 7, y + 4);
+  doc.setFontSize(7.5);
+  doc.text('DETALLE DE ABONOS REGISTRADOS', 7, y + 4);
 
   y += 6;
   doc.setTextColor(0, 0, 0);
@@ -285,11 +345,11 @@ export function generateCobranzaTicketPDF(record: WeighingRecord, company?: Comp
     doc.rect(5, y, 70, 6);
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(7);
-    doc.text('Sin abonos registrados', 7, y + 4);
+    doc.text('Sin abonos parciales registrados aún', 7, y + 4);
     y += 6;
   }
 
-  // TOTALES COBRANZA
+  // 6. TOTALES Y SALDO COBRANZA (Cuadro 6)
   doc.setFillColor(241, 245, 249);
   doc.rect(5, y, 70, 6, 'F');
   doc.rect(5, y, 70, 6);
@@ -309,6 +369,24 @@ export function generateCobranzaTicketPDF(record: WeighingRecord, company?: Comp
 
   y += 10;
 
+  // 7. Scale Image Box (If base64 image attached)
+  if (hasScaleImg) {
+    try {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(5, y, 70, 32, 'F');
+      doc.rect(5, y, 70, 32);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.text('FOTO DE BALANZA ELECTRÓNICA ADJUNTA:', 7, y + 4);
+      
+      const format = record.scaleImageUrl!.includes('image/png') ? 'PNG' : 'JPEG';
+      doc.addImage(record.scaleImageUrl!, format, 8, y + 5.5, 64, 24);
+      y += 35;
+    } catch (e) {
+      console.warn('Error adding scale image to PDF:', e);
+    }
+  }
+
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(7);
   doc.text('AvisControl - Ticket de Cobranza y Abonos', 40, y, { align: 'center' });
@@ -317,6 +395,7 @@ export function generateCobranzaTicketPDF(record: WeighingRecord, company?: Comp
 
   return doc;
 }
+
 
 export function downloadCobranzaTicketPDF(record: WeighingRecord, company?: Company, paymentsHistory: PaymentRecord[] = []) {
   const doc = generateCobranzaTicketPDF(record, company, paymentsHistory);

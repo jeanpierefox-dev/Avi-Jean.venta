@@ -146,11 +146,15 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   };
 
   const handleSendReminderWhatsApp = (w: WeighingRecord) => {
-    const text = `*RECORDATORIO DE PAGO PENDIENTE - ${activeCompany?.name || 'JEAN-BARSA AVÍCOLA SYSTEM'}*%0A` +
-      `Estimado cliente ${w.clientName}, le recordamos el saldo pendiente del Ticket #${w.ticketNumber}.%0A` +
-      `Monto Pendiente: *S/ ${w.pendingAmount.toFixed(2)}*%0A` +
-      `Fecha Vencimiento: ${w.dueDate}%0A%0A` +
-      `Agradecemos coordinar el pago por Yape / Plim / Transferencia. ¡Muchas gracias!`;
+    const scaleImg = w.scaleImageUrl || 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80';
+    const text = `*RECORDATORIO DE COBRANZA - ${activeCompany?.name || 'JEAN-BARSA AVÍCOLA SYSTEM'}*%0A` +
+      `Estimado cliente *${w.clientName}*, adjuntamos la información de su Ticket #${w.ticketNumber}:%0A` +
+      `• Total Venta: S/ ${w.totalAmount.toFixed(2)}%0A` +
+      `• Monto Pagado: S/ ${w.paidAmount.toFixed(2)}%0A` +
+      `• *SALDO PENDIENTE:* *S/ ${w.pendingAmount.toFixed(2)}*%0A` +
+      `• Fecha Vencimiento: ${w.dueDate}%0A%0A` +
+      `📷 *FOTO / IMAGEN DE LA PESA EN BALANZA:*%0A${encodeURIComponent(scaleImg)}%0A%0A` +
+      `Agradecemos coordinar el abono por Yape / Plim / Transferencia. ¡Muchas gracias!`;
 
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
