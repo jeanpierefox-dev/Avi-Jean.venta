@@ -198,20 +198,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const createUserProfile = async (userData: Omit<UserProfile, 'uid' | 'createdAt'> & { password?: string; username?: string }): Promise<UserProfile> => {
-    const fakeUid = `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    let uid = fakeUid;
+    const userDocRef = doc(collection(db, 'users'));
+    const uid = userDocRef.id;
 
     const finalUsername = (userData.username || userData.displayName?.toLowerCase().replace(/\s+/g, '_') || 'usuario').trim();
     const finalEmail = userData.email || `${finalUsername}@aviscontrol.pe`;
-
-    if (finalEmail && userData.password) {
-      try {
-        const res = await createUserWithEmailAndPassword(auth, finalEmail, userData.password);
-        uid = res.user.uid;
-      } catch (e) {
-        console.warn('Firebase user create fallback:', e);
-      }
-    }
 
     const newProfile: UserProfile = {
       uid,
@@ -220,20 +211,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password: userData.password || '1234',
       displayName: userData.displayName,
       role: userData.role,
-      companyId: userData.companyId,
-      clientId: userData.clientId,
+      companyId: userData.companyId || '',
+      clientId: userData.clientId || '',
       accessLevel: userData.accessLevel || 'operador',
       permissions: userData.permissions || [],
-      phone: userData.phone,
+      phone: userData.phone || '',
       createdAt: new Date().toISOString(),
     };
 
-    setAllUsers(prev => [newProfile, ...prev]);
+    setAllUsers(prev => [newProfile, ...prev.filter(u => u.uid !== uid)]);
 
     try {
-      await setDoc(doc(db, 'users', uid), newProfile);
+      await setDoc(userDocRef, newProfile);
     } catch (err) {
-      console.warn('Firestore setDoc user error:', err);
+      console.error('Firestore setDoc user error:', err);
     }
 
     return newProfile;
