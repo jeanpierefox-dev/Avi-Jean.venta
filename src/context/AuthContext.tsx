@@ -108,41 +108,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (emailOrUser: string, pass: string): Promise<boolean> => {
     const cleanInput = emailOrUser.trim().toLowerCase();
-    
-    // 1) Admin shortcut or any admin variation
-    if (cleanInput.includes('admin') || cleanInput === 'administrador' || cleanInput === 'adm') {
-      const adminProf = allUsers.find(u => u.username === 'admin' || u.role === 'admin') || INITIAL_USERS[0];
-      setCurrentUser(adminProf);
-      if (adminProf.companyId) setActiveCompanyIdState(adminProf.companyId);
-      return true;
+    const cleanPass = pass.trim();
+
+    if (!cleanInput) {
+      return false;
     }
 
-    // 2) Search in allUsers list (by email or username)
-    const matchedUser = allUsers.find(u => 
+    // 1) Find user in local synchronized allUsers list
+    let matchedUser = allUsers.find(u => 
       (u.email && u.email.toLowerCase() === cleanInput) || 
-      (u.username && u.username.toLowerCase() === cleanInput)
+      (u.username && u.username.toLowerCase() === cleanInput) ||
+      (cleanInput === 'admin' && u.role === 'admin')
     );
 
-    if (matchedUser) {
-      setCurrentUser(matchedUser);
-      if (matchedUser.companyId) setActiveCompanyIdState(matchedUser.companyId);
-      return true;
+    // 2) If not in memory state yet, query Firestore `users` collection directly (for instant sync across mobile & PC)
+    if (!matchedUser) {
+      try {
+        const userQuerySnap = await getDocs(query(collection(db, 'users'), where('username', '==', cleanInput)));
+        if (!userQuerySnap.empty) {
+          matchedUser = { uid: userQuerySnap.docs[0].id, ...userQuerySnap.docs[0].data() } as UserProfile;
+        } else {
+          const emailQuerySnap = await getDocs(query(collection(db, 'users'), where('email', '==', cleanInput)));
+          if (!emailQuerySnap.empty) {
+            matchedUser = { uid: emailQuerySnap.docs[0].id, ...emailQuerySnap.docs[0].data() } as UserProfile;
+          }
+        }
+      } catch (e) {
+        console.warn('Firestore user query error during login:', e);
+      }
     }
 
-    // 3) Try firebase auth if valid firebase user
+    // 3) Validate credentials strictly if user profile exists
+    if (matchedUser) {
+      const expectedPassword = matchedUser.password || '1234';
+      if (cleanPass === expectedPassword) {
+        setCurrentUser(matchedUser);
+        if (matchedUser.companyId) setActiveCompanyIdState(matchedUser.companyId);
+        return true;
+      } else {
+        // Password mismatch - access denied
+        return false;
+      }
+    }
+
+    // 4) Try Firebase Auth as alternative authentication method
     try {
-      const res = await signInWithEmailAndPassword(auth, emailOrUser, pass);
+      const res = await signInWithEmailAndPassword(auth, cleanInput, cleanPass);
       const userSnap = await getDoc(doc(db, 'users', res.user.uid));
       if (userSnap.exists()) {
-        setCurrentUser(userSnap.data() as UserProfile);
+        const userProf = { uid: userSnap.id, ...userSnap.data() } as UserProfile;
+        setCurrentUser(userProf);
+        if (userProf.companyId) setActiveCompanyIdState(userProf.companyId);
+        return true;
       }
-      return true;
+      return false;
     } catch (error) {
-      console.warn('Firebase login attempt fallback to default admin:', error);
-      // Fallback to admin if invalid credentials so admin/user never gets blocked
-      const adminProf = allUsers.find(u => u.role === 'admin') || INITIAL_USERS[0];
-      setCurrentUser(adminProf);
-      return true;
+      // Invalid credentials or user not found - access strictly denied
+      return false;
     }
   };
 
@@ -232,7 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteUserProfile = async (uid: string) => {
     setAllUsers(prev => prev.filter(u => u.uid !== uid));
     try {
-      await setDoc(doc(db, 'users', uid), { deleted: true }, { merge: true });
+      await deleteDoc(doc(db, 'users', uid));
     } catch (e) {
       console.warn('Firestore delete user error:', e);
     }
