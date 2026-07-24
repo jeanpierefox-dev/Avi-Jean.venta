@@ -12,6 +12,7 @@ import {
   DollarSign, 
   Clock, 
   Edit, 
+  Trash2,
   FileText,
   AlertCircle,
   ArrowLeft
@@ -23,13 +24,19 @@ interface ClientsManagerProps {
 }
 
 export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) => {
-  const { activeCompany } = useAuth();
+  const { activeCompany, currentUser } = useAuth();
 
-  const { clients, addClient, updateClient, weighings, payments } = useData();
+  const { clients, addClient, updateClient, deleteClient, weighings, payments } = useData();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+
+  const handleDeleteClient = async (client: Client) => {
+    if (window.confirm(`¿Está seguro de eliminar al cliente "${client.name}"?\nEsta acción eliminará al cliente del directorio.`)) {
+      await deleteClient(client.id);
+    }
+  };
 
   // New Client Form State
   const [name, setName] = useState('');
@@ -192,12 +199,24 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
                       Crédito: {client.creditDays} días
                     </p>
                   </div>
-                  <button
-                    onClick={() => startEdit(client)}
-                    className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center space-x-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(client)}
+                      title="Editar Cliente"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteClient(client)}
+                      title="Eliminar Cliente"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5 text-xs text-slate-600">

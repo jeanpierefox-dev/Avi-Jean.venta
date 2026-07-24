@@ -75,39 +75,39 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'clientes', label: 'Clientes', icon: Users, roles: ['admin', 'empresa'] },
     { id: 'inventario', label: 'Galpones (Kardex)', icon: Package, roles: ['admin', 'empresa', 'operador'] },
     { id: 'reportes', label: 'Reportes', icon: BarChart3, roles: ['admin', 'empresa'] },
-    { id: 'admin', label: 'Adm', icon: ShieldCheck, roles: ['admin', 'empresa'] },
+    { id: 'admin', label: 'Adm', icon: ShieldCheck, roles: ['admin'] },
     { id: 'mi_portal', label: 'Mi Portal', icon: Scale, roles: ['cliente'] },
   ];
 
   const filteredNavItems = navItems.filter(item => currentUser && item.roles.includes(currentUser.role));
 
   return (
-    <header className="bg-white/95 backdrop-blur text-slate-800 border-b border-slate-200/90 sticky top-0 z-40 shadow-sm">
+    <header className="bg-white/95 backdrop-blur text-slate-800 border-b border-slate-200/90 sticky top-0 z-40 shadow-sm max-w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-2">
           
-          {/* Logo & Brand - Corporate Private Enterprise */}
-          <div className="flex items-center space-x-3">
+          {/* Logo & Brand */}
+          <div className="flex items-center space-x-2.5 shrink-0">
             {activeCompany?.logoUrl ? (
               <img 
                 src={activeCompany.logoUrl} 
                 alt="Logo Empresa" 
-                className="w-10 h-10 object-contain rounded-xl bg-slate-50 p-1 border border-slate-200 shadow-sm"
+                className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl bg-slate-50 p-1 border border-slate-200 shadow-sm shrink-0"
               />
             ) : (
-              <div className="p-2.5 bg-blue-600 rounded-xl shadow-md shadow-blue-100 flex items-center justify-center text-white ring-2 ring-blue-50">
-                <Scale className="w-5 h-5 stroke-[2.5]" />
+              <div className="p-2 sm:p-2.5 bg-blue-600 rounded-xl shadow-md shadow-blue-100 flex items-center justify-center text-white ring-2 ring-blue-50 shrink-0">
+                <Scale className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
               </div>
             )}
 
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900">
+                <span className="font-extrabold text-sm sm:text-lg tracking-tight text-slate-900 truncate max-w-[130px] sm:max-w-none">
                   {appName}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 font-semibold hidden sm:block">
-                {activeCompany?.name || 'Sistema Corporativo Avícola'}
+              <p className="text-[10px] sm:text-[11px] text-slate-500 font-semibold hidden sm:block">
+                Plataforma de Gestión Avícola
               </p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Actions & User Menu */}
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0">
             
             {/* Company Selector (for Admin / Empresa) */}
             {currentUser && currentUser.role !== 'cliente' && companies.length > 0 && (
@@ -154,10 +154,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }
                   }}
                   title="Cambiar de Empresa / Ver Movimientos"
-                  className="flex items-center space-x-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs px-3 py-1.5 rounded-xl transition-colors text-purple-900 font-bold shadow-2xs"
+                  className="flex items-center space-x-1 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-[11px] sm:text-xs px-2 sm:px-3 py-1.5 rounded-xl transition-colors text-purple-900 font-bold shadow-2xs shrink-0"
                 >
                   <Building2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                  <span className="max-w-[110px] sm:max-w-[140px] truncate">{activeCompany?.name || 'Empresa'}</span>
+                  <span className="max-w-[75px] sm:max-w-[140px] truncate">{activeCompany?.name || 'Empresa'}</span>
                   <ChevronDown className="w-3 h-3 text-purple-400 shrink-0" />
                 </button>
 
@@ -204,7 +204,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
 
             {/* User Profile Badge */}
-            <div className={`px-3 py-1.5 rounded-xl border text-xs font-extrabold flex items-center space-x-1.5 shadow-xs ${roleColors[currentUser?.role || 'empresa']}`}>
+            <div className={`px-2 sm:px-3 py-1.5 rounded-xl border text-[11px] sm:text-xs font-extrabold flex items-center space-x-1 shadow-xs ${roleColors[currentUser?.role || 'empresa']}`}>
+              <UserCircle className="w-3.5 h-3.5 sm:hidden text-slate-600" />
               <span className="hidden sm:inline">{currentUser?.displayName || 'Usuario'}</span>
             </div>
 

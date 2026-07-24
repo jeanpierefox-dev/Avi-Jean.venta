@@ -24,16 +24,14 @@ function MainAppContent() {
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [showCompanySelector, setShowCompanySelector] = useState<boolean>(false);
 
-  // Auto-open company selector modal when Admin first logs in so they can choose
+  // Route user directly based on role when logged in
   useEffect(() => {
     if (currentUser?.role === 'admin') {
-      const hasPrompted = sessionStorage.getItem(`admin_prompted_${currentUser.uid}`);
-      if (!hasPrompted) {
-        setShowCompanySelector(true);
-        sessionStorage.setItem(`admin_prompted_${currentUser.uid}`, 'true');
-      }
+      setActiveTab('admin');
+    } else if (currentUser?.role === 'cliente') {
+      setActiveTab('mi_portal');
     }
-  }, [currentUser]);
+  }, [currentUser?.uid]);
 
   // Login Form State
   const [loginEmail, setLoginEmail] = useState('admin');
@@ -129,35 +127,34 @@ function MainAppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
-      {/* Top Admin Company Switcher Bar (for Admin users) */}
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans overflow-x-hidden w-full max-w-full">
+      {/* Top Admin Navigation Bar (for Super Admin user) */}
       {currentUser?.role === 'admin' && (
-        <div className="bg-gradient-to-r from-purple-950 via-indigo-900 to-slate-900 text-white px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md border-b border-purple-800/40">
-          <div className="flex items-center space-x-2">
-            <span className="bg-purple-500/20 text-purple-300 font-black text-[10px] uppercase px-2 py-0.5 rounded-md border border-purple-400/30 flex items-center gap-1">
+        <div className="bg-gradient-to-r from-purple-950 via-indigo-900 to-slate-900 text-white px-3 sm:px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md border-b border-purple-800/40 w-full max-w-full">
+          <div className="flex items-center space-x-2 truncate">
+            <span className="bg-purple-500/20 text-purple-300 font-black text-[10px] uppercase px-2 py-0.5 rounded-md border border-purple-400/30 flex items-center gap-1 shrink-0">
               <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
               SUPER ADM
             </span>
-            <span className="font-semibold text-slate-200">
-              Viendo empresa: <strong className="text-white font-extrabold">{activeCompany?.name || 'Consola Admin'}</strong>
-              {activeCompany?.taxId && <span className="text-purple-300 text-[11px] font-mono ml-1.5">(RUC: {activeCompany.taxId})</span>}
+            <span className="font-semibold text-slate-200 truncate">
+              Empresa activa: <strong className="text-white font-extrabold">{activeCompany?.name || 'Menú Principal Admin'}</strong>
             </span>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 shrink-0">
             <button
               onClick={() => setShowCompanySelector(true)}
-              className="bg-purple-600 hover:bg-purple-500 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-sm transition-transform active:scale-95"
+              className="bg-purple-600 hover:bg-purple-500 text-white font-extrabold px-3 py-1.5 rounded-xl text-[11px] sm:text-xs flex items-center space-x-1.5 shadow-sm transition-transform active:scale-95"
             >
               <RefreshCw className="w-3.5 h-3.5 text-purple-200" />
-              <span>🔄 Cambiar de Empresa</span>
+              <span>Cambiar de Empresa</span>
             </button>
             <button
               onClick={() => setActiveTab('admin')}
-              className="bg-white/10 hover:bg-white/20 text-slate-200 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 border border-white/20 transition-all"
+              className="bg-white/10 hover:bg-white/20 text-slate-200 font-bold px-3 py-1.5 rounded-xl text-[11px] sm:text-xs flex items-center space-x-1.5 border border-white/20 transition-all"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
-              <span>Consola Admin</span>
+              <span>Menú Admin</span>
             </button>
           </div>
         </div>

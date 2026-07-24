@@ -9,7 +9,7 @@ interface MonthlyReportsProps {
 }
 
 export const MonthlyReports: React.FC<MonthlyReportsProps> = ({ onSelectTab }) => {
-  const { activeCompany } = useAuth();
+  const { activeCompany, currentUser } = useAuth();
   const { weighings } = useData();
 
 
