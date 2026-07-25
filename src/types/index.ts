@@ -50,6 +50,14 @@ export interface BasketEntry {
   netWeight: number; // Peso neto
 }
 
+export interface ScaleEntry {
+  id: string;
+  chickens: number;
+  grossWeight: number;
+  photoUrl?: string;
+  notes?: string;
+}
+
 export type PaymentType = 'contado' | 'credito';
 export type PaymentStatus = 'pagado' | 'pendiente' | 'parcial' | 'vencido';
 
@@ -72,7 +80,8 @@ export interface WeighingRecord {
   creditDays?: number; // 7, 15, 30 días
   dueDate: string; // Fecha de vencimiento
   notes?: string;
-  scaleImageUrl?: string; // Foto de la pesa/balanza
+  scaleImageUrl?: string; // Foto de la pesa/balanza principal
+  scaleEntries?: ScaleEntry[]; // Múltiples pesas/balanzas con sus fotos individuales
   galponId?: string; // ID del galpón de donde se vendieron los pollos
   galponName?: string; // Nombre del galpón
   baskets?: BasketEntry[]; // Opcional

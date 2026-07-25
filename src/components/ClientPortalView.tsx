@@ -486,22 +486,27 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
             </div>
 
             <form onSubmit={handleSubmitPayment} className="space-y-4">
-              {/* Payment Method Selector (Yape, Plim, Transferencia) */}
+              {/* Payment Method Selector (Efectivo, Yape, Plim, Transferencia) */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Método de Pago</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['yape', 'plim', 'transferencia'] as PaymentMethod[]).map((m) => (
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 font-semibold">Tipo / Método de Pago</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: 'efectivo', label: 'Efectivo 💵' },
+                    { id: 'yape', label: 'Yape 📱' },
+                    { id: 'plim', label: 'Plim 💳' },
+                    { id: 'transferencia', label: 'Transferencia 🏦' },
+                  ].map((m) => (
                     <button
-                      key={m}
+                      key={m.id}
                       type="button"
-                      onClick={() => setPayMethod(m)}
-                      className={`py-2 rounded-xl text-xs font-extrabold uppercase border transition-all ${
-                        payMethod === m
+                      onClick={() => setPayMethod(m.id as PaymentMethod)}
+                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all ${
+                        payMethod === m.id
                           ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
                           : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
                       }`}
                     >
-                      {m}
+                      {m.label}
                     </button>
                   ))}
                 </div>

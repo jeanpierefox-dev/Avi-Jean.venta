@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { WeighingRecord, PaymentRecord, Client } from '../types';
+import { WeighingRecord, PaymentRecord, Client, PaymentMethod } from '../types';
 import { TicketModal } from './TicketModal';
 import { 
   Receipt, 
@@ -21,7 +21,10 @@ import {
   X,
   Eye,
   ArrowLeft,
-  Trash2
+  Trash2,
+  Users,
+  FolderOpen,
+  Image as ImageIcon
 } from 'lucide-react';
 import { 
   downloadPaymentReceiptPDF, 
@@ -41,6 +44,7 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
 
   const [activeTab, setActiveTab] = useState<'cobros' | 'reporte_pagos'>('cobros');
   const [filterStatus, setFilterStatus] = useState<string>('todos');
+  const [selectedClientFilter, setSelectedClientFilter] = useState<string>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [paymentsSearch, setPaymentsSearch] = useState<string>('');
   const [activeZoomImage, setActiveZoomImage] = useState<string | null>(null);
@@ -50,19 +54,24 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   const [selectedWeighing, setSelectedWeighing] = useState<WeighingRecord | null>(null);
   const [viewPaymentsTicket, setViewPaymentsTicket] = useState<WeighingRecord | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<'yape' | 'plim' | 'transferencia' | 'efectivo'>('yape');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('yape');
   const [reference, setReference] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
   const [voucherUrl, setVoucherUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const currentCompanyId = activeCompany?.id || currentUser?.companyId || '';
+  const companyClients = clients.filter(c => c.companyId === currentCompanyId);
+
   const companyWeighings = weighings
-    .filter(w => w.companyId === (activeCompany?.id || currentUser?.companyId || ''))
-    .filter(w => currentUser?.role !== 'cliente' || w.clientId === currentUser?.clientId);
+    .filter(w => w.companyId === currentCompanyId)
+    .filter(w => currentUser?.role !== 'cliente' || w.clientId === currentUser?.clientId)
+    .filter(w => selectedClientFilter === 'todos' || w.clientId === selectedClientFilter);
 
   const companyPayments = payments
-    .filter(p => p.companyId === (activeCompany?.id || currentUser?.companyId || ''))
-    .filter(p => currentUser?.role !== 'cliente' || p.clientId === currentUser?.clientId);
+    .filter(p => p.companyId === currentCompanyId)
+    .filter(p => currentUser?.role !== 'cliente' || p.clientId === currentUser?.clientId)
+    .filter(p => selectedClientFilter === 'todos' || p.clientId === selectedClientFilter);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -109,6 +118,14 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
     }
   };
 
+  const handlePresetVoucher = () => {
+    const vouchers = [
+      'https://images.unsplash.com/photo-1556742049-0a67dd3861c8?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=800&q=80'
+    ];
+    setVoucherUrl(vouchers[Math.floor(Math.random() * vouchers.length)]);
+  };
+
   const handleProcessPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedWeighing || paymentAmount <= 0 || isSubmitting) return;
@@ -118,28 +135,33 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
     try {
       const newPaymentRecord = {
         companyId: selectedWeighing.companyId,
+        weighingId: selectedWeighing.id,
         clientId: selectedWeighing.clientId,
         clientName: selectedWeighing.clientName,
-        weighingId: selectedWeighing.id,
         amount: paymentAmount,
         method: paymentMethod,
-        reference: reference || `REC-${Math.floor(Math.random() * 899999 + 100000)}`,
-        notes: paymentNotes,
-        voucherUrl: voucherUrl || undefined
+        reference: reference || `OPER-${Math.floor(Math.random() * 899999 + 100000)}`,
+        status: 'aprobado' as const,
+        notes: paymentNotes || 'Abono registrado en Cobranza',
+        voucherUrl: voucherUrl || undefined,
       };
 
       const createdPayment = await addPayment(newPaymentRecord);
 
       const clientObj = clients.find(c => c.id === selectedWeighing.clientId);
-      
-      // Auto download payment receipt PDF
-      downloadPaymentReceiptPDF(createdPayment, clientObj, activeCompany || undefined);
+      if (createdPayment && clientObj) {
+        try {
+          downloadPaymentReceiptPDF(createdPayment, clientObj, activeCompany || undefined);
+        } catch (pdfErr) {
+          console.warn('PDF download warning:', pdfErr);
+        }
+      }
 
-      alert(`¡Abono registrado con éxito por S/ ${paymentAmount.toFixed(2)}! Se ha descargado el recibo oficial.`);
+      alert(`¡Abono de S/ ${paymentAmount.toFixed(2)} registrado con éxito!`);
       setSelectedWeighing(null);
-    } catch (err) {
-      console.error('Error procesando pago:', err);
-      alert('Error al procesar el abono.');
+    } catch (e) {
+      console.error('Error processing payment:', e);
+      alert('Error al registrar el abono.');
     } finally {
       setIsSubmitting(false);
     }
@@ -259,29 +281,58 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
         </div>
       </div>
 
+      {/* Client Selector Filter (Filtrar Deudas por Cliente) */}
+      <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center space-x-2.5 w-full sm:w-auto">
+          <Users className="w-5 h-5 text-blue-600 shrink-0" />
+          <span className="text-xs font-bold text-slate-800 shrink-0">Filtrar Deudas por Cliente:</span>
+          <select
+            value={selectedClientFilter}
+            onChange={(e) => setSelectedClientFilter(e.target.value)}
+            className="bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3.5 py-2 text-xs font-bold outline-none focus:border-blue-500 w-full sm:w-72"
+          >
+            <option value="todos">Todos los Clientes ({companyClients.length})</option>
+            {companyClients.map(cli => (
+              <option key={cli.id} value={cli.id}>
+                {cli.name} (Deuda: S/ {cli.currentBalance.toFixed(2)})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedClientFilter !== 'todos' && (
+          <button
+            onClick={() => setSelectedClientFilter('todos')}
+            className="text-xs font-bold text-blue-600 hover:text-blue-800 underline self-end sm:self-center"
+          >
+            Mostrar todos los clientes
+          </button>
+        )}
+      </div>
+
       {/* Main Tabs: Cobros vs Reporte de Pagos */}
-      <div className="flex border-b border-slate-800 space-x-3 text-xs">
+      <div className="flex border-b border-slate-200 space-x-3 text-xs">
         <button
           onClick={() => setActiveTab('cobros')}
-          className={`pb-2 font-extrabold flex items-center space-x-1.5 border-b-2 transition-colors ${
+          className={`pb-2.5 font-extrabold flex items-center space-x-1.5 border-b-2 transition-colors ${
             activeTab === 'cobros' 
-              ? 'border-emerald-500 text-emerald-400' 
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-blue-600 text-blue-700' 
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Receipt className="w-3.5 h-3.5" />
+          <Receipt className="w-4 h-4" />
           <span>Tickets y Saldos Pendientes</span>
         </button>
 
         <button
           onClick={() => setActiveTab('reporte_pagos')}
-          className={`pb-2 font-extrabold flex items-center space-x-1.5 border-b-2 transition-colors ${
+          className={`pb-2.5 font-extrabold flex items-center space-x-1.5 border-b-2 transition-colors ${
             activeTab === 'reporte_pagos' 
-              ? 'border-emerald-500 text-emerald-400' 
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-blue-600 text-blue-700' 
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <History className="w-3.5 h-3.5" />
+          <History className="w-4 h-4" />
           <span>Reporte de Pagos Realizados ({companyPayments.length})</span>
         </button>
       </div>
@@ -594,21 +645,23 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">Método de Pago (Perú)</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="block text-slate-300 mb-1 font-semibold">Tipo / Método de Pago (Perú)</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {[
-                    { id: 'yape', label: 'Yape' },
-                    { id: 'plim', label: 'Plim' },
-                    { id: 'transferencia', label: 'Transferencia' },
-                    { id: 'efectivo', label: 'Efectivo' },
+                    { id: 'efectivo', label: 'Efectivo 💵' },
+                    { id: 'yape', label: 'Yape 📱' },
+                    { id: 'plim', label: 'Plim 💳' },
+                    { id: 'transferencia', label: 'Transferencia 🏦' },
+                    { id: 'cheque', label: 'Cheque 📄' },
+                    { id: 'otro', label: 'Otro' },
                   ].map((m) => (
                     <button
                       key={m.id}
                       type="button"
-                      onClick={() => setPaymentMethod(m.id as any)}
-                      className={`py-2 px-3 rounded-xl font-bold border text-xs transition-all ${
+                      onClick={() => setPaymentMethod(m.id as PaymentMethod)}
+                      className={`py-2 px-2.5 rounded-xl font-bold border text-xs transition-all ${
                         paymentMethod === m.id
-                          ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-950'
+                          ? 'bg-emerald-600 border-emerald-500 text-white shadow-md'
                           : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
                       }`}
                     >
@@ -631,10 +684,10 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
 
               {/* Voucher Image Upload */}
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">Adjuntar Foto de Voucher / Recibo</label>
+                <label className="block text-slate-300 mb-1 font-semibold">Adjuntar Foto / Captura de Voucher</label>
                 {voucherUrl ? (
                   <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
-                    <img src={voucherUrl} alt="Voucher" className="w-full h-32 object-cover" />
+                    <img src={voucherUrl} alt="Voucher" className="w-full h-36 object-cover" />
                     <button
                       type="button"
                       onClick={() => setVoucherUrl('')}
@@ -644,11 +697,28 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
                     </button>
                   </div>
                 ) : (
-                  <label className="cursor-pointer bg-slate-950 border border-dashed border-emerald-500/50 hover:border-emerald-400 p-3 rounded-xl flex items-center justify-center space-x-2 text-center text-slate-300">
-                    <Camera className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-semibold">Subir Foto o Captura de Voucher</span>
-                    <input type="file" accept="image/*" onChange={handleVoucherUpload} className="hidden" />
-                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <label className="cursor-pointer bg-slate-950 border border-dashed border-slate-700 hover:border-emerald-500 p-2.5 rounded-xl flex flex-col items-center justify-center text-center space-y-1 text-slate-300">
+                      <Camera className="w-4 h-4 text-emerald-400" />
+                      <span className="text-[11px] font-bold">Cámara</span>
+                      <input type="file" accept="image/*" capture="environment" onChange={handleVoucherUpload} className="hidden" />
+                    </label>
+
+                    <label className="cursor-pointer bg-slate-950 border border-dashed border-slate-700 hover:border-emerald-500 p-2.5 rounded-xl flex flex-col items-center justify-center text-center space-y-1 text-slate-300">
+                      <FolderOpen className="w-4 h-4 text-blue-400" />
+                      <span className="text-[11px] font-bold">Carpeta</span>
+                      <input type="file" accept="image/*" onChange={handleVoucherUpload} className="hidden" />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={handlePresetVoucher}
+                      className="bg-slate-950 border border-slate-700 hover:border-emerald-500 p-2.5 rounded-xl flex flex-col items-center justify-center text-center space-y-1 text-slate-300"
+                    >
+                      <ImageIcon className="w-4 h-4 text-amber-400" />
+                      <span className="text-[11px] font-bold">Ejemplo</span>
+                    </button>
+                  </div>
                 )}
               </div>
 
