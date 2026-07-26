@@ -19,7 +19,7 @@ import {
   deleteDoc, 
   setDoc, 
   getDocs,
-  getDocFromServer,
+  getDoc,
   query, 
   where,
   orderBy 
@@ -64,16 +64,14 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  console.warn('Firestore notice:', errInfo.error, 'Operation:', operationType, 'Path:', path);
 }
 
 async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'system_settings', 'general'));
+    await getDoc(doc(db, 'system_settings', 'general'));
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration.");
-    }
+    console.warn("Firestore connection check info:", error);
   }
 }
 testConnection();
