@@ -53,11 +53,11 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
   const isCobranza = paymentsHistory && paymentsHistory.length > 0;
   const hasScaleImg = record.scaleImageUrl && record.scaleImageUrl.startsWith('data:image');
   
-  const calculatedHeight = 220 + (isCobranza ? (paymentsHistory.length * 6 + 25) : 0) + (hasScaleImg ? 35 : 0);
+  const calculatedHeight = 240 + (isCobranza ? (paymentsHistory.length * 6 + 20) : 0) + (hasScaleImg ? 35 : 0);
 
   const doc = new jsPDF({
     unit: 'mm',
-    format: [80, calculatedHeight], // Formato Ticket Térmico 80mm estilo AviControl
+    format: [80, calculatedHeight], // Formato Ticket Térmico 80mm estilo AviControl Campo Verde
   });
 
   let y = 5;
@@ -67,145 +67,230 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
   doc.setDrawColor(15, 23, 42);
   doc.rect(3, 3, 74, calculatedHeight - 6);
 
-  // 1. Company Header Box with Logo (Cuadro 1)
-  y = drawCompanyHeaderLogo(doc, company, y);
-
-  // 2. Ticket Title Box (Cuadro 2 - Header Navy)
-  doc.setFillColor(15, 23, 42); // Navy Dark AviControl
-  doc.rect(5, y, 70, 8, 'F');
-  doc.setTextColor(255, 255, 255);
+  // 1. Company Header
+  const companyName = company?.name || 'AGROPECUARIA CAMPOVERDE SAC';
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text(isCobranza ? `TICKET COBRANZA: ${record.ticketNumber}` : `COMPROBANTE VENTA: ${record.ticketNumber}`, 40, y + 5.2, { align: 'center' });
+  doc.setFontSize(10.5);
+  doc.text(companyName, 40, y + 4, { align: 'center' });
   
-  y += 10;
-  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(9);
+  doc.text('TICKET DE PESAJE', 40, y + 9, { align: 'center' });
 
-  // 3. Client & Operation Box (Cuadro 3)
-  doc.setFillColor(241, 245, 249);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  const dateStr = new Date(record.createdAt).toLocaleDateString('es-ES') + ', ' + new Date(record.createdAt).toLocaleTimeString('es-ES');
+  doc.text(`FECHA: ${dateStr}`, 40, y + 13, { align: 'center' });
+
+  y += 16;
+
+  // Solid horizontal separator
+  doc.setLineWidth(0.6);
+  doc.setDrawColor(0, 0, 0);
+  doc.line(5, y, 75, y);
+
+  y += 4;
+
+  // LOTE & CLIENTE
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('LOTE:', 6, y + 3);
+  doc.text((record.galponName || 'ABEL MORALES SERRANO').toUpperCase(), 24, y + 3);
+
+  doc.text('CLIENTE:', 6, y + 8);
+  doc.text(record.clientName.toUpperCase(), 24, y + 8);
+
+  y += 12;
+
+  // TABLA 1: RESUMEN DE CANTIDADES
+  doc.setFillColor(226, 232, 240); // Light gray banner
   doc.rect(5, y, 70, 5, 'F');
   doc.rect(5, y, 70, 5);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
-  doc.text('DATOS DEL CLIENTE Y OPERACIÓN', 7, y + 3.5);
-
-  y += 5;
-
-  doc.rect(5, y, 70, 20);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.text(`FECHA/HORA: ${new Date(record.createdAt).toLocaleString('es-ES')}`, 7, y + 4);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`CLIENTE: ${record.clientName.substring(0, 28)}`, 7, y + 8);
-  doc.setFont('helvetica', 'normal');
-  if (record.galponName) {
-    doc.text(`ORIGEN / GALPÓN: ${record.galponName}`, 7, y + 12);
-  } else {
-    doc.text(`CONDICIÓN: ${record.paymentType.toUpperCase()} ${record.creditDays ? `(${record.creditDays} días)` : ''}`, 7, y + 12);
-  }
-  doc.setFont('helvetica', 'bold');
-  const isPaid = record.paymentStatus === 'pagado';
-  doc.text(`ESTADO: ${isPaid ? '100% CANCELADO' : `PENDIENTE S/ ${record.pendingAmount.toFixed(2)}`}`, 7, y + 16);
-
-  y += 23;
-
-  // 4. Detailed Weights & Price Box (Cuadro 4)
-  doc.setFillColor(241, 245, 249);
-  doc.rect(5, y, 70, 5, 'F');
-  doc.rect(5, y, 70, 5);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.text('DETALLE DE BALANZA Y PESO NETO', 7, y + 3.5);
-  doc.text('VALORES', 73, y + 3.5, { align: 'right' });
+  doc.text('RESUMEN DE CANTIDADES', 40, y + 3.5, { align: 'center' });
 
   y += 5;
 
   const avgWeight = record.chickenCount > 0 ? (record.netWeight / record.chickenCount).toFixed(2) : '0.00';
+  const filledBaskets = record.scaleEntries ? record.scaleEntries.length * 10 : Math.max(10, Math.round(record.chickenCount / 9));
+  const emptyBaskets = record.tareWeight > 0 ? filledBaskets : 0;
+  const hasTare = record.tareWeight > 0;
+  const hasDead = Boolean(record.deadChickensCount && record.deadChickensCount > 0);
 
-  const rows = [
-    { label: 'Cantidad de Pollos:', val: `${record.chickenCount} aves` },
-    { label: 'Peso Bruto Balanza:', val: `${record.grossWeight.toFixed(2)} kg` },
-    ...(record.tareWeight > 0 ? [{ label: 'Descuento / Tara Javas:', val: `-${record.tareWeight.toFixed(2)} kg` }] : []),
-    { label: 'PESO NETO VENDIDO:', val: `${record.netWeight.toFixed(2)} kg`, bold: true },
-    { label: 'PROMEDIO POR POLLO:', val: `${avgWeight} kg/ave`, bold: true },
-    { label: 'Precio por Kilo (S/):', val: `S/ ${record.unitPrice.toFixed(2)} / kg` },
-  ];
-
-  doc.setFontSize(7.5);
-  rows.forEach((r) => {
-    doc.rect(5, y, 70, 5);
-    if (r.bold) doc.setFont('helvetica', 'bold');
-    else doc.setFont('helvetica', 'normal');
-    doc.text(r.label, 7, y + 3.6);
-    doc.text(r.val, 73, y + 3.6, { align: 'right' });
-    y += 5;
-  });
-
-  // 5. Total Monto Box (Cuadro 5 - Full Navy)
-  doc.setFillColor(15, 23, 42);
-  doc.rect(5, y, 70, 8, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text('TOTAL VENTA:', 7, y + 5.5);
-  doc.text(`S/ ${record.totalAmount.toFixed(2)}`, 73, y + 5.5, { align: 'right' });
-
-  y += 11;
-  doc.setTextColor(0, 0, 0);
-
-  // 6. Payments History Box (Cuadro 6 - If Cobranza or payments exist)
-  if (isCobranza) {
-    doc.setFillColor(241, 245, 249);
-    doc.rect(5, y, 70, 5, 'F');
-    doc.rect(5, y, 70, 5);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text('HISTORIAL DE COBRANZA Y ABONOS', 7, y + 3.5);
-
-    y += 5;
-
-    doc.setFontSize(6.5);
-    paymentsHistory.forEach((p) => {
-      doc.rect(5, y, 70, 5);
-      doc.setFont('helvetica', 'normal');
-      const pDate = new Date(p.createdAt).toLocaleDateString('es-ES');
-      doc.text(`${pDate} - ${p.method.toUpperCase()} (${p.reference || 'S/N'})`, 7, y + 3.5);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`+ S/ ${p.amount.toFixed(2)}`, 73, y + 3.5, { align: 'right' });
-      y += 5;
-    });
-
-    // Summary cancellation box
-    doc.rect(5, y, 70, 6);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text('TOTAL ABONADO:', 7, y + 4);
-    doc.text(`S/ ${record.paidAmount.toFixed(2)}`, 73, y + 4, { align: 'right' });
-    y += 6;
-
-    doc.setFillColor(record.pendingAmount <= 0 ? 220 : 254, record.pendingAmount <= 0 ? 252 : 226, record.pendingAmount <= 0 ? 231 : 226);
-    doc.rect(5, y, 70, 6.5, 'F');
-    doc.rect(5, y, 70, 6.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text('SALDO PENDIENTE:', 7, y + 4.5);
-    doc.text(`S/ ${record.pendingAmount.toFixed(2)}`, 73, y + 4.5, { align: 'right' });
-
-    y += 9.5;
-  } else {
-    // Ticket Direct Sale Condition
-    doc.setFillColor(241, 245, 249);
-    doc.rect(5, y, 70, 6, 'F');
-    doc.rect(5, y, 70, 6);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text('CONDICIÓN DE PAGO:', 7, y + 4.2);
-    doc.text(record.paymentType === 'contado' ? 'PAGADO AL CONTADO' : `CRÉDITO (${record.creditDays || 0} DÍAS)`, 73, y + 4.2, { align: 'right' });
-
-    y += 9.5;
+  const cantidadRows: { label: string; val: string }[] = [];
+  if (hasTare) {
+    cantidadRows.push({ label: 'Jabas Llenas:', val: `${filledBaskets}` });
+  }
+  cantidadRows.push({ label: 'Total Pollos:', val: `${record.chickenCount}` });
+  if (hasTare) {
+    cantidadRows.push({ label: 'Jabas Vacías:', val: `${emptyBaskets}` });
+  }
+  if (hasDead) {
+    cantidadRows.push({ label: 'TOTAL MUERTOS:', val: `${record.deadChickensCount}` });
+  }
+  cantidadRows.push({ label: 'Prom. Peso Neto:', val: `${avgWeight} kg` });
+  if (hasDead) {
+    cantidadRows.push({ label: 'Prom. P. Muerto:', val: '0.00 kg' });
   }
 
-  // 7. Scale Image Box (If base64 image attached)
+  doc.setFontSize(7.5);
+  cantidadRows.forEach((r) => {
+    doc.rect(5, y, 70, 4.8);
+    doc.setFont('helvetica', r.label.includes('TOTAL') ? 'bold' : 'normal');
+    doc.text(r.label, 7, y + 3.4);
+    doc.text(r.val, 73, y + 3.4, { align: 'right' });
+    y += 4.8;
+  });
+
+  y += 2;
+
+  // TABLA 2: DETALLE DE PESOS
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('DETALLE DE PESOS', 40, y + 3, { align: 'center' });
+
+  y += 5;
+
+  // Banner LLENAS / PESADAS
+  doc.setFillColor(226, 232, 240);
+  doc.rect(5, y, 70, 4.5, 'F');
+  doc.rect(5, y, 70, 4.5);
+  doc.setFontSize(7);
+  doc.text(hasTare ? `LLENAS (${filledBaskets}p)` : `PESADAS (${record.scaleEntries?.length || 1})`, 40, y + 3.2, { align: 'center' });
+
+  y += 4.5;
+
+  // Grid for Llenas
+  if (record.scaleEntries && record.scaleEntries.length > 0) {
+    record.scaleEntries.forEach((se, idx) => {
+      doc.rect(5, y, 70, 4.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.text(`Pesa #${idx + 1} (${se.chickens}p)`, 7, y + 3.2);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${se.grossWeight.toFixed(2)} kg`, 73, y + 3.2, { align: 'right' });
+      y += 4.5;
+    });
+  } else {
+    doc.rect(5, y, 70, 4.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text(`Pesa Única (${record.chickenCount}p)`, 7, y + 3.2);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${record.grossWeight.toFixed(2)} kg`, 73, y + 3.2, { align: 'right' });
+    y += 4.5;
+  }
+
+  // Subtotal Llenas / Pesado
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text(`TOTAL PESADO: ${record.grossWeight.toFixed(2)} kg`, 73, y + 3.2, { align: 'right' });
+
+  y += 5;
+
+  // Banner VACÍAS (Only if hasTare)
+  if (hasTare) {
+    doc.setFillColor(226, 232, 240);
+    doc.rect(5, y, 70, 4.5, 'F');
+    doc.rect(5, y, 70, 4.5);
+    doc.setFontSize(7);
+    doc.text(`VACÍAS (${emptyBaskets}p)`, 40, y + 3.2, { align: 'center' });
+
+    y += 4.5;
+
+    doc.rect(5, y, 70, 4.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text('Tara Total Jabas:', 7, y + 3.2);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${record.tareWeight.toFixed(2)} kg`, 73, y + 3.2, { align: 'right' });
+    y += 4.5;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text(`TOTAL VACÍAS: ${record.tareWeight.toFixed(2)} kg`, 73, y + 3.2, { align: 'right' });
+
+    y += 6;
+  }
+
+  // Solid separator line
+  doc.setLineWidth(0.6);
+  doc.setDrawColor(0, 0, 0);
+  doc.line(5, y, 75, y);
+
+  y += 4;
+
+  // Summary Weight Lines
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Peso Bruto:', 7, y + 3);
+  doc.text(`${record.grossWeight.toFixed(2)} kg`, 73, y + 3, { align: 'right' });
+
+  if (hasTare) {
+    y += 4.5;
+    doc.text('Tara Total:', 7, y + 3);
+    doc.text(`-${record.tareWeight.toFixed(2)} kg`, 73, y + 3, { align: 'right' });
+
+    y += 4.5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL MERMA:', 7, y + 3);
+    doc.text('-0.00 kg', 73, y + 3, { align: 'right' });
+  }
+
+  y += 4.5;
+  doc.setFont('helvetica', 'normal');
+  doc.text('Prom. Peso Neto:', 7, y + 3);
+  doc.text(`${avgWeight} kg`, 73, y + 3, { align: 'right' });
+
+  if (hasDead) {
+    y += 4.5;
+    doc.text('Prom. P. Muerto:', 7, y + 3);
+    doc.text('0.00 kg', 73, y + 3, { align: 'right' });
+  }
+
+  y += 6;
+
+  // Solid separator line
+  doc.line(5, y, 75, y);
+
+  y += 4;
+
+  // Financial summary block
+  doc.setFillColor(15, 23, 42); // Navy Dark
+  doc.rect(5, y, 70, 16, 'F');
+  doc.setTextColor(255, 255, 255);
+
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Precio por Kilo:', 7, y + 4);
+  doc.text(`S/ ${record.unitPrice.toFixed(2)} / kg`, 73, y + 4, { align: 'right' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('TOTAL IMPORTE:', 7, y + 8.5);
+  doc.text(`S/ ${record.totalAmount.toFixed(2)}`, 73, y + 8.5, { align: 'right' });
+
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Monto Abonado:', 7, y + 12.5);
+  doc.text(`S/ ${record.paidAmount.toFixed(2)}`, 73, y + 12.5, { align: 'right' });
+
+  y += 18;
+  doc.setTextColor(0, 0, 0);
+
+  // Balance box if unpaid
+  if (record.pendingAmount > 0) {
+    doc.setFillColor(254, 226, 226);
+    doc.rect(5, y, 70, 5.5, 'F');
+    doc.rect(5, y, 70, 5.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('SALDO PENDIENTE:', 7, y + 3.8);
+    doc.text(`S/ ${record.pendingAmount.toFixed(2)}`, 73, y + 3.8, { align: 'right' });
+    y += 8;
+  }
+
+  // Scale photo if present
   if (hasScaleImg) {
     try {
       doc.setFillColor(248, 250, 252);

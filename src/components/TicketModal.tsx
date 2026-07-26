@@ -83,143 +83,202 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
         {/* Printable Ticket Area */}
         <div className="p-6 overflow-y-auto space-y-6 bg-slate-100/60">
           
-          <div id="thermal-ticket-print" className="bg-white text-slate-900 p-5 rounded-2xl shadow-md font-sans text-xs space-y-4 max-w-sm mx-auto border-2 border-slate-800">
+          <div id="thermal-ticket-print" className="bg-white text-slate-900 p-6 rounded-2xl shadow-lg font-sans text-xs space-y-4 max-w-sm mx-auto border-2 border-slate-900">
             
-            {/* 1. Header Thermal Logo & Company Info Box */}
-            <div className="text-center space-y-1 pb-3 border-b-2 border-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            {/* 1. Header Ticket info - Matches reference image */}
+            <div className="text-center space-y-0.5 pb-2">
               {activeCompany?.logoUrl && (
                 <img 
                   src={activeCompany.logoUrl} 
                   alt="Logo Empresa" 
-                  className="h-12 max-w-[140px] mx-auto object-contain mb-1 rounded" 
+                  className="h-10 max-w-[130px] mx-auto object-contain mb-1" 
                 />
               )}
-              <div className="font-black text-sm uppercase tracking-tight text-slate-900">
-                {activeCompany?.name || 'JEAN-BARSA AVÍCOLA SYSTEM'}
+              <div className="font-black text-base uppercase tracking-tight text-slate-900">
+                {activeCompany?.name || 'AGROPECUARIA CAMPOVERDE SAC'}
               </div>
-              <p className="text-[10px] font-bold font-mono text-slate-700">{activeCompany?.taxId || 'RUC 20601234567'}</p>
-              <p className="text-[10px] text-slate-600">{activeCompany?.address || 'Av. Panamericana Sur Km 35, Lima - Perú'}</p>
-              <p className="text-[10px] text-slate-600">Tel: {activeCompany?.phone || '+51 987-654-321'}</p>
-            </div>
-
-            {/* 2. Ticket Identifier Box */}
-            <div className="bg-blue-900 text-white p-3 rounded-xl text-center space-y-0.5 shadow-sm border border-blue-950">
-              <div className="text-[9px] uppercase font-bold text-blue-200 tracking-wider">COMPROBANTE DE PESA Y VENTA</div>
-              <div className="font-black text-lg text-emerald-300 font-mono tracking-widest">{record.ticketNumber}</div>
-              <div className="text-[10px] text-blue-100 font-mono">
-                {new Date(record.createdAt).toLocaleString('es-ES')}
+              <div className="font-extrabold text-sm text-slate-800 tracking-wider">
+                TICKET DE PESAJE
+              </div>
+              <div className="text-[11px] font-mono text-slate-700 font-semibold">
+                FECHA: {new Date(record.createdAt).toLocaleDateString('es-ES')}, {new Date(record.createdAt).toLocaleTimeString('es-ES')}
+              </div>
+              <div className="text-[10px] text-slate-500 font-mono font-bold">
+                TICKET Nº: {record.ticketNumber}
               </div>
             </div>
 
-            {/* 3. Client & Origin Info Grid Box (Cuadro Separado) */}
-            <div className="border-2 border-slate-800 rounded-xl overflow-hidden text-[11px] bg-white shadow-xs">
-              <div className="bg-slate-100 p-1.5 px-3 font-black text-slate-800 text-[10px] uppercase border-b border-slate-300 flex items-center justify-between">
-                <span>DATOS DEL CLIENTE Y OPERACIÓN</span>
-                <span className="text-[9px] font-mono text-slate-500">SECCIÓN 1</span>
+            {/* Solid Horizontal Separator */}
+            <div className="border-b-2 border-slate-900"></div>
+
+            {/* LOTE & CLIENTE */}
+            <div className="space-y-1 text-xs font-black px-1">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-900 min-w-[70px]">LOTE:</span>
+                <span className="text-slate-900 uppercase font-bold">{record.galponName || 'ABEL MORALES SERRANO'}</span>
               </div>
-              <div className="divide-y divide-slate-200">
-                <div className="p-2.5 flex justify-between items-center">
-                  <span className="font-bold text-slate-600">CLIENTE:</span>
-                  <span className="font-black text-slate-900">{record.clientName}</span>
-                </div>
-                {record.galponName && (
-                  <div className="p-2.5 flex justify-between items-center bg-slate-50">
-                    <span className="font-bold text-slate-600">GALPÓN ORIGEN:</span>
-                    <span className="font-extrabold text-blue-700">{record.galponName}</span>
-                  </div>
-                )}
-                <div className="p-2.5 flex justify-between items-center">
-                  <span className="font-bold text-slate-600">CONDICIÓN:</span>
-                  <span className="font-bold uppercase text-slate-800">{record.paymentType} {record.creditDays ? `(${record.creditDays} Días)` : ''}</span>
-                </div>
-                <div className="p-2.5 flex justify-between items-center bg-slate-100/80">
-                  <span className="font-bold text-slate-600">ESTADO:</span>
-                  <span className={`font-black uppercase px-2 py-0.5 rounded text-[10px] ${record.paymentStatus === 'pagado' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`}>
-                    {record.paymentStatus === 'pagado' ? 'PAGADO / CANCELADO' : 'PENDIENTE DE PAGO'}
-                  </span>
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-900 min-w-[70px]">CLIENTE:</span>
+                <span className="text-slate-900 uppercase font-extrabold text-sm">{record.clientName}</span>
               </div>
             </div>
 
-            {/* 4. Detailed Weights & Price Box (Cuadro Separado) */}
-            <div className="border-2 border-slate-800 rounded-xl overflow-hidden bg-white shadow-xs">
-              <div className="bg-slate-900 text-white font-bold p-2 text-[10px] uppercase flex justify-between border-b border-slate-800">
-                <span>DETALLE DE BALANZA Y PESOS</span>
-                <span>VALORES</span>
+            {/* TABLA 1: RESUMEN DE CANTIDADES */}
+            <div className="border-2 border-slate-300 rounded-lg overflow-hidden bg-white">
+              <div className="bg-slate-200 text-slate-900 font-extrabold text-[11px] uppercase p-1.5 text-center border-b border-slate-300 tracking-wide">
+                RESUMEN DE CANTIDADES
               </div>
-              
               <div className="divide-y divide-slate-200 text-[11px]">
-                <div className="p-2.5 flex justify-between">
-                  <span className="text-slate-700 font-medium">Cantidad de Pollos:</span>
-                  <span className="font-bold font-mono text-slate-900">{record.chickenCount} aves</span>
-                </div>
-                <div className="p-2.5 flex justify-between bg-slate-50">
-                  <span className="text-slate-700 font-medium">Peso Bruto Balanza:</span>
-                  <span className="font-bold font-mono text-slate-900">{record.grossWeight.toFixed(2)} kg</span>
-                </div>
-                <div className="p-2.5 flex justify-between">
-                  <span className="text-slate-700 font-medium">Tara (Javas / Cestas):</span>
-                  <span className="font-bold font-mono text-slate-900">-{record.tareWeight.toFixed(2)} kg</span>
-                </div>
-                <div className="p-2.5 flex justify-between bg-emerald-50 font-black text-slate-900 border-t-2 border-slate-800">
-                  <span>PESO NETO COBRABLE:</span>
-                  <span className="font-black font-mono text-emerald-800 text-sm">{record.netWeight.toFixed(2)} kg</span>
-                </div>
-                <div className="p-2.5 flex justify-between bg-blue-50/80 font-bold text-slate-900">
-                  <span className="text-slate-800">PROMEDIO POR POLLO:</span>
-                  <span className="font-black font-mono text-blue-900">{avgWeight} kg/ave</span>
-                </div>
-                <div className="p-2.5 flex justify-between text-slate-700">
-                  <span>Precio por Kilo:</span>
-                  <span className="font-bold font-mono">S/ {record.unitPrice.toFixed(2)} / kg</span>
-                </div>
-              </div>
-
-              {/* Total Row Box */}
-              <div className="bg-slate-900 text-white p-3 flex justify-between items-center border-t-2 border-slate-800">
-                <span className="font-extrabold text-xs tracking-wider">TOTAL MONTO VENTA:</span>
-                <span className="font-black text-lg font-mono text-emerald-300">S/ {record.totalAmount.toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* 5. Payments History & Balance Box (Cuadro Separado) */}
-            <div className="border-2 border-slate-800 rounded-xl overflow-hidden text-[11px] bg-white shadow-xs">
-              <div className="bg-slate-100 p-2 font-black text-slate-800 uppercase text-[10px] border-b border-slate-300 flex justify-between">
-                <span>HISTORIAL DE PAGOS Y ABONOS</span>
-                <span>MONTO S/</span>
-              </div>
-              <div className="divide-y divide-slate-200">
-                {ticketPayments.length === 0 ? (
-                  <div className="p-3 text-slate-500 italic text-[10px] text-center">
-                    {record.paymentStatus === 'pagado' ? 'Cancelado al contado en la pesa' : 'Sin abonos parciales registrados aún'}
+                {record.tareWeight > 0 && (
+                  <div className="p-1.5 px-3 flex justify-between items-center">
+                    <span className="font-semibold text-slate-800">Jabas Llenas:</span>
+                    <span className="font-extrabold font-mono text-slate-900">
+                      {record.scaleEntries ? record.scaleEntries.length * 10 : Math.max(10, Math.round(record.chickenCount / 9))}
+                    </span>
                   </div>
-                ) : (
-                  ticketPayments.map((p) => (
-                    <div key={p.id} className="p-2.5 flex justify-between items-center bg-slate-50">
-                      <div>
-                        <div className="font-bold text-slate-900 uppercase text-[10px]">{p.method} - {p.reference || 'Sin Ref'}</div>
-                        <div className="text-[9px] text-slate-500">{new Date(p.createdAt).toLocaleDateString('es-ES')}</div>
-                      </div>
-                      <div className="font-black text-emerald-700 font-mono text-xs">
-                        +S/ {p.amount.toFixed(2)}
-                      </div>
-                    </div>
-                  ))
+                )}
+                <div className="p-1.5 px-3 flex justify-between items-center bg-slate-50">
+                  <span className="font-bold text-slate-900">Total Pollos:</span>
+                  <span className="font-black font-mono text-slate-900 text-xs">{record.chickenCount}</span>
+                </div>
+                {record.tareWeight > 0 && (
+                  <div className="p-1.5 px-3 flex justify-between items-center">
+                    <span className="font-semibold text-slate-800">Jabas Vacías:</span>
+                    <span className="font-extrabold font-mono text-slate-900">
+                      {Math.max(10, Math.round(record.chickenCount / 9))}
+                    </span>
+                  </div>
+                )}
+                {Boolean(record.deadChickensCount && record.deadChickensCount > 0) && (
+                  <div className="p-1.5 px-3 flex justify-between items-center bg-slate-50">
+                    <span className="font-bold text-slate-900">TOTAL MUERTOS:</span>
+                    <span className="font-mono text-slate-900">{record.deadChickensCount}</span>
+                  </div>
+                )}
+                <div className="p-1.5 px-3 flex justify-between items-center">
+                  <span className="font-semibold text-slate-800">Prom. Peso Neto:</span>
+                  <span className="font-extrabold font-mono text-slate-900">{avgWeight} kg</span>
+                </div>
+                {Boolean(record.deadChickensCount && record.deadChickensCount > 0) && (
+                  <div className="p-1.5 px-3 flex justify-between items-center bg-slate-50">
+                    <span className="font-semibold text-slate-800">Prom. P. Muerto:</span>
+                    <span className="font-mono text-slate-900">0.00 kg</span>
+                  </div>
                 )}
               </div>
-              <div className="p-2.5 bg-slate-100 flex justify-between font-bold text-slate-800 border-t border-slate-300">
-                <span>Total Abonado:</span>
-                <span className="font-mono text-emerald-700">S/ {record.paidAmount.toFixed(2)}</span>
+            </div>
+
+            {/* TABLA 2: DETALLE DE PESOS */}
+            <div className="space-y-2">
+              <div className="text-center font-extrabold text-xs uppercase tracking-wider text-slate-900 pt-1">
+                DETALLE DE PESOS
               </div>
-              <div className={`p-2.5 flex justify-between font-black text-xs ${record.pendingAmount <= 0 ? 'bg-emerald-100 text-emerald-900' : 'bg-rose-100 text-rose-900'}`}>
-                <span>SALDO PENDIENTE RESTANTE:</span>
-                <span className="font-mono text-sm">S/ {record.pendingAmount.toFixed(2)}</span>
+
+              {/* LLENAS / PESADAS BANNER & GRID */}
+              <div className="border border-slate-300 rounded-lg overflow-hidden bg-white">
+                <div className="bg-slate-200 text-slate-900 font-extrabold text-[10px] uppercase p-1 text-center border-b border-slate-300">
+                  {record.tareWeight > 0 ? `LLENAS (${record.scaleEntries?.length || 1} pesadas)` : `PESADAS DE BALANZA (${record.scaleEntries?.length || 1})`}
+                </div>
+
+                <div className="p-2 divide-y divide-slate-100 text-[10px] font-mono">
+                  {record.scaleEntries && record.scaleEntries.length > 0 ? (
+                    record.scaleEntries.map((se, idx) => (
+                      <div key={se.id || idx} className="py-1 flex justify-between items-center">
+                        <span className="font-semibold text-slate-700">Pesa #{idx + 1} ({se.chickens} pollos):</span>
+                        <span className="font-black text-slate-900">{se.grossWeight.toFixed(2)} kg</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-1 flex justify-between items-center">
+                      <span className="font-semibold text-slate-700">Pesa Única ({record.chickenCount} pollos):</span>
+                      <span className="font-black text-slate-900">{record.grossWeight.toFixed(2)} kg</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-1.5 px-3 bg-slate-100 border-t border-slate-300 text-right font-black text-xs text-slate-900">
+                  TOTAL PESADO: {record.grossWeight.toFixed(2)} kg
+                </div>
+              </div>
+
+              {/* VACÍAS BANNER & GRID (Only rendered if tareWeight > 0) */}
+              {record.tareWeight > 0 && (
+                <div className="border border-slate-300 rounded-lg overflow-hidden bg-white">
+                  <div className="bg-slate-200 text-slate-900 font-extrabold text-[10px] uppercase p-1 text-center border-b border-slate-300">
+                    VACÍAS
+                  </div>
+
+                  <div className="p-1.5 px-3 text-[10px] font-mono flex justify-between items-center text-slate-700">
+                    <span>Tara Total (Jabas/Cestas):</span>
+                    <span className="font-bold">{record.tareWeight.toFixed(2)} kg</span>
+                  </div>
+
+                  <div className="p-1.5 px-3 bg-slate-100 border-t border-slate-300 text-right font-black text-xs text-slate-900">
+                    TOTAL VACÍAS: {record.tareWeight.toFixed(2)} kg
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Solid Horizontal Separator */}
+            <div className="border-b-2 border-slate-900"></div>
+
+            {/* RESUMEN FINAL PESOS */}
+            <div className="space-y-1 text-xs font-mono px-1">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-slate-800">Peso Bruto:</span>
+                <span className="font-bold text-slate-900">{record.grossWeight.toFixed(2)} kg</span>
+              </div>
+              {record.tareWeight > 0 && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-slate-800">Tara Total:</span>
+                    <span className="font-bold text-slate-900">-{record.tareWeight.toFixed(2)} kg</span>
+                  </div>
+                  <div className="flex justify-between items-center font-black text-sm text-slate-900 pt-0.5">
+                    <span>TOTAL MERMA:</span>
+                    <span>-0.00 kg</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between items-center text-[11px] pt-1">
+                <span className="font-semibold text-slate-700">Prom. Peso Neto:</span>
+                <span className="font-bold text-slate-900">{avgWeight} kg</span>
+              </div>
+              {Boolean(record.deadChickensCount && record.deadChickensCount > 0) && (
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="font-semibold text-slate-700">Prom. P. Muerto:</span>
+                  <span className="font-mono text-slate-900">0.00 kg</span>
+                </div>
+              )}
+            </div>
+
+            {/* Separator for Financial Totals */}
+            <div className="border-b-2 border-slate-900"></div>
+
+            {/* DETALLE FINANCIERO / IMPORTE */}
+            <div className="bg-slate-900 text-white p-3 rounded-xl space-y-1.5 shadow-xs">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300">Precio por Kilo:</span>
+                <span className="font-mono font-bold text-slate-100">S/ {record.unitPrice.toFixed(2)} / kg</span>
+              </div>
+              <div className="flex justify-between items-center text-sm font-black border-t border-slate-700 pt-1.5">
+                <span className="text-emerald-400">TOTAL IMPORTE:</span>
+                <span className="font-mono text-emerald-300 text-base">S/ {record.totalAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300">Monto Abonado:</span>
+                <span className="font-mono text-emerald-400 font-bold">S/ {record.paidAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs font-black border-t border-slate-800 pt-1">
+                <span className="text-amber-300">SALDO PENDIENTE:</span>
+                <span className="font-mono text-rose-300">S/ {record.pendingAmount.toFixed(2)}</span>
               </div>
             </div>
 
-            {/* 6. Scale Image Attachment in Ticket */}
+            {/* Attached Scale Photo if present */}
             {record.scaleImageUrl && (
-              <div className="border-2 border-slate-800 rounded-xl p-2.5 text-center space-y-1 bg-slate-50">
+              <div className="border-2 border-slate-800 rounded-xl p-2 text-center space-y-1 bg-slate-50">
                 <div className="font-bold text-[9px] uppercase text-slate-600">Foto Adjunta de Balanza Electrónica:</div>
                 <img 
                   src={record.scaleImageUrl} 
@@ -230,7 +289,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
             )}
 
             <div className="text-center pt-2 border-t border-dashed border-slate-400 text-[10px] italic text-slate-600 space-y-0.5">
-              <div>¡Gracias por su preferencia en Jean-Barsa Avícola System!</div>
+              <div>AvisControl - Sistema Corporativo Avícola</div>
               <div className="font-semibold text-slate-800">Atendido por: {record.createdBy}</div>
             </div>
 

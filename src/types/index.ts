@@ -84,6 +84,7 @@ export interface WeighingRecord {
   scaleEntries?: ScaleEntry[]; // Múltiples pesas/balanzas con sus fotos individuales
   galponId?: string; // ID del galpón de donde se vendieron los pollos
   galponName?: string; // Nombre del galpón
+  deadChickensCount?: number; // Opcional: número de pollos muertos si los hubiera
   baskets?: BasketEntry[]; // Opcional
   createdAt: string;
   createdBy: string; // Nombre del usuario operario
