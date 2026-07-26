@@ -64,13 +64,13 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   const companyClients = clients.filter(c => c.companyId === currentCompanyId);
 
   const companyWeighings = weighings
-    .filter(w => w.companyId === currentCompanyId)
-    .filter(w => currentUser?.role !== 'cliente' || w.clientId === currentUser?.clientId)
+    .filter(w => !currentCompanyId || w.companyId === currentCompanyId)
+    .filter(w => currentUser?.role !== 'cliente' || w.clientId === currentUser?.clientId || (currentUser?.displayName && w.clientName?.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()))
     .filter(w => selectedClientFilter === 'todos' || w.clientId === selectedClientFilter);
 
   const companyPayments = payments
-    .filter(p => p.companyId === currentCompanyId)
-    .filter(p => currentUser?.role !== 'cliente' || p.clientId === currentUser?.clientId)
+    .filter(p => !currentCompanyId || p.companyId === currentCompanyId)
+    .filter(p => currentUser?.role !== 'cliente' || p.clientId === currentUser?.clientId || (currentUser?.displayName && p.clientName?.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()))
     .filter(p => selectedClientFilter === 'todos' || p.clientId === selectedClientFilter);
 
   const today = new Date().toISOString().split('T')[0];

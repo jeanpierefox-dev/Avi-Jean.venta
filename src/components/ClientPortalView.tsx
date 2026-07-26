@@ -40,15 +40,45 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
   const [payNotes, setPayNotes] = useState<string>('');
   const [isSubmittingPay, setIsSubmittingPay] = useState(false);
 
-  // Find client record matching current user
-  const clientInfo = clients.find(c => 
+  // Find client record matching current user with flexible fallback
+  const matchedClient = clients.find(c => 
     (currentUser?.clientId && c.id === currentUser.clientId) ||
-    (c.id === currentUser?.clientId) ||
-    (currentUser?.companyId && c.companyId === currentUser.companyId && c.name.toLowerCase() === currentUser.displayName?.toLowerCase())
-  ) || clients.find(c => c.companyId === (activeCompany?.id || currentUser?.companyId)) || clients[0];
+    (currentUser?.displayName && c.name.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()) ||
+    (currentUser?.username && c.name.toLowerCase().trim() === currentUser.username.toLowerCase().trim()) ||
+    (currentUser?.phone && c.phone && c.phone.replace(/\D/g, '') === currentUser.phone.replace(/\D/g, '')) ||
+    (currentUser?.email && c.email && c.email.toLowerCase().trim() === currentUser.email.toLowerCase().trim()) ||
+    (currentUser?.displayName && c.name.toLowerCase().includes(currentUser.displayName.toLowerCase().trim())) ||
+    (currentUser?.displayName && currentUser.displayName.toLowerCase().includes(c.name.toLowerCase().trim()))
+  ) || clients.find(c => c.companyId === (activeCompany?.id || currentUser?.companyId));
 
-  const clientWeighings = weighings.filter(w => w.clientId === clientInfo?.id);
-  const clientPayments = payments.filter(p => p.clientId === clientInfo?.id);
+  const clientInfo = matchedClient || {
+    id: currentUser?.clientId || `cli_${currentUser?.uid || 'default'}`,
+    companyId: activeCompany?.id || currentUser?.companyId || 'comp_1',
+    name: currentUser?.displayName || currentUser?.username || 'Cliente Comercial',
+    phone: currentUser?.phone || '',
+    email: currentUser?.email || '',
+    address: 'Atención al Cliente',
+    currentBalance: 0,
+    creditLimit: 5000,
+    creditDays: 15,
+    createdAt: new Date().toISOString()
+  };
+
+  const clientWeighings = weighings.filter(w => 
+    w.clientId === clientInfo.id ||
+    (currentUser?.clientId && w.clientId === currentUser.clientId) ||
+    (clientInfo.name && w.clientName && w.clientName.toLowerCase().trim() === clientInfo.name.toLowerCase().trim()) ||
+    (currentUser?.displayName && w.clientName && w.clientName.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()) ||
+    (currentUser?.username && w.clientName && w.clientName.toLowerCase().trim() === currentUser.username.toLowerCase().trim())
+  );
+
+  const clientPayments = payments.filter(p => 
+    p.clientId === clientInfo.id ||
+    (currentUser?.clientId && p.clientId === currentUser.clientId) ||
+    (clientInfo.name && p.clientName && p.clientName.toLowerCase().trim() === clientInfo.name.toLowerCase().trim()) ||
+    (currentUser?.displayName && p.clientName && p.clientName.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()) ||
+    (currentUser?.username && p.clientName && p.clientName.toLowerCase().trim() === currentUser.username.toLowerCase().trim())
+  );
 
   const pendingWeighings = clientWeighings.filter(w => w.pendingAmount > 0);
   const paidWeighings = clientWeighings.filter(w => w.pendingAmount <= 0);

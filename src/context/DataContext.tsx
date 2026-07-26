@@ -438,10 +438,65 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('Firestore weighing update payment error:', e);
         }
       }
+    } else {
+      // General abono without specific weighingId: distribute across client's pending tickets (oldest first)
+      const targetName = (paymentData.clientName || '').toLowerCase().trim();
+      const clientPendingWeighings = weighings
+        .filter(w => (w.clientId === paymentData.clientId || (targetName && w.clientName.toLowerCase().trim() === targetName)) && w.pendingAmount > 0)
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+      let remainingAbono = paymentData.amount;
+      const updatedWeighingUpdates: { id: string; paidAmount: number; pendingAmount: number; paymentStatus: PaymentStatus }[] = [];
+
+      for (const w of clientPendingWeighings) {
+        if (remainingAbono <= 0) break;
+        const applyAmount = Math.min(remainingAbono, w.pendingAmount);
+        const newPaid = w.paidAmount + applyAmount;
+        const newPending = Math.max(0, w.totalAmount - newPaid);
+        const newStatus: PaymentStatus = newPending <= 0 ? 'pagado' : 'parcial';
+
+        remainingAbono -= applyAmount;
+        updatedWeighingUpdates.push({
+          id: w.id,
+          paidAmount: newPaid,
+          pendingAmount: newPending,
+          paymentStatus: newStatus,
+        });
+      }
+
+      if (updatedWeighingUpdates.length > 0) {
+        setWeighings(prev => prev.map(w => {
+          const match = updatedWeighingUpdates.find(u => u.id === w.id);
+          if (match) {
+            return {
+              ...w,
+              paidAmount: match.paidAmount,
+              pendingAmount: match.pendingAmount,
+              paymentStatus: match.paymentStatus
+            };
+          }
+          return w;
+        }));
+
+        for (const updateItem of updatedWeighingUpdates) {
+          try {
+            await updateDoc(doc(db, 'weighings', updateItem.id), {
+              paidAmount: updateItem.paidAmount,
+              pendingAmount: updateItem.pendingAmount,
+              paymentStatus: updateItem.paymentStatus
+            });
+          } catch (e) {
+            console.warn('Firestore weighing batch update error:', e);
+          }
+        }
+      }
     }
 
     // Reduce Client Balance
-    const targetClient = clients.find(c => c.id === paymentData.clientId);
+    const targetClient = clients.find(c => 
+      c.id === paymentData.clientId || 
+      (paymentData.clientName && c.name.toLowerCase().trim() === paymentData.clientName.toLowerCase().trim())
+    );
     if (targetClient) {
       const updatedBalance = Math.max(0, (targetClient.currentBalance || 0) - paymentData.amount);
       await updateClient(targetClient.id, { currentBalance: updatedBalance });
