@@ -40,19 +40,18 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
   const [payNotes, setPayNotes] = useState<string>('');
   const [isSubmittingPay, setIsSubmittingPay] = useState(false);
 
-  // Find client record matching current user with flexible fallback
+  // Find client record matching current user strictly by name or ID without wrong fallback
   const matchedClient = clients.find(c => 
     (currentUser?.clientId && c.id === currentUser.clientId) ||
     (currentUser?.displayName && c.name.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()) ||
     (currentUser?.username && c.name.toLowerCase().trim() === currentUser.username.toLowerCase().trim()) ||
     (currentUser?.phone && c.phone && c.phone.replace(/\D/g, '') === currentUser.phone.replace(/\D/g, '')) ||
     (currentUser?.email && c.email && c.email.toLowerCase().trim() === currentUser.email.toLowerCase().trim()) ||
-    (currentUser?.displayName && c.name.toLowerCase().includes(currentUser.displayName.toLowerCase().trim())) ||
-    (currentUser?.displayName && currentUser.displayName.toLowerCase().includes(c.name.toLowerCase().trim()))
-  ) || clients.find(c => c.companyId === (activeCompany?.id || currentUser?.companyId));
+    (currentUser?.displayName && c.name.toLowerCase().includes(currentUser.displayName.toLowerCase().trim()))
+  );
 
   const clientInfo = matchedClient || {
-    id: currentUser?.clientId || `cli_${currentUser?.uid || 'default'}`,
+    id: currentUser?.clientId || `cli_${currentUser?.uid || currentUser?.displayName || 'default'}`,
     companyId: activeCompany?.id || currentUser?.companyId || 'comp_1',
     name: currentUser?.displayName || currentUser?.username || 'Cliente Comercial',
     phone: currentUser?.phone || '',
@@ -64,21 +63,33 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
     createdAt: new Date().toISOString()
   };
 
-  const clientWeighings = weighings.filter(w => 
-    w.clientId === clientInfo.id ||
-    (currentUser?.clientId && w.clientId === currentUser.clientId) ||
-    (clientInfo.name && w.clientName && w.clientName.toLowerCase().trim() === clientInfo.name.toLowerCase().trim()) ||
-    (currentUser?.displayName && w.clientName && w.clientName.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()) ||
-    (currentUser?.username && w.clientName && w.clientName.toLowerCase().trim() === currentUser.username.toLowerCase().trim())
-  );
+  const normalizedClientName = (clientInfo.name || '').toLowerCase().trim();
+  const normalizedUserDisplayName = (currentUser?.displayName || '').toLowerCase().trim();
+  const normalizedUsername = (currentUser?.username || '').toLowerCase().trim();
 
-  const clientPayments = payments.filter(p => 
-    p.clientId === clientInfo.id ||
-    (currentUser?.clientId && p.clientId === currentUser.clientId) ||
-    (clientInfo.name && p.clientName && p.clientName.toLowerCase().trim() === clientInfo.name.toLowerCase().trim()) ||
-    (currentUser?.displayName && p.clientName && p.clientName.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()) ||
-    (currentUser?.username && p.clientName && p.clientName.toLowerCase().trim() === currentUser.username.toLowerCase().trim())
-  );
+  // Filter weighings strictly for this specific client user
+  const clientWeighings = weighings.filter(w => {
+    if (w.clientId === clientInfo.id) return true;
+    if (currentUser?.clientId && w.clientId === currentUser.clientId) return true;
+    const wName = (w.clientName || '').toLowerCase().trim();
+    if (!wName) return false;
+    if (normalizedClientName && wName === normalizedClientName) return true;
+    if (normalizedUserDisplayName && wName === normalizedUserDisplayName) return true;
+    if (normalizedUsername && wName === normalizedUsername) return true;
+    return false;
+  });
+
+  // Filter payments strictly for this specific client user
+  const clientPayments = payments.filter(p => {
+    if (p.clientId === clientInfo.id) return true;
+    if (currentUser?.clientId && p.clientId === currentUser.clientId) return true;
+    const pName = (p.clientName || '').toLowerCase().trim();
+    if (!pName) return false;
+    if (normalizedClientName && pName === normalizedClientName) return true;
+    if (normalizedUserDisplayName && pName === normalizedUserDisplayName) return true;
+    if (normalizedUsername && pName === normalizedUsername) return true;
+    return false;
+  });
 
   const pendingWeighings = clientWeighings.filter(w => w.pendingAmount > 0);
   const paidWeighings = clientWeighings.filter(w => w.pendingAmount <= 0);
@@ -97,7 +108,41 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
 
   const handleDownloadStatement = () => {
     if (!clientInfo) return;
-    generateStatementPDF(clientInfo, clientWeighings, clientPayments, activeCompany || undefined);
+    const currentClientWithBalance = { ...clientInfo, currentBalance: totalPendingDebt };
+    generateStatementPDF(currentClientWithBalance, clientWeighings, clientPayments, activeCompany || undefined);
+  };
+
+  // WhatsApp Share Balance / Account State
+  const handleShareWhatsAppSaldo = () => {
+    const text = `*ESTADO DE CUENTA Y SALDO PENDIENTE - AVISCONTROL*%0A` +
+      `🏢 *Empresa:* ${activeCompany?.name || 'Avícola Galpón Real'}%0A` +
+      `👤 *Cliente:* ${clientInfo.name}%0A` +
+      `📅 *Fecha:* ${new Date().toLocaleDateString('es-ES')}%0A` +
+      `----------------------------------%0A` +
+      `⚠️ *SALDO TOTAL PENDIENTE:* S/ ${totalPendingDebt.toFixed(2)}%0A` +
+      `💳 *Límite de Crédito:* S/ ${clientInfo.creditLimit.toFixed(2)}%0A` +
+      `📋 *Tickets con Saldo:* ${pendingWeighings.length} compras%0A` +
+      `----------------------------------%0A` +
+      `¡Muchas gracias por su preferencia!`;
+
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
+  // WhatsApp Share Payment Voucher / Abono
+  const handleShareWhatsAppAbono = (p: any) => {
+    const text = `*COMPROBANTE DE ABONO DE PAGO - AVISCONTROL*%0A` +
+      `🏢 *Empresa:* ${activeCompany?.name || 'Avícola Galpón Real'}%0A` +
+      `👤 *Cliente:* ${p.clientName || clientInfo.name}%0A` +
+      `📅 *Fecha Pago:* ${new Date(p.createdAt).toLocaleString('es-ES')}%0A` +
+      `----------------------------------%0A` +
+      `💰 *MONTO ABONADO:* S/ ${p.amount.toFixed(2)}%0A` +
+      `💳 *Método de Pago:* ${p.method.toUpperCase()}%0A` +
+      `🔢 *N° Operación / Ref:* ${p.reference || 'N/A'}%0A` +
+      `----------------------------------%0A` +
+      (p.voucherUrl ? `📷 *FOTO VOUCHER:*%0A${encodeURIComponent(p.voucherUrl)}%0A%0A` : '') +
+      `¡Abono procesado correctamente!`;
+
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
   // WhatsApp Share with Scale Image
@@ -233,8 +278,17 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
             </button>
 
             <button
+              onClick={handleShareWhatsAppSaldo}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3.5 py-3 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/40 transition-transform active:scale-95"
+              title="Compartir saldo actual por WhatsApp"
+            >
+              <Send className="w-4 h-4" />
+              <span>Compartir Saldo WP</span>
+            </button>
+
+            <button
               onClick={handleDownloadStatement}
-              className="bg-sky-600 hover:bg-sky-500 text-white font-extrabold px-4 py-3 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-sky-900/40 transition-transform active:scale-95"
+              className="bg-sky-600 hover:bg-sky-500 text-white font-extrabold px-3.5 py-3 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-sky-900/40 transition-transform active:scale-95"
             >
               <FileDown className="w-4 h-4" />
               <span>Estado de Cuenta PDF</span>
@@ -367,13 +421,24 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
                   </div>
                 )}
 
-                <button
-                  onClick={() => downloadPaymentReceiptPDF(p, clientInfo, activeCompany || undefined)}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-[10px] py-1.5 rounded-xl border border-slate-700 flex items-center justify-center space-x-1"
-                >
-                  <FileDown className="w-3 h-3" />
-                  <span>Recibo de Abono PDF</span>
-                </button>
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  <button
+                    onClick={() => handleShareWhatsAppAbono(p)}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] py-1.5 rounded-xl flex items-center justify-center space-x-1 shadow-xs"
+                    title="Compartir comprobante de abono a WhatsApp"
+                  >
+                    <Send className="w-3 h-3" />
+                    <span>Compartir WP</span>
+                  </button>
+
+                  <button
+                    onClick={() => downloadPaymentReceiptPDF(p, clientInfo, activeCompany || undefined)}
+                    className="bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-[10px] py-1.5 rounded-xl border border-slate-700 flex items-center justify-center space-x-1"
+                  >
+                    <FileDown className="w-3 h-3" />
+                    <span>Recibo PDF</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>

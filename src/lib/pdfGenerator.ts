@@ -290,8 +290,26 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
     y += 8;
   }
 
-  // Scale photo if present
-  if (hasScaleImg) {
+  // Scale photos if present (for individual scale entries or primary photo)
+  const entriesWithPhotos = record.scaleEntries?.filter(se => se.photoUrl && se.photoUrl.startsWith('data:image')) || [];
+  if (entriesWithPhotos.length > 0) {
+    entriesWithPhotos.forEach((se, i) => {
+      try {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(5, y, 70, 32, 'F');
+        doc.rect(5, y, 70, 32);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.text(`FOTO PESA #${i + 1} (${se.chickens} pollos - ${se.grossWeight.toFixed(1)} kg):`, 7, y + 4);
+        
+        const format = se.photoUrl!.includes('image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(se.photoUrl!, format, 8, y + 5.5, 64, 24);
+        y += 35;
+      } catch (e) {
+        console.warn('Error adding scale entry image to PDF:', e);
+      }
+    });
+  } else if (hasScaleImg) {
     try {
       doc.setFillColor(248, 250, 252);
       doc.rect(5, y, 70, 32, 'F');

@@ -276,17 +276,38 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
               </div>
             </div>
 
-            {/* Attached Scale Photo if present */}
-            {record.scaleImageUrl && (
+            {/* Attached Scale Photos for every entry */}
+            {record.scaleEntries && record.scaleEntries.some(s => Boolean(s.photoUrl)) ? (
+              <div className="space-y-3 pt-2">
+                <div className="text-center font-extrabold text-[10px] uppercase tracking-wider text-slate-800 border-t border-slate-300 pt-2">
+                  FOTOS DE PESAS DE BALANZA REGISTRADAS:
+                </div>
+                <div className="grid grid-cols-1 gap-2.5">
+                  {record.scaleEntries.map((se, idx) => se.photoUrl ? (
+                    <div key={se.id || idx} className="border-2 border-slate-800 rounded-xl p-2 text-center space-y-1 bg-slate-50">
+                      <div className="font-extrabold text-[10px] uppercase text-slate-900 flex justify-between px-1">
+                        <span>📷 Foto Pesa #{idx + 1} ({se.chickens} pollos)</span>
+                        <span className="text-emerald-700 font-mono font-black">{se.grossWeight.toFixed(2)} kg</span>
+                      </div>
+                      <img 
+                        src={se.photoUrl} 
+                        alt={`Foto Pesa #${idx + 1}`} 
+                        className="w-full h-40 object-cover rounded-lg border border-slate-300"
+                      />
+                    </div>
+                  ) : null)}
+                </div>
+              </div>
+            ) : record.scaleImageUrl ? (
               <div className="border-2 border-slate-800 rounded-xl p-2 text-center space-y-1 bg-slate-50">
-                <div className="font-bold text-[9px] uppercase text-slate-600">Foto Adjunta de Balanza Electrónica:</div>
+                <div className="font-bold text-[9px] uppercase text-slate-600">📷 Foto Adjunta de Balanza Electrónica:</div>
                 <img 
                   src={record.scaleImageUrl} 
                   alt="Foto Balanza" 
-                  className="w-full h-36 object-cover rounded-lg border border-slate-300"
+                  className="w-full h-40 object-cover rounded-lg border border-slate-300"
                 />
               </div>
-            )}
+            ) : null}
 
             <div className="text-center pt-2 border-t border-dashed border-slate-400 text-[10px] italic text-slate-600 space-y-0.5">
               <div>AvisControl - Sistema Corporativo Avícola</div>

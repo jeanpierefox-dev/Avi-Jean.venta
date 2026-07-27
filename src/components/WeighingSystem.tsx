@@ -587,17 +587,36 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                         </button>
                       </div>
                     ) : (
-                      <label className="cursor-pointer bg-white border border-dashed border-blue-300 hover:border-blue-500 p-2.5 rounded-xl flex items-center justify-center space-x-2 text-slate-700 transition-colors">
-                        <Camera className="w-4 h-4 text-blue-600" />
-                        <span className="text-xs font-bold">Tomar / Adjuntar Foto de Pesa #{index + 1}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
-                          className="hidden"
-                        />
-                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label className="cursor-pointer bg-white border border-dashed border-blue-300 hover:border-blue-500 p-2.5 rounded-xl flex items-center justify-center space-x-2 text-slate-700 transition-colors">
+                          <Camera className="w-4 h-4 text-blue-600" />
+                          <span className="text-xs font-bold">Tomar Foto Pesa #{index + 1}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
+                            className="hidden"
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const samplePhotos = [
+                              'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80',
+                              'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+                              'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80'
+                            ];
+                            const chosen = samplePhotos[index % samplePhotos.length];
+                            handleUpdateScaleEntry(entry.id, 'photoUrl', chosen);
+                          }}
+                          className="bg-white border border-slate-300 hover:border-slate-400 p-2.5 rounded-xl flex items-center justify-center space-x-1 text-slate-600 text-xs font-bold"
+                        >
+                          <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Foto Ejemplo Pesa #{index + 1}</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
