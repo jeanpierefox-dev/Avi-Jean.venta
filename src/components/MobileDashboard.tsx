@@ -34,7 +34,7 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
   const appGridItems = [
     {
       id: 'pesa',
-      title: 'Nueva Pesa',
+      title: 'Pesa Rápida',
       subtitle: 'Registrar balanza y foto',
       icon: Scale,
       badge: companyWeighings.length > 0 ? `${companyWeighings.length} hoy` : 'Listo',
@@ -150,39 +150,6 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
           </div>
         </div>
       </div>
-
-      {/* Direct Quick Weight Priority Hero Banner */}
-      {currentUser?.role !== 'cliente' && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 border border-blue-500 p-6 rounded-3xl shadow-md text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
-          <div className="flex items-center space-x-3.5 z-10">
-            <div className="p-3.5 bg-white/10 backdrop-blur rounded-2xl text-white shadow-inner ring-2 ring-white/20 shrink-0">
-              <Scale className="w-7 h-7 stroke-[2.5]" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-mono font-bold tracking-widest px-2 py-0.5 rounded bg-white/20 text-white border border-white/30 uppercase">
-                  Acceso Prioritario
-                </span>
-                <span className="text-[10px] font-bold text-emerald-300">● Listo para pesaje</span>
-              </div>
-              <h3 className="font-black text-base text-white tracking-tight mt-1">
-                Ingreso Rápido de Pesas (Balanza + Foto)
-              </h3>
-              <p className="text-xs text-blue-100">
-                Abono inmediato, descuento automático de galpón e impresión de ticket.
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => onSelectTab('pesa')}
-            className="bg-white hover:bg-slate-50 text-blue-800 font-black px-6 py-3 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-lg active:scale-95 transition-all self-start sm:self-auto shrink-0"
-          >
-            <Camera className="w-4 h-4 text-blue-600" />
-            <span>INGRESAR PESA RÁPIDA AHORA</span>
-          </button>
-        </div>
-      )}
 
       {/* Grid title */}
       <div className="flex items-center justify-between px-1">

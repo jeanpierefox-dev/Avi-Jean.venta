@@ -17,6 +17,7 @@ import {
   Clock,
   Layers,
   ArrowRight,
+  ArrowLeft,
   ShieldAlert,
   Camera,
   Image as ImageIcon,
@@ -50,7 +51,8 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
     { id: '1', chickens: 120, grossWeight: 288.0, photoUrl: '' }
   ]);
 
-  // Quick Pesa Form State
+  // Quick Pesa Form State & Single Input Toggle Mode
+  const [inputMode, setInputMode] = useState<'chickens' | 'weight'>('chickens');
   const [quickChickens, setQuickChickens] = useState<string>('');
   const [quickGrossWeight, setQuickGrossWeight] = useState<string>('');
   const [quickPhotoUrl, setQuickPhotoUrl] = useState<string>('');
@@ -75,9 +77,6 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
       id: `scale_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       chickens: chickensNum,
       grossWeight: weightNum,
-      tareWeight: 0,
-      netWeight: weightNum,
-      unitPrice: numericUnitPrice,
       photoUrl: quickPhotoUrl
     };
 
@@ -89,6 +88,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
 
   // Overall / Default scale image if not specified per entry
   const [scaleImageUrl, setScaleImageUrl] = useState<string>('');
+  const [viewingPhotoUrl, setViewingPhotoUrl] = useState<string | null>(null);
 
   // Quick Client Modal State
   const [showQuickClientModal, setShowQuickClientModal] = useState(false);
@@ -337,45 +337,17 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       
-      {/* Module Title Banner */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-sm text-slate-900">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center space-x-3.5">
-            {onSelectTab && (
-              <button
-                onClick={() => onSelectTab('dashboard')}
-                className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition-colors border border-slate-200 flex items-center justify-center"
-                title="Volver al Menú"
-              >
-                <ArrowRight className="w-5 h-5 rotate-180" />
-              </button>
-            )}
-            <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-sm">
-              <Scale className="w-6 h-6 stroke-[2.5]" />
-            </div>
-            <div>
-              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
-                Pesa Directa de Pollos (Múltiples Pesas)
-                <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-md font-mono font-bold">
-                  Soles Peruanos (S/)
-                </span>
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                Ingrese una o varias pesadas con foto individual. Limpieza automática para nuevos pesajes.
-              </p>
-            </div>
-          </div>
-
-          {onSelectTab && (
-            <button
-              onClick={() => onSelectTab('dashboard')}
-              className="self-start md:self-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-blue-700 font-bold text-xs rounded-2xl border border-slate-200 flex items-center gap-2"
-            >
-              <ArrowRight className="w-4 h-4 rotate-180" />
-              <span>Volver al Menú Principal</span>
-            </button>
-          )}
-        </div>
+      {/* Top Action Bar with Volver al Menú */}
+      <div className="flex items-center justify-between bg-white border border-slate-200/90 p-4 rounded-3xl shadow-2xs">
+        {onSelectTab ? (
+          <button
+            onClick={() => onSelectTab('dashboard')}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95"
+          >
+            <ArrowLeft className="w-4 h-4 text-blue-600" />
+            <span>Volver al Menú</span>
+          </button>
+        ) : <div />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -604,7 +576,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
             </div>
 
             {/* 2. FORMULARIO CON ICONOS PARA INGRESAR NUEVA PESA */}
-            <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-2xl p-4 space-y-3">
+            <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between border-b border-emerald-200/80 pb-2">
                 <span className="font-extrabold text-xs uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
                   <PlusCircle className="w-4 h-4 text-emerald-600" />
@@ -612,98 +584,146 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Cantidad de Pollo */}
-                <div>
-                  <label className="block text-[11px] font-extrabold text-slate-700 mb-1 flex items-center gap-1.5">
-                    <Bird className="w-4 h-4 text-amber-600" />
-                    <span>Cantidad de Pollos</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={quickChickens}
-                    onChange={(e) => setQuickChickens(e.target.value)}
-                    placeholder="ej. 120"
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-base font-black font-mono text-slate-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20"
-                  />
-                </div>
+              {/* Iconos Horizontales Interactivos como Pestañas de Selección */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setInputMode('chickens')}
+                  className={`p-2.5 rounded-xl border flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+                    inputMode === 'chickens'
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs ring-2 ring-amber-300/60'
+                      : 'bg-white/90 text-slate-700 border-emerald-200 hover:bg-white'
+                  }`}
+                >
+                  <Bird className={`w-5 h-5 shrink-0 ${inputMode === 'chickens' ? 'text-white' : 'text-amber-600'}`} />
+                  <span className="text-xs font-black">
+                    Pollos {quickChickens ? `(${quickChickens})` : ''}
+                  </span>
+                </button>
 
-                {/* Kilo */}
-                <div>
-                  <label className="block text-[11px] font-extrabold text-slate-700 mb-1 flex items-center gap-1.5">
-                    <Scale className="w-4 h-4 text-emerald-600" />
-                    <span>Peso Kilos (Balanza)</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={quickGrossWeight}
-                    onChange={(e) => setQuickGrossWeight(e.target.value)}
-                    placeholder="ej. 288.5"
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-base font-black font-mono text-emerald-700 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setInputMode('weight')}
+                  className={`p-2.5 rounded-xl border flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+                    inputMode === 'weight'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs ring-2 ring-emerald-300/60'
+                      : 'bg-white/90 text-slate-700 border-emerald-200 hover:bg-white'
+                  }`}
+                >
+                  <Scale className={`w-5 h-5 shrink-0 ${inputMode === 'weight' ? 'text-white' : 'text-emerald-600'}`} />
+                  <span className="text-xs font-black">
+                    Peso {quickGrossWeight ? `(${quickGrossWeight} kg)` : ''}
+                  </span>
+                </button>
+              </div>
 
-                {/* Agregar Foto */}
-                <div>
-                  <label className="block text-[11px] font-extrabold text-slate-700 mb-1 flex items-center gap-1.5">
-                    <Camera className="w-4 h-4 text-blue-600" />
-                    <span>Agregar Foto</span>
-                  </label>
-
-                  {quickPhotoUrl ? (
-                    <div className="relative rounded-xl overflow-hidden border border-emerald-400 bg-white h-10 flex items-center px-2">
-                      <img src={quickPhotoUrl} alt="Vista previa" className="w-7 h-7 object-cover rounded-lg mr-2" />
-                      <span className="text-[11px] text-emerald-800 font-bold truncate flex-1">Foto Adjuntada</span>
+              {/* Un Solo Cuadro de Ingreso Central */}
+              <div className="pt-1">
+                {inputMode === 'chickens' ? (
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center text-[11px] font-extrabold text-amber-900 px-1">
+                      <span>Ingresar Cantidad de Pollos (Aves)</span>
                       <button
                         type="button"
-                        onClick={() => setQuickPhotoUrl('')}
-                        className="p-1 bg-rose-500 text-white rounded-full hover:bg-rose-600"
+                        onClick={() => setInputMode('weight')}
+                        className="text-emerald-700 hover:underline font-bold text-[10px]"
                       >
-                        <X className="w-3 h-3" />
+                        Cambiar a Peso Kilos →
                       </button>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <label className="cursor-pointer bg-white border border-dashed border-blue-400 hover:border-blue-600 py-1.5 px-2 rounded-xl flex items-center justify-center space-x-1 text-slate-800 transition-colors shadow-2xs">
-                        <FolderOpen className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span className="text-[11px] font-bold truncate">Galeria</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleQuickPhotoUpload(e)}
-                          className="hidden"
-                        />
-                      </label>
-
-                      <label className="cursor-pointer bg-white border border-slate-300 hover:border-slate-400 py-1.5 px-2 rounded-xl flex items-center justify-center space-x-1 text-slate-800 transition-colors shadow-2xs">
-                        <Camera className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span className="text-[11px] font-bold truncate">Cámara</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          onChange={(e) => handleQuickPhotoUpload(e)}
-                          className="hidden"
-                        />
-                      </label>
+                    <input
+                      type="number"
+                      value={quickChickens}
+                      onChange={(e) => setQuickChickens(e.target.value)}
+                      placeholder="Ingrese cantidad de pollos (ej. 120)"
+                      autoFocus
+                      className="w-full bg-white border-2 border-amber-500 rounded-2xl px-4 py-3 text-lg sm:text-xl font-black font-mono text-slate-900 outline-none focus:ring-4 focus:ring-amber-500/20 text-center shadow-2xs"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center text-[11px] font-extrabold text-emerald-900 px-1">
+                      <span>Ingresar Peso Kilos (Balanza)</span>
+                      <button
+                        type="button"
+                        onClick={() => setInputMode('chickens')}
+                        className="text-amber-700 hover:underline font-bold text-[10px]"
+                      >
+                        ← Cambiar a Cantidad Pollos
+                      </button>
                     </div>
-                  )}
-                </div>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={quickGrossWeight}
+                      onChange={(e) => setQuickGrossWeight(e.target.value)}
+                      placeholder="Ingrese peso en kg (ej. 288.5)"
+                      autoFocus
+                      className="w-full bg-white border-2 border-emerald-500 rounded-2xl px-4 py-3 text-lg sm:text-xl font-black font-mono text-emerald-700 outline-none focus:ring-4 focus:ring-emerald-500/20 text-center shadow-2xs"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Debajo para poner la imagen de la pesa */}
+              <div className="pt-1 space-y-1.5">
+                <label className="block text-xs font-extrabold text-slate-700 flex items-center gap-1.5">
+                  <Camera className="w-4 h-4 text-blue-600" />
+                  <span>Imagen de la Pesa (Opcional)</span>
+                </label>
+
+                {quickPhotoUrl ? (
+                  <div className="relative rounded-xl overflow-hidden border border-emerald-400 bg-white h-11 flex items-center px-3">
+                    <img src={quickPhotoUrl} alt="Vista previa" className="w-8 h-8 object-cover rounded-lg mr-2" />
+                    <span className="text-xs text-emerald-800 font-bold truncate flex-1">Foto Adjuntada Correctamente</span>
+                    <button
+                      type="button"
+                      onClick={() => setQuickPhotoUrl('')}
+                      className="p-1 bg-rose-500 text-white rounded-full hover:bg-rose-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="cursor-pointer bg-white border border-dashed border-blue-400 hover:border-blue-600 py-2 px-3 rounded-xl flex items-center justify-center space-x-2 text-slate-800 transition-colors shadow-2xs">
+                      <FolderOpen className="w-4 h-4 text-blue-600 shrink-0" />
+                      <span className="text-xs font-extrabold">Galería</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleQuickPhotoUpload(e)}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <label className="cursor-pointer bg-white border border-slate-300 hover:border-slate-400 py-2 px-3 rounded-xl flex items-center justify-center space-x-2 text-slate-800 transition-colors shadow-2xs">
+                      <Camera className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="text-xs font-extrabold">Cámara</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => handleQuickPhotoUpload(e)}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
 
               <button
                 type="button"
                 onClick={handleAddQuickPesa}
                 disabled={!quickChickens && !quickGrossWeight}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-98"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-98"
               >
                 <Plus className="w-4 h-4" />
                 <span>+ AGREGAR PESA A LA LISTA</span>
               </button>
             </div>
 
-            {/* 3. LISTADO DE PESAS QUE SE VAN PONIENDO CON SU RESPECTIVA FOTO */}
+            {/* 3. LISTADO DE PESAS REGISTRADAS EN UN SOLO LISTADO */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <span className="font-extrabold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-2">
@@ -717,99 +737,71 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   Aún no se han registrado pesas. Utilice el formulario superior para agregar la primera pesa.
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="divide-y divide-slate-200/80 bg-slate-50 border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs">
                   {scaleEntries.map((entry, index) => {
                     const entryAvg = entry.chickens > 0 ? (entry.grossWeight / entry.chickens) : 0;
                     return (
                       <div
                         key={entry.id}
-                        className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 space-y-2.5 shadow-2xs"
+                        className="p-3 bg-white hover:bg-slate-50/80 flex items-center justify-between gap-2 text-xs transition-colors"
                       >
-                        <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
-                          <span className="font-extrabold text-xs text-blue-900 bg-blue-100/80 px-2.5 py-0.5 rounded-lg flex items-center gap-1.5">
-                            <Scale className="w-3.5 h-3.5 text-blue-600" />
-                            PESA #{index + 1}
+                        {/* Number Badge */}
+                        <div className="flex items-center space-x-2 shrink-0">
+                          <span className="font-mono font-black text-xs text-blue-900 bg-blue-100/90 px-2.5 py-1 rounded-lg">
+                            #{index + 1}
                           </span>
+                        </div>
 
-                          <div className="flex items-center space-x-3">
-                            <span className="text-[11px] font-mono text-slate-500">
-                              Promedio: <strong className="text-slate-800 font-extrabold">{entryAvg.toFixed(2)} kg/ave</strong>
-                            </span>
-
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveScaleEntry(entry.id)}
-                              className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
-                              title="Eliminar pesa"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                        {/* Values in clean single-line table columns */}
+                        <div className="flex-1 grid grid-cols-3 gap-1 text-slate-800 font-mono text-center">
+                          <div>
+                            <span className="text-[10px] text-slate-400 block font-sans">Pollos</span>
+                            <strong className="text-slate-900 font-extrabold">{entry.chickens} aves</strong>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block font-sans">Peso</span>
+                            <strong className="text-emerald-700 font-extrabold">{entry.grossWeight.toFixed(1)} kg</strong>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block font-sans">Promed.</span>
+                            <strong className="text-slate-700 font-semibold">{entryAvg.toFixed(2)} kg/a</strong>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                          <div>
-                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-0.5">Pollos (Aves)</label>
-                            <input
-                              type="number"
-                              value={entry.chickens === 0 ? '' : entry.chickens}
-                              onChange={(e) => handleUpdateScaleEntry(entry.id, 'chickens', e.target.value === '' ? 0 : parseInt(e.target.value))}
-                              className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-1.5 text-sm font-black font-mono outline-none focus:border-emerald-600"
-                            />
-                          </div>
+                        {/* Icon for Pesa Image View / Upload */}
+                        <div className="flex items-center space-x-2 shrink-0">
+                          {entry.photoUrl ? (
+                            <button
+                              type="button"
+                              onClick={() => setViewingPhotoUrl(entry.photoUrl)}
+                              className="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 rounded-xl flex items-center gap-1 font-extrabold text-[11px] shadow-2xs"
+                              title="Ver Imagen de la Pesa"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                              <span className="hidden sm:inline">Ver Foto</span>
+                            </button>
+                          ) : (
+                            <label className="cursor-pointer p-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300 rounded-xl flex items-center gap-1 text-[11px] font-bold" title="Adjuntar foto a esta pesa">
+                              <Camera className="w-3.5 h-3.5 text-slate-500" />
+                              <span className="hidden sm:inline">Foto</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
 
-                          <div>
-                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-0.5">Peso Balanza (kg)</label>
-                            <input
-                              type="number"
-                              step="0.1"
-                              value={entry.grossWeight === 0 ? '' : entry.grossWeight}
-                              onChange={(e) => handleUpdateScaleEntry(entry.id, 'grossWeight', e.target.value === '' ? 0 : parseFloat(e.target.value))}
-                              className="w-full bg-white border border-slate-300 text-emerald-700 rounded-xl px-3 py-1.5 text-sm font-black font-mono outline-none focus:border-emerald-600"
-                            />
-                          </div>
-
-                          {/* Foto de la Pesa */}
-                          <div>
-                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-0.5">Foto de Pesa #{index + 1}</label>
-                            {entry.photoUrl ? (
-                              <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white h-12 flex items-center">
-                                <img src={entry.photoUrl} alt={`Pesa ${index+1}`} className="w-full h-full object-cover" />
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateScaleEntry(entry.id, 'photoUrl', '')}
-                                  className="absolute top-1 right-1 p-0.5 bg-rose-600 text-white rounded-full shadow"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="grid grid-cols-2 gap-1">
-                                <label className="cursor-pointer bg-white border border-dashed border-blue-400 hover:border-blue-600 py-1 px-1.5 rounded-xl flex items-center justify-center space-x-1 text-slate-800 transition-colors">
-                                  <FolderOpen className="w-3 h-3 text-blue-600 shrink-0" />
-                                  <span className="text-[10px] font-bold truncate">Carpeta</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
-                                    className="hidden"
-                                  />
-                                </label>
-
-                                <label className="cursor-pointer bg-white border border-slate-300 hover:border-slate-400 py-1 px-1.5 rounded-xl flex items-center justify-center space-x-1 text-slate-800 transition-colors">
-                                  <Camera className="w-3 h-3 text-emerald-600 shrink-0" />
-                                  <span className="text-[10px] font-bold truncate">Cámara</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
-                                    className="hidden"
-                                  />
-                                </label>
-                              </div>
-                            )}
-                          </div>
+                          {/* Delete button */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveScaleEntry(entry.id)}
+                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
+                            title="Eliminar pesa"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     );
@@ -820,17 +812,42 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
           </div>
 
           {/* Notes / Observation */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs">
-            <label className="block text-xs font-bold text-slate-600 mb-1">
-              Observaciones del Pesaje (Opcional)
-            </label>
-            <input
-              type="text"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="ej. Galpón 1 Norte - Pollo en pie de calidad"
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-blue-500"
-            />
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs space-y-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">
+                Observaciones del Pesaje (Opcional)
+              </label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="ej. Galpón 1 Norte - Pollo en pie de calidad"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Direct Action Buttons at bottom of pesas section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handlePreviewTicket}
+                disabled={totalNetWeight <= 0 || !selectedClient}
+                className="w-full bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-blue-700 font-extrabold rounded-xl py-2.5 text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 border border-blue-200 transition-all"
+              >
+                <Eye className="w-4 h-4 text-blue-600" />
+                <span>VISUALIZAR TICKET</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSubmitWeighing}
+                disabled={isSubmitting || totalNetWeight <= 0 || !selectedClient}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold rounded-xl py-2.5 text-xs uppercase tracking-wider shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-95"
+              >
+                <Receipt className="w-4 h-4" />
+                <span>{isSubmitting ? 'Generando...' : 'GENERAR TICKET'}</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -838,85 +855,84 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
         {/* RIGHT COLUMN: Real-Time Total Calculations & Ticket Generator */}
         <div className="lg:col-span-5 space-y-6">
           
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-md relative overflow-hidden space-y-6 sticky top-20">
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm space-y-4 sticky top-20">
 
-            <div className="flex items-center justify-between border-b border-slate-200/90 pb-4">
-              <div className="flex items-center space-x-3">
-                <Receipt className="w-6 h-6 text-blue-600" />
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <Receipt className="w-5 h-5 text-blue-600" />
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-base">
-                    Monto a Cobrar (Soles)
+                  <h3 className="font-extrabold text-slate-900 text-sm">
+                    Cuadro de Totales ({scaleEntries.length} {scaleEntries.length === 1 ? 'pesa' : 'pesas'})
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Suma Total de {scaleEntries.length} {scaleEntries.length === 1 ? 'Pesa' : 'Pesas'}
-                  </p>
                 </div>
               </div>
 
-              <span className="text-[10px] font-mono px-2.5 py-1 bg-slate-100 text-blue-700 font-bold rounded-lg border border-slate-200">
-                {paymentType.toUpperCase()}
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-100 text-blue-700 font-bold rounded-lg border border-slate-200 uppercase">
+                {paymentType}
               </span>
             </div>
 
-            {/* Main Calculation Cards */}
-            <div className="space-y-3">
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-600">Total Pollos Vivos</span>
-                <span className="text-xl font-black text-slate-900 font-mono">{totalChickens} aves</span>
+            {/* Grid 2x2 de métricas balanceadas */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-slate-50 border border-slate-200/90 p-3 rounded-2xl">
+                <span className="text-[10px] font-bold text-slate-500 uppercase block">Total Pollos</span>
+                <span className="text-base font-black text-slate-900 font-mono">{totalChickens} aves</span>
               </div>
 
-              <div className="bg-blue-50/80 border border-blue-200 p-4 rounded-2xl flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-extrabold uppercase text-blue-800 block">Peso Neto Total</span>
-                  <span className="text-[11px] text-slate-500">Promedio: {averageWeightPerChicken.toFixed(2)} kg/ave</span>
-                </div>
-                <span className="text-2xl font-black text-blue-900 font-mono">
-                  {totalNetWeight.toFixed(2)} <span className="text-xs font-normal">kg</span>
-                </span>
+              <div className="bg-blue-50/80 border border-blue-200/90 p-3 rounded-2xl">
+                <span className="text-[10px] font-extrabold text-blue-800 uppercase block">Peso Neto Total</span>
+                <span className="text-base font-black text-blue-900 font-mono">{totalNetWeight.toFixed(1)} kg</span>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200/90 p-3 rounded-2xl">
+                <span className="text-[10px] font-bold text-slate-500 uppercase block">Promedio Peso</span>
+                <span className="text-xs font-bold text-slate-800 font-mono">{averageWeightPerChicken.toFixed(2)} kg/a</span>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200/90 p-3 rounded-2xl">
+                <span className="text-[10px] font-bold text-slate-500 uppercase block">Precio / Kilo</span>
+                <span className="text-xs font-bold text-slate-800 font-mono">S/ {numericUnitPrice.toFixed(2)}</span>
               </div>
             </div>
 
-            {/* Total Amount Big Banner */}
-            <div className="bg-slate-900 border-2 border-blue-600 p-5 rounded-2xl text-center space-y-1 shadow-sm text-white">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-300">
-                Monto Total a Cobrar en Soles
+            {/* Banner Destacado del Monto Total */}
+            <div className="bg-slate-900 border-2 border-blue-600 p-4 rounded-2xl text-center space-y-0.5 shadow-2xs text-white">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">
+                Monto Total a Cobrar
               </span>
-              <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
+              <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
                 S/ {totalAmountToCharge.toFixed(2)}
               </div>
-              <p className="text-[11px] text-slate-300">
-                {totalNetWeight.toFixed(1)} kg × S/ {unitPrice.toFixed(2)}/kg
-              </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="space-y-3 pt-2">
+            <div className="space-y-2 pt-1">
               <button
                 type="button"
                 onClick={handlePreviewTicket}
                 disabled={totalNetWeight <= 0 || !selectedClient}
-                className="w-full bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-blue-700 font-extrabold rounded-2xl py-3 text-xs uppercase tracking-wider flex items-center justify-center space-x-2 border border-blue-200 transition-all shadow-xs"
+                className="w-full bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-blue-700 font-extrabold rounded-xl py-2.5 text-xs uppercase tracking-wider flex items-center justify-center space-x-2 border border-blue-200 transition-all shadow-2xs"
               >
                 <Eye className="w-4 h-4 text-blue-600" />
-                <span>VISUALIZAR TICKET ANTES DE REGISTRAR</span>
+                <span>Visualizar Ticket</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleSubmitWeighing}
                 disabled={isSubmitting || totalNetWeight <= 0 || !selectedClient}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold rounded-2xl py-4 text-xs uppercase tracking-wider shadow-md flex items-center justify-center space-x-3 transition-transform active:scale-95"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold rounded-2xl py-3.5 text-xs uppercase tracking-wider shadow-md flex items-center justify-center space-x-2 transition-transform active:scale-95"
               >
-                <Receipt className="w-5 h-5" />
+                <Receipt className="w-4.5 h-4.5" />
                 <span>{isSubmitting ? 'Generando Ticket...' : 'GENERAR TICKET Y REGISTRAR'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl py-2.5 text-xs flex items-center justify-center space-x-1.5"
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl py-2 text-xs flex items-center justify-center space-x-1.5 transition-colors"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
+                <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
                 <span>Limpiar Todo para Nuevo Pesaje</span>
               </button>
             </div>
@@ -1008,6 +1024,35 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {viewingPhotoUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-slate-200 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 relative">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                <Camera className="w-5 h-5 text-blue-600" />
+                Fotografía de la Pesa / Balanza
+              </h3>
+              <button
+                onClick={() => setViewingPhotoUrl(null)}
+                className="p-1 text-slate-400 hover:text-slate-800 rounded-full hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="rounded-2xl overflow-hidden border border-slate-200 max-h-[65vh] flex items-center justify-center bg-slate-950">
+              <img src={viewingPhotoUrl} alt="Foto de Pesa" className="max-h-[60vh] w-auto object-contain" />
+            </div>
+            <button
+              onClick={() => setViewingPhotoUrl(null)}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3 rounded-2xl text-xs uppercase tracking-wider"
+            >
+              Cerrar Vista Previa
+            </button>
           </div>
         </div>
       )}

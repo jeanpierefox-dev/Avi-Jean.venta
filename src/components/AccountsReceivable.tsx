@@ -214,45 +214,22 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   return (
     <div className="space-y-4 pb-8">
       
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200/90 p-4 rounded-3xl shadow-xs">
-        <div className="flex items-center space-x-3">
-          {onSelectTab && (
-            <button
-              onClick={() => onSelectTab('dashboard')}
-              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors border border-slate-200 flex items-center justify-center shrink-0"
-              title="Volver al Menú"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-          )}
-          <div className="p-2.5 bg-amber-500 rounded-xl text-white shadow-xs shrink-0">
-            <Receipt className="w-5 h-5 stroke-[2.5]" />
-          </div>
-          <div>
-            <h1 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
-              Cuentas por Cobrar y Cobranzas
-            </h1>
-            <p className="text-[11px] text-slate-500 font-medium">
-              Gestión corporativa de abonos en Soles (S/), comprobantes y estados de cuenta.
-            </p>
-          </div>
-        </div>
+      {/* Top Action Bar with Volver al Menú */}
+      <div className="flex items-center justify-between bg-white border border-slate-200/90 p-4 rounded-3xl shadow-2xs">
+        {onSelectTab ? (
+          <button
+            onClick={() => onSelectTab('dashboard')}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95"
+          >
+            <ArrowLeft className="w-4 h-4 text-blue-600" />
+            <span>Volver al Menú</span>
+          </button>
+        ) : <div />}
 
-        <div className="flex flex-wrap items-center gap-2">
-          {onSelectTab && (
-            <button
-              onClick={() => onSelectTab('dashboard')}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1 border border-slate-200 transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Volver</span>
-            </button>
-          )}
-
+        <div className="flex items-center space-x-2">
           <button
             onClick={checkOverduePayments}
-            className="bg-slate-100 hover:bg-slate-200 text-amber-800 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 border border-amber-200 transition-colors"
+            className="bg-slate-100 hover:bg-slate-200 text-amber-800 font-bold px-3 py-2 rounded-xl text-xs flex items-center space-x-1.5 border border-amber-200 transition-colors"
           >
             <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
             <span>Verificar Vencidos</span>

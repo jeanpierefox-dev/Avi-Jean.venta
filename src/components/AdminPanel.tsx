@@ -15,6 +15,7 @@ import {
   Sparkles,
   AlertCircle,
   ArrowRight,
+  ArrowLeft,
   Image,
   Upload,
   X,
@@ -301,54 +302,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       
-      {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 text-white p-6 rounded-3xl shadow-md border border-purple-900/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          {onSelectTab && (
-            <button
-              onClick={() => onSelectTab('dashboard')}
-              className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-colors border border-white/10 flex items-center justify-center"
-              title="Volver al Menú Principal"
-            >
-              <ArrowRight className="w-5 h-5 rotate-180" />
-            </button>
-          )}
-          <div className="p-3 bg-purple-600 text-white rounded-2xl shadow-sm">
-            <ShieldCheck className="w-7 h-7" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
-              Panel de Administración Global
-              <span className="text-xs bg-purple-800/80 text-purple-100 border border-purple-600 px-2.5 py-0.5 rounded-full font-mono">
-                Multi-Empresa &amp; Roles
-              </span>
-            </h1>
-            <p className="text-xs text-purple-200 mt-0.5 font-medium">
-              Gestión de empresas creadas, logos para tickets, usuarios operador y acceso directo a ventas/clientes.
-            </p>
-          </div>
-        </div>
+      {/* Top Action Bar with Volver al Menú */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200/90 p-4 rounded-3xl shadow-2xs">
+        {onSelectTab ? (
+          <button
+            onClick={() => onSelectTab('dashboard')}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95 self-start sm:self-auto"
+          >
+            <ArrowLeft className="w-4 h-4 text-blue-600" />
+            <span>Volver al Menú</span>
+          </button>
+        ) : <div />}
 
         {/* Sub Tabs and Navigation */}
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
               if (window.confirm('¿Desea RESTAURAR EL SISTEMA a los datos por defecto de fábrica? Esta acción reiniciará los tickets y usuarios de prueba.')) {
                 resetSystemToDefault();
               }
             }}
-            className="bg-rose-900/80 hover:bg-rose-800 text-rose-100 font-bold px-3 py-2 rounded-xl text-xs flex items-center space-x-1.5 border border-rose-700 transition-colors shadow-xs"
+            className="bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold px-3 py-2 rounded-xl text-xs flex items-center space-x-1.5 border border-rose-200 transition-colors"
             title="Restaurar datos y estado de fábrica"
           >
-            <RotateCcw className="w-4 h-4 text-rose-200" />
+            <RotateCcw className="w-4 h-4 text-rose-600" />
             <span>Restaurar Sistema</span>
           </button>
 
-          <div className="flex bg-slate-950/80 p-1.5 rounded-xl border border-slate-800">
+          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => setActiveSubTab('empresas')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeSubTab === 'empresas' ? 'bg-purple-600 text-white shadow' : 'text-slate-300 hover:text-white'
+                activeSubTab === 'empresas' ? 'bg-purple-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Empresas ({companies.length})
@@ -356,7 +341,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
             <button
               onClick={() => setActiveSubTab('usuarios')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeSubTab === 'usuarios' ? 'bg-purple-600 text-white shadow' : 'text-slate-300 hover:text-white'
+                activeSubTab === 'usuarios' ? 'bg-purple-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Usuarios ({allUsers.length})

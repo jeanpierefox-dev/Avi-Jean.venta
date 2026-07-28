@@ -117,52 +117,28 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
     <div className="space-y-6 pb-12">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-slate-200/90 p-5 sm:p-6 rounded-3xl shadow-xs">
-        <div className="flex items-center space-x-4">
-          {onSelectTab && (
-            <button
-              onClick={() => onSelectTab('dashboard')}
-              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 transition-colors flex items-center justify-center shrink-0"
-              title="Volver al Menú"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          )}
-          <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-xs shrink-0">
-            <Package className="w-6 h-6 stroke-[2.5]" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              Gestión de Inventario y Galpones
-            </h1>
-            <p className="text-xs text-slate-500 font-medium">
-              Control corporativo de lotes, existencias vivas y balance por galpón.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {onSelectTab && (
-            <button
-              onClick={() => onSelectTab('dashboard')}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 border border-slate-200 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Volver al Menú</span>
-            </button>
-          )}
-
+      {/* Top Action Bar with Volver al Menú */}
+      <div className="flex items-center justify-between bg-white border border-slate-200/90 p-4 rounded-3xl shadow-2xs">
+        {onSelectTab ? (
           <button
-            onClick={() => {
-              resetForm();
-              setShowModal(true);
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-xs transition-transform active:scale-95"
+            onClick={() => onSelectTab('dashboard')}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95"
           >
-            <Plus className="w-4 h-4" />
-            <span>Ingresar Pollos a Galpón</span>
+            <ArrowLeft className="w-4 h-4 text-blue-600" />
+            <span>Volver al Menú</span>
           </button>
-        </div>
+        ) : <div />}
+
+        <button
+          onClick={() => {
+            resetForm();
+            setShowModal(true);
+          }}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-2xs transition-transform active:scale-95"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Ingresar Pollos a Galpón</span>
+        </button>
       </div>
 
       {/* Grid of Inventory Items */}

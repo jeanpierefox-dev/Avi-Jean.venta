@@ -108,7 +108,7 @@ const getInitialState = <T,>(key: string, fallback: T): T => {
     const saved = localStorage.getItem(key);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) return parsed as unknown as T;
     }
   } catch (e) {
     console.warn(`Error loading cached ${key}:`, e);
