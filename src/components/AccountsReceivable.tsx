@@ -214,34 +214,53 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   return (
     <div className="space-y-4 pb-8">
       
-      {/* Top Action Bar with Volver al Menú */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/90 p-4 rounded-3xl shadow-2xs">
-        {onSelectTab ? (
-          <button
-            onClick={() => onSelectTab('dashboard')}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4 text-blue-600" />
-            <span>Volver al Menú</span>
-          </button>
-        ) : <div />}
+      {/* Top Header Card for Accounts Receivable */}
+      <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg text-white space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-amber-600 rounded-2xl shadow-md border border-amber-400">
+              <Receipt className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
+                  JEANPIERE BARBOZA • 2025
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">• Gestión de Cobranzas</span>
+              </div>
+              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase">
+                Control de Cuentas por Cobrar y Registro de Abonos (S/)
+              </h1>
+            </div>
+          </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={checkOverduePayments}
-            className="bg-slate-100 hover:bg-slate-200 text-amber-800 font-bold px-3 py-2 rounded-xl text-xs flex items-center space-x-1.5 border border-amber-200 transition-colors"
-          >
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-            <span>Verificar Vencidos</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            {onSelectTab && (
+              <button
+                onClick={() => onSelectTab('dashboard')}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-100 font-extrabold px-3.5 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-700 transition-colors shadow-2xs active:scale-95 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 text-amber-400" />
+                <span>Volver al Menú</span>
+              </button>
+            )}
 
-          <button
-            onClick={handleExportPaymentsPDF}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition-transform active:scale-95"
-          >
-            <FileDown className="w-3.5 h-3.5" />
-            <span>Reporte PDF</span>
-          </button>
+            <button
+              onClick={checkOverduePayments}
+              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-extrabold px-3 py-2.5 rounded-2xl text-xs flex items-center space-x-1.5 border border-amber-500/40 transition-colors cursor-pointer"
+            >
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">Verificar Vencidos</span>
+            </button>
+
+            <button
+              onClick={handleExportPaymentsPDF}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3.5 py-2.5 rounded-2xl text-xs flex items-center space-x-1.5 shadow-md transition-transform active:scale-95 cursor-pointer"
+            >
+              <FileDown className="w-4 h-4" />
+              <span>Reporte PDF</span>
+            </button>
+          </div>
         </div>
       </div>
 

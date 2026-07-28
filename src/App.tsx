@@ -51,18 +51,34 @@ function MainAppContent() {
   // If no logged in user, show corporate auth landing with 1-tap quick access
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center p-4 animate-fade-in">
-        <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-slate-100 flex flex-col justify-center items-center p-4 animate-fade-in relative overflow-hidden">
+        {/* Background glow accents */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-md bg-white text-slate-900 border border-slate-200/80 rounded-3xl p-8 shadow-2xl space-y-6 relative z-10">
           
-          <div className="text-center space-y-2">
-            <div className="inline-flex p-3.5 bg-blue-600 rounded-2xl shadow-md shadow-blue-200 mb-1 ring-4 ring-blue-50">
-              <Scale className="w-8 h-8 text-white" />
+          <div className="text-center space-y-3">
+            <div className="inline-block relative">
+              <img 
+                src="/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg" 
+                alt="JEANPIERE BARBOZA 2025 Logo" 
+                className="w-20 h-20 mx-auto object-cover rounded-2xl bg-slate-900 border-2 border-amber-500 shadow-xl shadow-amber-500/10 ring-4 ring-amber-50"
+              />
+              <span className="absolute -bottom-2 -right-2 bg-blue-900 text-amber-400 font-mono font-black text-[9px] uppercase px-2 py-0.5 rounded-full border border-amber-400/40 shadow-sm">
+                2025
+              </span>
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900">
-              {appName}
-            </h1>
-            <p className="text-xs text-slate-500 font-medium">
-              Plataforma Corporativa de Gestión Avícola, Pesa Industrial y Cobranza (S/)
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 uppercase">
+                JEANPIERE BARBOZA
+              </h1>
+              <p className="text-xs font-bold text-amber-700 uppercase tracking-widest mt-0.5">
+                Control & Pesaje Avícola
+              </p>
+            </div>
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              Sistema Corporativo de Pesa Industrial de Pollos, Emisión de Tickets y Control de Cobranzas en Soles (S/)
             </p>
           </div>
 
@@ -74,40 +90,41 @@ function MainAppContent() {
             )}
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1 uppercase tracking-wider text-[11px]">Usuario de Ingreso</label>
+              <label className="block text-slate-700 font-black mb-1.5 uppercase tracking-wider text-[11px]">Usuario de Ingreso</label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="text"
                   required
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   placeholder="Ej. admin u operador1"
-                  className="w-full bg-white border border-slate-300 text-slate-900 font-medium rounded-xl pl-9 pr-3.5 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-bold rounded-xl pl-10 pr-3.5 py-2.5 outline-none focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1 uppercase tracking-wider text-[11px]">Contraseña Corporativa</label>
+              <label className="block text-slate-700 font-black mb-1.5 uppercase tracking-wider text-[11px]">Contraseña Corporativa</label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="password"
                   required
                   value={loginPass}
                   onChange={(e) => setLoginPass(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl pl-9 pr-3.5 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-bold rounded-xl pl-10 pr-3.5 py-2.5 outline-none focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-blue-200 transition-transform active:scale-95"
+              className="w-full bg-blue-900 hover:bg-blue-800 text-white font-black py-3.5 rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-blue-900/20 transition-all active:scale-98 cursor-pointer flex items-center justify-center space-x-2"
             >
-              Ingresar al Sistema Corporativo
+              <ShieldCheck className="w-4 h-4 text-amber-400" />
+              <span>Ingresar al Sistema Corporativo</span>
             </button>
           </form>
 

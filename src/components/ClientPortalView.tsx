@@ -241,185 +241,261 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       
-      {/* Top Action Bar with Volver al Menú */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/90 p-4 rounded-3xl shadow-2xs">
-        {onSelectTab ? (
-          <button
-            onClick={() => onSelectTab('dashboard')}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4 text-blue-600" />
-            <span>Volver al Menú</span>
-          </button>
-        ) : <div />}
+      {/* Top Header Card for Client Portal */}
+      <div className="bg-white border border-slate-200/90 p-5 rounded-3xl shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <img 
+              src={activeCompany?.logoUrl || "/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg"} 
+              alt="JEANPIERE BARBOZA 2025 Logo" 
+              className="w-12 h-12 rounded-2xl bg-slate-900 border-2 border-amber-500 shadow-md shadow-amber-500/10 object-cover shrink-0"
+            />
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-blue-100 text-blue-900 rounded-md border border-blue-200">
+                  Portal del Cliente
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">• Sync en Vivo</span>
+              </div>
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                {clientInfo.name}
+              </h1>
+              <p className="text-xs text-slate-500 font-medium">
+                {clientInfo.address || 'Cliente Frecuente'} {clientInfo.phone ? `• Tel: ${clientInfo.phone}` : ''}
+              </p>
+            </div>
+          </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setIsPaymentModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-2xs transition-transform active:scale-95"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Registrar / Enviar Pago Yape</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {onSelectTab && (
+              <button
+                onClick={() => onSelectTab('dashboard')}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-3.5 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 text-blue-600" />
+                <span>Volver al Menú</span>
+              </button>
+            )}
 
-          <button
-            onClick={handleDownloadStatement}
-            className="bg-sky-600 hover:bg-sky-500 text-white font-extrabold px-3 py-2.5 rounded-2xl text-xs flex items-center justify-center space-x-1.5 shadow-2xs transition-transform active:scale-95"
-          >
-            <FileDown className="w-4 h-4" />
-            <span className="hidden sm:inline">Estado Cuenta PDF</span>
-          </button>
+            <button
+              onClick={() => setIsPaymentModalOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-transform active:scale-95 cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Registrar Pago / Voucher</span>
+            </button>
 
-          <button
-            onClick={handleShareWhatsAppSaldo}
-            className="bg-slate-800 hover:bg-slate-700 text-white font-extrabold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-2xs transition-transform active:scale-95"
-            title="Compartir saldo actual por WhatsApp"
-          >
-            <Send className="w-4 h-4 text-emerald-400" />
-            <span className="hidden sm:inline">Compartir Saldo WP</span>
-          </button>
+            <button
+              onClick={handleDownloadStatement}
+              className="bg-blue-50 hover:bg-blue-100 text-blue-800 font-extrabold px-3.5 py-2.5 rounded-2xl text-xs border border-blue-200 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+            >
+              <FileDown className="w-4 h-4 text-blue-600" />
+              <span className="hidden sm:inline">Estado de Cuenta PDF</span>
+            </button>
+
+            <button
+              onClick={handleShareWhatsAppSaldo}
+              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-extrabold px-3.5 py-2.5 rounded-2xl text-xs border border-emerald-200 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+              title="Compartir saldo actual por WhatsApp"
+            >
+              <Send className="w-4 h-4 text-emerald-600" />
+              <span className="hidden sm:inline">Consultar Saldo WhatsApp</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Account Metrics in Soles */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg space-y-1">
-          <span className="text-xs font-bold text-slate-400">Saldo Pendiente a Pagar</span>
-          <div className="text-2xl font-black text-rose-400 font-mono">
+      {/* Account Metrics in Soles - High Visibility Light Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        
+        {/* Deuda Pendiente */}
+        <div className={`p-5 rounded-3xl border shadow-2xs transition-all ${
+          totalPendingDebt > 0 
+            ? 'bg-rose-50/70 border-rose-200' 
+            : 'bg-emerald-50/70 border-emerald-200'
+        }`}>
+          <div className="flex items-center justify-between mb-1">
+            <span className={`text-xs font-black uppercase tracking-wider ${
+              totalPendingDebt > 0 ? 'text-rose-800' : 'text-emerald-800'
+            }`}>
+              Deuda Pendiente
+            </span>
+            <span className={`p-1.5 rounded-xl ${
+              totalPendingDebt > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+            }`}>
+              <Receipt className="w-4 h-4" />
+            </span>
+          </div>
+          <div className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${
+            totalPendingDebt > 0 ? 'text-rose-700' : 'text-emerald-700'
+          }`}>
             S/ {totalPendingDebt.toFixed(2)}
           </div>
-          <p className="text-[11px] text-slate-500">Sincronizado en la nube</p>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg space-y-1">
-          <span className="text-xs font-bold text-slate-400">Límite de Crédito Autorizado</span>
-          <div className="text-2xl font-black text-emerald-400 font-mono">
-            S/ {(clientInfo?.creditLimit || 5000).toFixed(2)}
-          </div>
-          <p className="text-[11px] text-slate-500">{clientInfo?.creditDays || 15} días de crédito autorizado</p>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg space-y-1">
-          <span className="text-xs font-bold text-slate-400">Total Abonos / Pagos Realizados</span>
-          <div className="text-2xl font-black text-sky-400 font-mono">
-            S/ {clientPayments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
-          </div>
-          <p className="text-[11px] text-slate-500">
-            {clientPayments.length} comprobantes de pago subidos
+          <p className="text-[11px] text-slate-600 font-medium mt-1">
+            {pendingWeighings.length > 0 ? `${pendingWeighings.length} compra(s) por cancelar` : '¡Al día! Sin deudas pendientes'}
           </p>
         </div>
+
+        {/* Total Compras Realizadas */}
+        <div className="bg-white border border-slate-200 p-5 rounded-3xl shadow-2xs">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Total Compras</span>
+            <span className="p-1.5 bg-blue-50 text-blue-700 rounded-xl">
+              <Scale className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
+            S/ {clientWeighings.reduce((sum, w) => sum + w.totalAmount, 0).toFixed(2)}
+          </div>
+          <p className="text-[11px] text-slate-500 font-medium mt-1">
+            {clientWeighings.length} tickets de pesaje ({clientWeighings.reduce((sum, w) => sum + w.netWeight, 0).toFixed(1)} kg)
+          </p>
+        </div>
+
+        {/* Total Abonos Realizados */}
+        <div className="bg-white border border-slate-200 p-5 rounded-3xl shadow-2xs">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Abonos Realizados</span>
+            <span className="p-1.5 bg-emerald-50 text-emerald-700 rounded-xl">
+              <CheckCircle2 className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-emerald-700 font-mono tracking-tight">
+            S/ {clientPayments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
+          </div>
+          <p className="text-[11px] text-slate-500 font-medium mt-1">
+            {clientPayments.length} comprobante(s) registrado(s)
+          </p>
+        </div>
+
+        {/* Límite de Crédito */}
+        <div className="bg-white border border-slate-200 p-5 rounded-3xl shadow-2xs">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Límite de Crédito</span>
+            <span className="p-1.5 bg-amber-50 text-amber-700 rounded-xl">
+              <ShieldCheck className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
+            S/ {(clientInfo?.creditLimit || 5000).toFixed(2)}
+          </div>
+          <p className="text-[11px] text-slate-500 font-medium mt-1">
+            {clientInfo?.creditDays || 15} días de plazo autorizado
+          </p>
+        </div>
+
       </div>
 
-      {/* Filter Bar & Sub-Tabs for Cobranza / Mis Pesas */}
-      <div className="flex flex-wrap items-center gap-2 bg-slate-900/90 p-2 rounded-2xl border border-slate-800 shadow-md">
-        <button
-          onClick={() => setFilterMode('todas')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
-            filterMode === 'todas'
-              ? 'bg-sky-600 text-white shadow-md'
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-          }`}
-        >
-          <Scale className="w-4 h-4" />
-          <span>Todas las Pesas ({clientWeighings.length})</span>
-        </button>
-
+      {/* Navigation Filter Sub-Tabs - Formal Corporate Segmented Bar */}
+      <div className="flex flex-wrap items-center gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 shadow-md">
         <button
           onClick={() => setFilterMode('cobranza')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+          className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center space-x-2 cursor-pointer ${
             filterMode === 'cobranza'
-              ? 'bg-amber-600 text-white shadow-md'
-              : 'text-amber-400 hover:bg-slate-800'
+              ? 'bg-rose-600 text-white shadow-md ring-1 ring-rose-400'
+              : 'text-rose-300 hover:bg-slate-800'
           }`}
         >
-          <Receipt className="w-4 h-4" />
-          <span>Cobranza / Por Cobrar ({pendingWeighings.length})</span>
+          <Receipt className="w-4 h-4 text-rose-400" />
+          <span>Deudas Pendientes por Pagar ({pendingWeighings.length})</span>
           {totalPendingDebt > 0 && (
-            <span className="ml-1 bg-amber-950 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded-full border border-amber-800">
+            <span className="ml-1 bg-rose-950 text-rose-200 font-mono text-[10px] px-2 py-0.5 rounded-md border border-rose-800 font-black">
               S/ {totalPendingDebt.toFixed(0)}
             </span>
           )}
         </button>
 
         <button
+          onClick={() => setFilterMode('todas')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center space-x-2 cursor-pointer ${
+            filterMode === 'todas'
+              ? 'bg-blue-600 text-white shadow-md ring-1 ring-blue-400'
+              : 'text-slate-300 hover:bg-slate-800'
+          }`}
+        >
+          <Scale className="w-4 h-4 text-amber-400" />
+          <span>Todas las Compras ({clientWeighings.length})</span>
+        </button>
+
+        <button
           onClick={() => setFilterMode('pagados')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+          className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center space-x-2 cursor-pointer ${
             filterMode === 'pagados'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              ? 'bg-emerald-600 text-white shadow-md ring-1 ring-emerald-400'
+              : 'text-slate-300 hover:bg-slate-800'
           }`}
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>Pesas Canceladas ({paidWeighings.length})</span>
+          <span>Compras Canceladas ({paidWeighings.length})</span>
         </button>
 
         <button
           onClick={() => setFilterMode('vouchers')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+          className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center space-x-2 cursor-pointer ${
             filterMode === 'vouchers'
-              ? 'bg-purple-600 text-white shadow-md'
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              ? 'bg-amber-600 text-white shadow-md ring-1 ring-amber-400'
+              : 'text-slate-300 hover:bg-slate-800'
           }`}
         >
-          <QrCode className="w-4 h-4 text-purple-400" />
-          <span>Mis Abonos & Vouchers ({clientPayments.length})</span>
+          <QrCode className="w-4 h-4 text-amber-300" />
+          <span>Mis Abonos / Vouchers ({clientPayments.length})</span>
         </button>
       </div>
 
       {/* Submitted Vouchers & Payment Abonos History */}
       {(filterMode === 'vouchers' || filterMode === 'todas') && clientPayments.length > 0 && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-            <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
-              <QrCode className="w-4 h-4 text-emerald-400" />
-              Mis Vouchers de Pago y Abonos Registrados (Soles)
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-2xs space-y-4">
+          <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+            <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+              <QrCode className="w-4 h-4 text-emerald-600" />
+              Historial de Abonos y Vouchers Enviados
             </h3>
-            <span className="text-xs font-mono text-slate-400">{clientPayments.length} pagos</span>
+            <span className="text-xs font-mono font-bold text-slate-500">{clientPayments.length} pagos</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {clientPayments.map((p) => (
-              <div key={p.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-2">
+              <div key={p.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
                 <div className="flex justify-between items-center">
-                  <span className="font-extrabold text-emerald-400 font-mono text-sm">S/ {p.amount.toFixed(2)}</span>
-                  <span className="text-[9px] font-bold uppercase bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">
+                  <span className="font-black text-emerald-700 font-mono text-base">S/ {p.amount.toFixed(2)}</span>
+                  <span className="text-[10px] font-black uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 rounded-lg font-mono">
                     {p.method}
                   </span>
                 </div>
-                <div className="text-[10px] text-slate-400">
-                  Ref: <strong className="text-slate-200">{p.reference || 'N/A'}</strong>
+                <div className="text-xs text-slate-600 font-medium">
+                  Ref: <strong className="text-slate-900 font-mono">{p.reference || 'N/A'}</strong>
                 </div>
-                <div className="text-[10px] text-slate-500">
+                <div className="text-[11px] text-slate-500 font-medium">
                   Fecha: {new Date(p.createdAt).toLocaleString('es-ES')}
                 </div>
 
                 {p.voucherUrl && (
                   <div 
                     onClick={() => setActiveZoomImage(p.voucherUrl!)}
-                    className="relative group rounded-lg overflow-hidden border border-slate-800 h-24 bg-slate-900 cursor-pointer"
+                    className="relative group rounded-xl overflow-hidden border border-slate-300 h-28 bg-slate-100 cursor-pointer"
                   >
                     <img src={p.voucherUrl} alt="Voucher" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <span className="text-[10px] text-white font-bold bg-emerald-600 px-2 py-1 rounded">Ver Voucher</span>
+                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <span className="text-xs text-white font-bold bg-emerald-600 px-3 py-1 rounded-xl shadow">Ver Voucher</span>
                     </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                <div className="grid grid-cols-2 gap-2 pt-1">
                   <button
                     onClick={() => handleShareWhatsAppAbono(p)}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] py-1.5 rounded-xl flex items-center justify-center space-x-1 shadow-xs"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-2 rounded-xl flex items-center justify-center space-x-1.5 shadow-2xs cursor-pointer transition-colors"
                     title="Compartir comprobante de abono a WhatsApp"
                   >
-                    <Send className="w-3 h-3" />
+                    <Send className="w-3.5 h-3.5" />
                     <span>Compartir WP</span>
                   </button>
 
                   <button
                     onClick={() => downloadPaymentReceiptPDF(p, clientInfo, activeCompany || undefined)}
-                    className="bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-[10px] py-1.5 rounded-xl border border-slate-700 flex items-center justify-center space-x-1"
+                    className="bg-white hover:bg-slate-100 text-slate-800 font-extrabold text-xs py-2 rounded-xl border border-slate-300 flex items-center justify-center space-x-1.5 cursor-pointer transition-colors"
                   >
-                    <FileDown className="w-3 h-3" />
+                    <FileDown className="w-3.5 h-3.5 text-blue-600" />
                     <span>Recibo PDF</span>
                   </button>
                 </div>
@@ -429,35 +505,42 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
         </div>
       )}
 
-      {/* Weighing Tickets Cards & Scale Images */}
+      {/* Purchases / Weighing Tickets Cards with Scale Photos */}
       {filterMode !== 'vouchers' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-xl overflow-hidden p-5 space-y-4">
-          <div className="font-extrabold text-sm text-white flex justify-between items-center border-b border-slate-800 pb-3">
+        <div className="bg-white border border-slate-200 rounded-3xl shadow-2xs overflow-hidden p-5 space-y-4">
+          <div className="font-black text-sm text-slate-900 flex justify-between items-center border-b border-slate-200 pb-3">
             <span className="flex items-center gap-2">
-              <Camera className="w-4 h-4 text-emerald-400" />
-              {filterMode === 'cobranza' ? 'Pesas Pendientes de Cobranza (Por Pagar)' : filterMode === 'pagados' ? 'Pesas Canceladas' : 'Historial de Pesas y Foto de Balanza'}
+              <Camera className="w-4.5 h-4.5 text-blue-600" />
+              {filterMode === 'cobranza' ? 'Detalle de Compras y Deudas Pendientes por Cancelar' : filterMode === 'pagados' ? 'Historial de Compras Canceladas' : 'Historial Completo de Compras y Fotos de Balanza'}
             </span>
-            <span className="text-xs font-mono text-slate-400">{displayedWeighings.length} comprobantes</span>
+            <span className="text-xs font-mono font-extrabold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+              {displayedWeighings.length} compras
+            </span>
           </div>
 
           {displayedWeighings.length === 0 ? (
-            <div className="text-center py-10 text-slate-400 text-xs font-semibold">
-              No hay tickets de pesaje en esta categoría.
+            <div className="text-center py-12 text-slate-500 text-xs font-medium">
+              No hay registro de compras en esta categoría.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {displayedWeighings.map((w) => (
-                <div key={w.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3 hover:border-slate-700 transition-colors">
+                <div key={w.id} className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-3.5 hover:border-blue-300 transition-all shadow-2xs">
                   
+                  {/* Header Row */}
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-xs font-black text-emerald-400 font-mono">{w.ticketNumber}</span>
-                      <p className="text-[10px] text-slate-400">{new Date(w.createdAt).toLocaleString('es-ES')}</p>
+                      <span className="text-xs font-black text-blue-900 font-mono bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200">
+                        {w.ticketNumber}
+                      </span>
+                      <p className="text-[11px] text-slate-500 font-medium mt-1">
+                        {new Date(w.createdAt).toLocaleString('es-ES')}
+                      </p>
                     </div>
-                    <span className={`text-[10px] font-extrabold font-mono uppercase px-2 py-0.5 rounded-full ${
-                      w.paymentStatus === 'pagado' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300 border border-rose-800'
+                    <span className={`text-[10px] font-black font-mono uppercase px-3 py-1 rounded-full ${
+                      w.paymentStatus === 'pagado' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'
                     }`}>
-                      {w.paymentStatus}
+                      {w.paymentStatus === 'pagado' ? 'PAGADO' : 'PENDIENTE'}
                     </span>
                   </div>
 
@@ -465,79 +548,77 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
                   {w.scaleImageUrl ? (
                     <div 
                       onClick={() => setActiveZoomImage(w.scaleImageUrl!)}
-                      className="relative group rounded-xl overflow-hidden border border-slate-800 cursor-pointer bg-slate-900"
+                      className="relative group rounded-xl overflow-hidden border border-slate-200 cursor-pointer bg-slate-900"
                     >
                       <img 
                         src={w.scaleImageUrl} 
                         alt="Foto de la Balanza" 
-                        className="w-full h-36 object-cover group-hover:scale-105 transition-transform" 
+                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform" 
                       />
-                      <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <span className="bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-lg flex items-center space-x-1">
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Ver Foto Completa</span>
+                      <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <span className="bg-blue-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-lg flex items-center space-x-1">
+                          <Eye className="w-4 h-4" />
+                          <span>Ver Foto de Balanza</span>
                         </span>
                       </div>
-                      <div className="absolute bottom-2 left-2 bg-slate-950/80 backdrop-blur-sm text-[9px] text-emerald-300 font-bold px-2 py-0.5 rounded font-mono border border-emerald-800/60">
+                      <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-sm text-[10px] text-white font-bold px-2.5 py-0.5 rounded-md font-mono border border-slate-700">
                         📷 Foto Balanza Verificada
                       </div>
                     </div>
                   ) : (
-                    <div className="h-24 bg-slate-900/60 rounded-xl border border-slate-800/80 flex items-center justify-center text-slate-500 text-xs">
-                      Sin Foto de Balanza
+                    <div className="h-24 bg-slate-100 rounded-xl border border-dashed border-slate-300 flex items-center justify-center text-slate-400 text-xs font-medium">
+                      Sin foto adjunta de balanza
                     </div>
                   )}
 
-                  {/* Weighing Stats Breakdown */}
-                  <div className="grid grid-cols-3 gap-2 bg-slate-900/80 p-2.5 rounded-xl text-center border border-slate-800/60">
+                  {/* Weighing Stats Table Breakdown */}
+                  <div className="grid grid-cols-3 gap-2 bg-white p-2.5 rounded-xl text-center border border-slate-200 font-mono">
                     <div>
-                      <span className="text-[9px] text-slate-400 font-semibold block">Pollos</span>
-                      <span className="text-xs font-extrabold text-white font-mono">{w.chickenCount} aves</span>
+                      <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Aves</span>
+                      <span className="text-xs font-black text-slate-900">{w.chickenCount} <span className="text-[9px] font-normal text-slate-500">pollos</span></span>
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-400 font-semibold block">Peso Neto</span>
-                      <span className="text-xs font-black text-emerald-400 font-mono">{w.netWeight.toFixed(1)} kg</span>
+                      <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Peso Neto</span>
+                      <span className="text-xs font-black text-emerald-700">{w.netWeight.toFixed(1)} <span className="text-[9px] font-normal text-emerald-600">kg</span></span>
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-400 font-semibold block">Precio S/</span>
-                      <span className="text-xs font-bold text-slate-300 font-mono">S/ {w.unitPrice.toFixed(2)}</span>
+                      <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Precio S/</span>
+                      <span className="text-xs font-bold text-slate-800">S/ {w.unitPrice.toFixed(2)}</span>
                     </div>
                   </div>
 
-                  {/* Total Row & Actions */}
-                  <div className="flex flex-col gap-2 pt-1 border-t border-slate-900">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-semibold">Total a Pagar</span>
-                        <span className="text-base font-black text-white font-mono">S/ {w.totalAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[10px] text-slate-400 block font-semibold">Saldo Pendiente</span>
-                        <span className={`text-sm font-black font-mono ${w.pendingAmount > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                          S/ {w.pendingAmount.toFixed(2)}
-                        </span>
-                      </div>
+                  {/* Financial Row */}
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase block">Monto Total Compra</span>
+                      <span className="text-base font-black text-slate-900 font-mono">S/ {w.totalAmount.toFixed(2)}</span>
                     </div>
-
-                    {/* Action Buttons: WhatsApp with Image, Ticket PDF */}
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button
-                        onClick={() => handleShareWhatsAppPesa(w)}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-md transition-transform active:scale-95"
-                        title="Compartir ticket e imagen por WhatsApp"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Compartir WP (con Foto)</span>
-                      </button>
-
-                      <button
-                        onClick={() => handleDownloadPDF(w)}
-                        className="bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold px-3 py-2 rounded-xl border border-slate-700 text-xs flex items-center justify-center space-x-1.5"
-                      >
-                        <FileDown className="w-3.5 h-3.5" />
-                        <span>Ticket PDF</span>
-                      </button>
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase block">Saldo Deuda</span>
+                      <span className={`text-base font-black font-mono ${w.pendingAmount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                        S/ {w.pendingAmount.toFixed(2)}
+                      </span>
                     </div>
+                  </div>
+
+                  {/* Action Buttons: WhatsApp with Image, Ticket PDF */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      onClick={() => handleShareWhatsAppPesa(w)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-2xs transition-colors cursor-pointer"
+                      title="Compartir ticket e imagen por WhatsApp"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>WhatsApp (Con Foto)</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDownloadPDF(w)}
+                      className="bg-white hover:bg-slate-100 text-slate-800 font-extrabold px-3 py-2.5 rounded-xl border border-slate-300 text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                    >
+                      <FileDown className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Descargar Ticket</span>
+                    </button>
                   </div>
 
                 </div>
@@ -549,16 +630,16 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
 
       {/* Modal: Client Upload Payment Voucher / Abono */}
       {isPaymentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-slate-200 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center space-x-2">
-                <QrCode className="w-5 h-5 text-emerald-400" />
-                <span className="font-extrabold text-base text-white">Subir Voucher / Registrar Abono</span>
+                <QrCode className="w-5 h-5 text-emerald-600" />
+                <span className="font-extrabold text-base text-slate-900">Registrar Pago / Enviar Voucher</span>
               </div>
               <button
                 onClick={() => setIsPaymentModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -567,22 +648,22 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
             <form onSubmit={handleSubmitPayment} className="space-y-4">
               {/* Payment Method Selector (Efectivo, Yape, Plim, Transferencia) */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5 font-semibold">Tipo / Método de Pago</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Tipo / Método de Pago</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
-                    { id: 'efectivo', label: 'Efectivo 💵' },
                     { id: 'yape', label: 'Yape 📱' },
                     { id: 'plim', label: 'Plim 💳' },
-                    { id: 'transferencia', label: 'Transferencia 🏦' },
+                    { id: 'efectivo', label: 'Efectivo 💵' },
+                    { id: 'transferencia', label: 'Banco 🏦' },
                   ].map((m) => (
                     <button
                       key={m.id}
                       type="button"
                       onClick={() => setPayMethod(m.id as PaymentMethod)}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all ${
+                      className={`py-2 px-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${
                         payMethod === m.id
-                          ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
-                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       {m.label}
@@ -593,16 +674,16 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
 
               {/* Amount in Soles */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Monto Depositado en Soles (S/)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Monto Depositado en Soles (S/)</label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-3 text-emerald-400 font-mono font-bold text-sm">S/</span>
+                  <span className="absolute left-3.5 top-3 text-emerald-700 font-mono font-extrabold text-base">S/</span>
                   <input
                     type="number"
                     step="0.01"
                     value={payAmount}
                     onChange={(e) => setPayAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full bg-slate-950 border border-slate-700 text-white rounded-2xl pl-10 pr-3 py-2.5 text-base font-mono font-bold outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-2xl pl-10 pr-3 py-2.5 text-base font-mono font-bold outline-none focus:border-emerald-500 focus:bg-white"
                     required
                   />
                 </div>
@@ -610,21 +691,21 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
 
               {/* Operation Reference */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Número de Operación / Referencia</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Número de Operación / Referencia</label>
                 <input
                   type="text"
                   value={payRef}
                   onChange={(e) => setPayRef(e.target.value)}
                   placeholder="ej. OP-982134"
-                  className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3.5 py-2 text-xs outline-none focus:border-slate-700"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3.5 py-2 text-xs outline-none focus:border-emerald-500 focus:bg-white"
                 />
               </div>
 
               {/* Voucher Attachment */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Voucher / Recibo Adjunto</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Voucher / Capture de Pago</label>
                 {payVoucherUrl ? (
-                  <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950">
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-300 bg-slate-100">
                     <img src={payVoucherUrl} alt="Voucher" className="w-full h-36 object-cover" />
                     <button
                       type="button"
@@ -636,19 +717,19 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    <label className="cursor-pointer bg-slate-950 border border-dashed border-emerald-500/50 hover:border-emerald-400 p-3 rounded-2xl flex flex-col items-center justify-center text-center space-y-1">
-                      <Upload className="w-5 h-5 text-emerald-400" />
-                      <span className="text-[11px] font-bold text-white">Subir Voucher (Galería / PC)</span>
+                    <label className="cursor-pointer bg-emerald-50/60 border border-dashed border-emerald-400 hover:border-emerald-600 p-3 rounded-2xl flex flex-col items-center justify-center text-center space-y-1 transition-colors">
+                      <Upload className="w-5 h-5 text-emerald-600" />
+                      <span className="text-[11px] font-bold text-emerald-900">Subir Voucher (Galería / Foto)</span>
                       <input type="file" accept="image/*" onChange={handleVoucherUpload} className="hidden" />
                     </label>
 
                     <button
                       type="button"
                       onClick={handlePresetVoucher}
-                      className="bg-slate-950 border border-slate-800 hover:border-slate-700 p-3 rounded-2xl flex flex-col items-center justify-center text-center space-y-1"
+                      className="bg-slate-50 border border-slate-200 hover:bg-slate-100 p-3 rounded-2xl flex flex-col items-center justify-center text-center space-y-1 transition-colors cursor-pointer"
                     >
-                      <Camera className="w-5 h-5 text-sky-400" />
-                      <span className="text-[11px] font-bold text-slate-300">Voucher Ejemplo</span>
+                      <Camera className="w-5 h-5 text-blue-600" />
+                      <span className="text-[11px] font-bold text-slate-700">Voucher de Prueba</span>
                     </button>
                   </div>
                 )}
@@ -658,7 +739,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
               <button
                 type="submit"
                 disabled={isSubmittingPay}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-2xl py-3.5 text-xs shadow-lg shadow-emerald-900/40 flex items-center justify-center space-x-2 transition-transform active:scale-95"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl py-3.5 text-xs shadow-md flex items-center justify-center space-x-2 transition-transform active:scale-95 cursor-pointer"
               >
                 <Send className="w-4 h-4" />
                 <span>{isSubmittingPay ? 'Enviando Pago...' : 'ENVIAR ABONO A EMPRESA'}</span>
@@ -670,21 +751,21 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
 
       {/* Lightbox Zoom Modal for Scale Photos & Vouchers */}
       {activeZoomImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in">
-          <div className="relative max-w-2xl w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden p-3 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
+          <div className="relative max-w-2xl w-full bg-white border border-slate-200 rounded-3xl overflow-hidden p-3 shadow-2xl">
             <button
               onClick={() => setActiveZoomImage(null)}
-              className="absolute top-4 right-4 p-2 bg-slate-950/80 hover:bg-rose-600 text-white rounded-full transition-colors z-10"
+              className="absolute top-4 right-4 p-2 bg-slate-900/80 hover:bg-rose-600 text-white rounded-full transition-colors z-10 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
             <img 
               src={activeZoomImage} 
               alt="Comprobante Ampliado" 
-              className="w-full max-h-[80vh] object-contain rounded-2xl" 
+              className="w-full max-h-[80vh] object-contain rounded-2xl bg-slate-950" 
             />
-            <div className="p-3 text-center text-xs text-slate-300 font-mono font-bold">
-              Comprobante Digital Oficial
+            <div className="p-2 text-center text-xs text-slate-600 font-mono font-bold">
+              Comprobante Digital Verificado - JEANPIERE BARBOZA
             </div>
           </div>
         </div>

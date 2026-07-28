@@ -337,17 +337,36 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       
-      {/* Top Action Bar with Volver al Menú */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/90 p-4 rounded-3xl shadow-2xs">
-        {onSelectTab ? (
-          <button
-            onClick={() => onSelectTab('dashboard')}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4 text-blue-600" />
-            <span>Volver al Menú</span>
-          </button>
-        ) : <div />}
+      {/* Top Header Card for Weighing System */}
+      <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg text-white space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-blue-600 rounded-2xl shadow-md border border-blue-400">
+              <Scale className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
+                  JEANPIERE BARBOZA • 2025
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">• Operación de Balanza</span>
+              </div>
+              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase">
+                Sistema de Pesaje Industrial y Generación de Tickets
+              </h1>
+            </div>
+          </div>
+
+          {onSelectTab && (
+            <button
+              onClick={() => onSelectTab('dashboard')}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-100 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-700 transition-colors shadow-2xs active:scale-95 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 text-amber-400" />
+              <span>Volver al Menú</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -726,86 +745,92 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
             {/* 3. LISTADO DE PESAS REGISTRADAS EN UN SOLO LISTADO */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="font-extrabold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                <span className="font-extrabold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
                   <Scale className="w-4 h-4 text-blue-600" />
-                  Listado de Pesas Registradas ({scaleEntries.length})
+                  Detalle de Pesas ({scaleEntries.length})
                 </span>
+                {scaleEntries.length > 0 && (
+                  <span className="text-[11px] font-mono font-extrabold text-blue-800 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200">
+                    Suma: {totalChickens} aves | {totalGrossWeight.toFixed(1)} kg
+                  </span>
+                )}
               </div>
 
               {scaleEntries.length === 0 ? (
-                <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-6 text-center text-slate-500 text-xs">
+                <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-6 text-center text-slate-500 text-xs font-medium">
                   Aún no se han registrado pesas. Utilice el formulario superior para agregar la primera pesa.
                 </div>
               ) : (
-                <div className="divide-y divide-slate-200/80 bg-slate-50 border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs">
-                  {scaleEntries.map((entry, index) => {
-                    const entryAvg = entry.chickens > 0 ? (entry.grossWeight / entry.chickens) : 0;
-                    return (
-                      <div
-                        key={entry.id}
-                        className="p-3 bg-white hover:bg-slate-50/80 flex items-center justify-between gap-2 text-xs transition-colors"
-                      >
-                        {/* Number Badge */}
-                        <div className="flex items-center space-x-2 shrink-0">
-                          <span className="font-mono font-black text-xs text-blue-900 bg-blue-100/90 px-2.5 py-1 rounded-lg">
-                            #{index + 1}
-                          </span>
-                        </div>
+                <div className="overflow-x-auto rounded-2xl border border-slate-200/90 shadow-2xs bg-white">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-100/90 text-slate-700 font-black uppercase text-[10px] tracking-wider border-b border-slate-200">
+                        <th className="py-2.5 px-3 text-center w-16 whitespace-nowrap"># Pesa</th>
+                        <th className="py-2.5 px-3 text-center whitespace-nowrap">Pollos (Aves)</th>
+                        <th className="py-2.5 px-3 text-center whitespace-nowrap">Peso Bruto</th>
+                        <th className="py-2.5 px-3 text-center whitespace-nowrap hidden sm:table-cell">Promedio</th>
+                        <th className="py-2.5 px-3 text-right whitespace-nowrap">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-mono">
+                      {scaleEntries.map((entry, index) => {
+                        const entryAvg = entry.chickens > 0 ? (entry.grossWeight / entry.chickens) : 0;
+                        return (
+                          <tr key={entry.id} className="hover:bg-blue-50/40 transition-colors">
+                            <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                              <span className="font-mono font-black text-xs text-blue-900 bg-blue-100/80 border border-blue-200/80 px-2.5 py-1 rounded-lg">
+                                #{index + 1}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-center font-black text-slate-900 whitespace-nowrap">
+                              {entry.chickens} <span className="text-[10px] text-slate-500 font-normal">aves</span>
+                            </td>
+                            <td className="py-2.5 px-3 text-center font-black text-emerald-700 whitespace-nowrap">
+                              {entry.grossWeight.toFixed(1)} <span className="text-[10px] text-emerald-600 font-normal">kg</span>
+                            </td>
+                            <td className="py-2.5 px-3 text-center font-extrabold text-slate-700 hidden sm:table-cell whitespace-nowrap">
+                              {entryAvg.toFixed(2)} <span className="text-[10px] text-slate-500 font-normal">kg/a</span>
+                            </td>
+                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end space-x-1.5">
+                                {entry.photoUrl ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewingPhotoUrl(entry.photoUrl)}
+                                    className="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 rounded-xl flex items-center gap-1 font-extrabold text-[11px] shadow-2xs transition-colors cursor-pointer"
+                                    title="Ver Imagen de la Pesa"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span className="hidden sm:inline">Foto</span>
+                                  </button>
+                                ) : (
+                                  <label className="cursor-pointer p-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 rounded-xl flex items-center gap-1 text-[11px] font-bold transition-colors" title="Adjuntar foto a esta pesa">
+                                    <Camera className="w-3.5 h-3.5 text-slate-500" />
+                                    <span className="hidden sm:inline">Foto</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
+                                      className="hidden"
+                                    />
+                                  </label>
+                                )}
 
-                        {/* Values in clean single-line table columns */}
-                        <div className="flex-1 grid grid-cols-3 gap-1 text-slate-800 font-mono text-center">
-                          <div>
-                            <span className="text-[10px] text-slate-400 block font-sans">Pollos</span>
-                            <strong className="text-slate-900 font-extrabold">{entry.chickens} aves</strong>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-400 block font-sans">Peso</span>
-                            <strong className="text-emerald-700 font-extrabold">{entry.grossWeight.toFixed(1)} kg</strong>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-400 block font-sans">Promed.</span>
-                            <strong className="text-slate-700 font-semibold">{entryAvg.toFixed(2)} kg/a</strong>
-                          </div>
-                        </div>
-
-                        {/* Icon for Pesa Image View / Upload */}
-                        <div className="flex items-center space-x-2 shrink-0">
-                          {entry.photoUrl ? (
-                            <button
-                              type="button"
-                              onClick={() => setViewingPhotoUrl(entry.photoUrl)}
-                              className="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 rounded-xl flex items-center gap-1 font-extrabold text-[11px] shadow-2xs"
-                              title="Ver Imagen de la Pesa"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-emerald-600" />
-                              <span className="hidden sm:inline">Ver Foto</span>
-                            </button>
-                          ) : (
-                            <label className="cursor-pointer p-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300 rounded-xl flex items-center gap-1 text-[11px] font-bold" title="Adjuntar foto a esta pesa">
-                              <Camera className="w-3.5 h-3.5 text-slate-500" />
-                              <span className="hidden sm:inline">Foto</span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
-                                className="hidden"
-                              />
-                            </label>
-                          )}
-
-                          {/* Delete button */}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveScaleEntry(entry.id)}
-                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
-                            title="Eliminar pesa"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveScaleEntry(entry.id)}
+                                  className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-200 transition-colors cursor-pointer"
+                                  title="Eliminar pesa"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
@@ -861,79 +886,90 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
               <div className="flex items-center space-x-2.5">
                 <Receipt className="w-5 h-5 text-blue-600" />
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm">
-                    Cuadro de Totales ({scaleEntries.length} {scaleEntries.length === 1 ? 'pesa' : 'pesas'})
+                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                    Resumen Total de Pesas ({scaleEntries.length} {scaleEntries.length === 1 ? 'pesa' : 'pesas'})
                   </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Cálculo automático de balanza en Soles (S/)
+                  </p>
                 </div>
               </div>
 
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-100 text-blue-700 font-bold rounded-lg border border-slate-200 uppercase">
+              <span className="text-[10px] font-mono px-2.5 py-1 bg-blue-50 text-blue-700 font-extrabold rounded-xl border border-blue-200 uppercase">
                 {paymentType}
               </span>
             </div>
 
-            {/* Grid 2x2 de métricas balanceadas */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-50 border border-slate-200/90 p-3 rounded-2xl">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Total Pollos</span>
-                <span className="text-base font-black text-slate-900 font-mono">{totalChickens} aves</span>
+            {/* Grid de métricas completas de pesaje */}
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
+              <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Pollos</span>
+                <span className="text-base sm:text-lg font-black text-slate-900 font-mono">{totalChickens} <span className="text-xs font-normal text-slate-500">aves</span></span>
               </div>
 
               <div className="bg-blue-50/80 border border-blue-200/90 p-3 rounded-2xl">
-                <span className="text-[10px] font-extrabold text-blue-800 uppercase block">Peso Neto Total</span>
-                <span className="text-base font-black text-blue-900 font-mono">{totalNetWeight.toFixed(1)} kg</span>
+                <span className="text-[10px] font-extrabold text-blue-800 uppercase tracking-wider block">Peso Neto Total</span>
+                <span className="text-base sm:text-lg font-black text-blue-900 font-mono">{totalNetWeight.toFixed(1)} <span className="text-xs font-normal text-blue-700">kg</span></span>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200/90 p-3 rounded-2xl">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Promedio Peso</span>
+              <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-2xl">
+                <span className="text-[10px] font-bold text-slate-500 uppercase block">Peso Bruto</span>
+                <span className="text-xs font-bold text-slate-800 font-mono">{totalGrossWeight.toFixed(1)} kg</span>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-2xl">
+                <span className="text-[10px] font-bold text-slate-500 uppercase block">Promedio / Ave</span>
                 <span className="text-xs font-bold text-slate-800 font-mono">{averageWeightPerChicken.toFixed(2)} kg/a</span>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200/90 p-3 rounded-2xl">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Precio / Kilo</span>
-                <span className="text-xs font-bold text-slate-800 font-mono">S/ {numericUnitPrice.toFixed(2)}</span>
+              <div className="col-span-2 bg-emerald-50/60 border border-emerald-200/80 p-2.5 rounded-2xl flex justify-between items-center">
+                <span className="text-[11px] font-extrabold text-emerald-900 uppercase">Precio por Kilo:</span>
+                <span className="text-sm font-black text-emerald-800 font-mono">S/ {numericUnitPrice.toFixed(2)} / kg</span>
               </div>
             </div>
 
-            {/* Banner Destacado del Monto Total */}
-            <div className="bg-slate-900 border-2 border-blue-600 p-4 rounded-2xl text-center space-y-0.5 shadow-2xs text-white">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">
-                Monto Total a Cobrar
+            {/* Banner Destacado del Monto Total a Cobrar */}
+            <div className="bg-slate-900 border-2 border-blue-600 p-4 rounded-2xl text-center space-y-1 shadow-xs text-white">
+              <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-blue-300 block">
+                MONTO TOTAL A COBRAR EN SOLES
               </span>
-              <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
+              <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
                 S/ {totalAmountToCharge.toFixed(2)}
               </div>
+              <p className="text-[10px] text-slate-300 font-mono">
+                {totalNetWeight.toFixed(1)} kg × S/ {numericUnitPrice.toFixed(2)} / kg
+              </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="space-y-2 pt-1">
+            <div className="space-y-2.5 pt-1">
               <button
                 type="button"
                 onClick={handlePreviewTicket}
                 disabled={totalNetWeight <= 0 || !selectedClient}
-                className="w-full bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-blue-700 font-extrabold rounded-xl py-2.5 text-xs uppercase tracking-wider flex items-center justify-center space-x-2 border border-blue-200 transition-all shadow-2xs"
+                className="w-full bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-blue-700 font-extrabold rounded-xl py-3 text-xs uppercase tracking-wider flex items-center justify-center space-x-2 border border-blue-200 transition-all shadow-2xs cursor-pointer"
               >
                 <Eye className="w-4 h-4 text-blue-600" />
-                <span>Visualizar Ticket</span>
+                <span>Visualizar Ticket (Previa)</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleSubmitWeighing}
                 disabled={isSubmitting || totalNetWeight <= 0 || !selectedClient}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold rounded-2xl py-3.5 text-xs uppercase tracking-wider shadow-md flex items-center justify-center space-x-2 transition-transform active:scale-95"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold rounded-2xl py-3.5 text-xs uppercase tracking-wider shadow-md flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer"
               >
                 <Receipt className="w-4.5 h-4.5" />
-                <span>{isSubmitting ? 'Generando Ticket...' : 'GENERAR TICKET Y REGISTRAR'}</span>
+                <span>{isSubmitting ? 'Generando Ticket...' : 'GENERAR TICKET Y REGISTRAR VENTA'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl py-2 text-xs flex items-center justify-center space-x-1.5 transition-colors"
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl py-2 text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-                <span>Limpiar Todo para Nuevo Pesaje</span>
+                <span>Limpiar Formulario para Nuevo Pesaje</span>
               </button>
             </div>
           </div>

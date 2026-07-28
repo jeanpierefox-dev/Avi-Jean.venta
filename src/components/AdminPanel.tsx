@@ -302,59 +302,78 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       
-      {/* Top Action Bar with Volver al Menú */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200/90 p-4 rounded-3xl shadow-2xs">
-        {onSelectTab ? (
-          <button
-            onClick={() => onSelectTab('dashboard')}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95 self-start sm:self-auto"
-          >
-            <ArrowLeft className="w-4 h-4 text-blue-600" />
-            <span>Volver al Menú</span>
-          </button>
-        ) : <div />}
+      {/* Top Header Card for Admin Panel */}
+      <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg text-white space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-purple-600 rounded-2xl shadow-md border border-purple-400">
+              <ShieldCheck className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
+                  JEANPIERE BARBOZA • 2025
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">• Panel de Administración</span>
+              </div>
+              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase">
+                Gestión Empresarial, Seguridad y Control de Usuarios
+              </h1>
+            </div>
+          </div>
 
-        {/* Sub Tabs and Navigation */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => {
-              if (window.confirm('¿Desea RESTAURAR EL SISTEMA a los datos por defecto de fábrica? Esta acción reiniciará los tickets y usuarios de prueba.')) {
-                resetSystemToDefault();
-              }
-            }}
-            className="bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold px-3 py-2 rounded-xl text-xs flex items-center space-x-1.5 border border-rose-200 transition-colors"
-            title="Restaurar datos y estado de fábrica"
-          >
-            <RotateCcw className="w-4 h-4 text-rose-600" />
-            <span>Restaurar Sistema</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            {onSelectTab && (
+              <button
+                onClick={() => onSelectTab('dashboard')}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-100 font-extrabold px-3.5 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-700 transition-colors shadow-2xs active:scale-95 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 text-amber-400" />
+                <span>Volver al Menú</span>
+              </button>
+            )}
 
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
-              onClick={() => setActiveSubTab('empresas')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeSubTab === 'empresas' ? 'bg-purple-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              onClick={() => {
+                if (window.confirm('¿Desea RESTAURAR EL SISTEMA a los datos por defecto de fábrica? Esta acción reiniciará los tickets y usuarios de prueba.')) {
+                  resetSystemToDefault();
+                }
+              }}
+              className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold px-3 py-2.5 rounded-2xl text-xs flex items-center space-x-1.5 border border-rose-500/40 transition-colors cursor-pointer"
+              title="Restaurar datos y estado de fábrica"
             >
-              Empresas ({companies.length})
-            </button>
-            <button
-              onClick={() => setActiveSubTab('usuarios')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeSubTab === 'usuarios' ? 'bg-purple-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Usuarios ({allUsers.length})
-            </button>
-            <button
-              onClick={() => setActiveSubTab('permisos')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeSubTab === 'permisos' ? 'bg-purple-600 text-white shadow' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              Niveles de Seguridad
+              <RotateCcw className="w-4 h-4 text-rose-400" />
+              <span className="hidden sm:inline">Restaurar Sistema</span>
             </button>
           </div>
+        </div>
+
+        {/* Sub-Tabs Selector */}
+        <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-950/80 rounded-2xl border border-slate-800">
+          <button
+            onClick={() => setActiveSubTab('empresas')}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              activeSubTab === 'empresas' ? 'bg-purple-600 text-white shadow-md ring-1 ring-purple-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            Empresas ({companies.length})
+          </button>
+          <button
+            onClick={() => setActiveSubTab('usuarios')}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              activeSubTab === 'usuarios' ? 'bg-purple-600 text-white shadow-md ring-1 ring-purple-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            Usuarios ({allUsers.length})
+          </button>
+          <button
+            onClick={() => setActiveSubTab('permisos')}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              activeSubTab === 'permisos' ? 'bg-purple-600 text-white shadow-md ring-1 ring-purple-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            Niveles de Seguridad
+          </button>
         </div>
       </div>
 

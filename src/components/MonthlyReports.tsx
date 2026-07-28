@@ -42,33 +42,52 @@ export const MonthlyReports: React.FC<MonthlyReportsProps> = ({ onSelectTab }) =
   return (
     <div className="space-y-6 pb-12">
       
-      {/* Top Action Bar with Volver al Menú */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/90 p-4 rounded-3xl shadow-2xs">
-        {onSelectTab ? (
-          <button
-            onClick={() => onSelectTab('dashboard')}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-300 transition-colors shadow-2xs active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4 text-blue-600" />
-            <span>Volver al Menú</span>
-          </button>
-        ) : <div />}
+      {/* Top Header Card for Monthly Reports */}
+      <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg text-white space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-emerald-600 rounded-2xl shadow-md border border-emerald-400">
+              <BarChart3 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
+                  JEANPIERE BARBOZA • 2025
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">• Consolidado Mensual</span>
+              </div>
+              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase">
+                Reportes Financieros y Balance de Ventas en PDF
+              </h1>
+            </div>
+          </div>
 
-        <div className="flex items-center space-x-2">
-          <input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-emerald-500"
-          />
+          <div className="flex items-center space-x-2">
+            {onSelectTab && (
+              <button
+                onClick={() => onSelectTab('dashboard')}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-100 font-extrabold px-3.5 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-slate-700 transition-colors shadow-2xs active:scale-95 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 text-amber-400" />
+                <span>Volver al Menú</span>
+              </button>
+            )}
 
-          <button
-            onClick={handleExportPDF}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-2xs transition-transform active:scale-95"
-          >
-            <FileDown className="w-4 h-4" />
-            <span>Exportar PDF</span>
-          </button>
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-slate-800 border border-slate-700 text-white rounded-2xl px-3 py-2 text-xs font-bold outline-none focus:border-amber-400 cursor-pointer"
+            />
+
+            <button
+              onClick={handleExportPDF}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 border border-emerald-400 shadow-md transition-all active:scale-95 cursor-pointer"
+            >
+              <FileDown className="w-4 h-4" />
+              <span>Exportar PDF</span>
+            </button>
+          </div>
         </div>
       </div>
 
