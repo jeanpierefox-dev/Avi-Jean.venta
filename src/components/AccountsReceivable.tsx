@@ -61,17 +61,43 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentCompanyId = activeCompany?.id || currentUser?.companyId || '';
-  const companyClients = clients.filter(c => c.companyId === currentCompanyId);
+  const companyClients = clients.filter(c => !currentCompanyId || c.companyId === currentCompanyId);
+
+  const companyClientIds = new Set(companyClients.map(c => c.id));
+  const companyClientNames = new Set(companyClients.map(c => (c.name || '').toLowerCase().trim()));
+
+  const selectedClientObj = selectedClientFilter !== 'todos' ? companyClients.find(c => c.id === selectedClientFilter) : null;
+  const selectedClientNameNorm = selectedClientObj ? (selectedClientObj.name || '').toLowerCase().trim() : '';
 
   const companyWeighings = weighings
-    .filter(w => !currentCompanyId || w.companyId === currentCompanyId)
+    .filter(w => 
+      !currentCompanyId || 
+      w.companyId === currentCompanyId || 
+      companyClientIds.has(w.clientId) || 
+      (w.clientName && companyClientNames.has(w.clientName.toLowerCase().trim()))
+    )
     .filter(w => currentUser?.role !== 'cliente' || w.clientId === currentUser?.clientId || (currentUser?.displayName && w.clientName?.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()))
-    .filter(w => selectedClientFilter === 'todos' || w.clientId === selectedClientFilter);
+    .filter(w => {
+      if (selectedClientFilter === 'todos') return true;
+      if (w.clientId === selectedClientFilter) return true;
+      if (selectedClientNameNorm && w.clientName && w.clientName.toLowerCase().trim() === selectedClientNameNorm) return true;
+      return false;
+    });
 
   const companyPayments = payments
-    .filter(p => !currentCompanyId || p.companyId === currentCompanyId)
+    .filter(p => 
+      !currentCompanyId || 
+      p.companyId === currentCompanyId || 
+      companyClientIds.has(p.clientId) || 
+      (p.clientName && companyClientNames.has(p.clientName.toLowerCase().trim()))
+    )
     .filter(p => currentUser?.role !== 'cliente' || p.clientId === currentUser?.clientId || (currentUser?.displayName && p.clientName?.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()))
-    .filter(p => selectedClientFilter === 'todos' || p.clientId === selectedClientFilter);
+    .filter(p => {
+      if (selectedClientFilter === 'todos') return true;
+      if (p.clientId === selectedClientFilter) return true;
+      if (selectedClientNameNorm && p.clientName && p.clientName.toLowerCase().trim() === selectedClientNameNorm) return true;
+      return false;
+    });
 
   const today = new Date().toISOString().split('T')[0];
 

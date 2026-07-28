@@ -43,8 +43,8 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
-  const [creditLimit, setCreditLimit] = useState<number>(3000);
-  const [creditDays, setCreditDays] = useState<number>(15);
+  const [creditLimit, setCreditLimit] = useState<string | number>(3000);
+  const [creditDays, setCreditDays] = useState<string | number>(15);
 
   const currentCompanyId = activeCompany?.id || currentUser?.companyId || '';
   const companyClients = clients.filter(c => c.companyId === currentCompanyId);
@@ -59,14 +59,17 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
     e.preventDefault();
     if (!name.trim()) return;
 
+    const limitNum = creditLimit === '' ? 0 : Number(creditLimit) || 0;
+    const daysNum = creditDays === '' ? 0 : Number(creditDays) || 0;
+
     if (editingClient) {
       await updateClient(editingClient.id, {
         name,
         phone,
         email,
         address,
-        creditLimit,
-        creditDays,
+        creditLimit: limitNum,
+        creditDays: daysNum,
       });
     } else {
       const newCli = await addClient({
@@ -75,8 +78,8 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
         phone,
         email,
         address,
-        creditLimit,
-        creditDays,
+        creditLimit: limitNum,
+        creditDays: daysNum,
         currentBalance: 0,
       });
       const userAssigned = (newCli as any).assignedUsername || 'cliente';
@@ -103,14 +106,15 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
     setPhone(client.phone || '');
     setEmail(client.email || '');
     setAddress(client.address || '');
-    setCreditLimit(client.creditLimit || 3000);
-    setCreditDays(client.creditDays || 15);
+    setCreditLimit(client.creditLimit ?? 3000);
+    setCreditDays(client.creditDays ?? 15);
     setShowAddModal(true);
   };
 
   const handleDownloadStatement = (client: Client) => {
-    const clientWeighings = weighings.filter(w => w.clientId === client.id);
-    const clientPayments = payments.filter(p => p.clientId === client.id);
+    const cName = client.name.toLowerCase().trim();
+    const clientWeighings = weighings.filter(w => w.clientId === client.id || (w.clientName && w.clientName.toLowerCase().trim() === cName));
+    const clientPayments = payments.filter(p => p.clientId === client.id || (p.clientName && p.clientName.toLowerCase().trim() === cName));
     generateStatementPDF(client, clientWeighings, clientPayments, activeCompany || undefined);
   };
 
@@ -337,9 +341,11 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
                   <label className="block text-slate-700 mb-1 font-semibold">Límite de Crédito (S/)</label>
                   <input
                     type="number"
+                    step="0.01"
                     value={creditLimit}
-                    onChange={(e) => setCreditLimit(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-slate-50 border border-slate-300 text-emerald-700 font-bold rounded-xl px-3 py-2 outline-none focus:border-blue-500"
+                    onChange={(e) => setCreditLimit(e.target.value)}
+                    placeholder="3000.00"
+                    className="w-full bg-slate-50 border border-slate-300 text-emerald-700 font-bold rounded-xl px-3 py-2 outline-none focus:border-blue-500 font-mono"
                   />
                 </div>
 
@@ -348,8 +354,9 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
                   <input
                     type="number"
                     value={creditDays}
-                    onChange={(e) => setCreditDays(parseInt(e.target.value) || 0)}
-                    className="w-full bg-slate-50 border border-slate-300 text-amber-700 font-bold rounded-xl px-3 py-2 outline-none focus:border-blue-500"
+                    onChange={(e) => setCreditDays(e.target.value)}
+                    placeholder="15"
+                    className="w-full bg-slate-50 border border-slate-300 text-amber-700 font-bold rounded-xl px-3 py-2 outline-none focus:border-blue-500 font-mono"
                   />
                 </div>
               </div>

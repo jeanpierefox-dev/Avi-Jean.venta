@@ -398,11 +398,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Add Payment
   const addPayment = async (paymentData: Omit<PaymentRecord, 'id' | 'createdAt' | 'createdBy'>): Promise<PaymentRecord> => {
+    const resolvedCompanyId = paymentData.companyId || activeCompany?.id || currentUser?.companyId || clients.find(c => c.id === paymentData.clientId)?.companyId || weighings.find(w => w.clientId === paymentData.clientId)?.companyId || 'comp_1';
+
     const newPayment: PaymentRecord = {
       ...paymentData,
+      companyId: resolvedCompanyId,
       id: `pay_${Date.now()}`,
       createdAt: new Date().toISOString(),
-      createdBy: currentUser?.displayName || 'Cajero',
+      createdBy: currentUser?.displayName || currentUser?.username || 'Cliente/Cajero',
     };
 
     setPayments(prev => [newPayment, ...prev]);

@@ -37,7 +37,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   // Form State
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [selectedGalponId, setSelectedGalponId] = useState<string>('');
-  const [unitPrice, setUnitPrice] = useState<number>(8.50); // Default price in Soles (S/)
+  const [unitPrice, setUnitPrice] = useState<number | string>(8.50); // Default price in Soles (S/)
   const [paymentType, setPaymentType] = useState<PaymentType>('credito');
   const [creditDays, setCreditDays] = useState<number>(15); // 7, 15, 30 días
   const [paidAmount, setPaidAmount] = useState<number>(0);
@@ -55,7 +55,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   const [showQuickClientModal, setShowQuickClientModal] = useState(false);
   const [quickClientName, setQuickClientName] = useState('');
   const [quickClientPhone, setQuickClientPhone] = useState('');
-  const [quickClientLimit, setQuickClientLimit] = useState<number>(5000);
+  const [quickClientLimit, setQuickClientLimit] = useState<number | string>(5000);
 
   const currentCompanyId = activeCompany?.id || currentUser?.companyId || '';
 
@@ -108,13 +108,15 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   const selectedClient = companyClients.find(c => c.id === selectedClientId) || companyClients[0];
   const selectedGalpon = galponesList.find(g => g.id === selectedGalponId) || galponesList[0];
 
+  const numericUnitPrice = unitPrice === '' ? 0 : Number(unitPrice) || 0;
+
   // Calculated Totals Summed Across All Scale Entries
   const totalChickens = scaleEntries.reduce((sum, item) => sum + (Number(item.chickens) || 0), 0);
   const totalGrossWeight = scaleEntries.reduce((sum, item) => sum + (Number(item.grossWeight) || 0), 0);
   const totalNetWeight = totalGrossWeight;
 
   const averageWeightPerChicken = totalChickens > 0 ? (totalNetWeight / totalChickens) : 0;
-  const totalAmountToCharge = totalNetWeight * unitPrice;
+  const totalAmountToCharge = totalNetWeight * numericUnitPrice;
 
   // Auto set paid amount if paymentType is 'contado'
   useEffect(() => {
@@ -232,7 +234,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
         grossWeight: totalGrossWeight,
         tareWeight: 0,
         netWeight: totalNetWeight,
-        unitPrice,
+        unitPrice: numericUnitPrice,
         totalAmount: totalAmountToCharge,
         paidAmount: paymentType === 'contado' ? totalAmountToCharge : paidAmount,
         paymentType,
@@ -276,7 +278,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
       grossWeight: totalGrossWeight,
       tareWeight: 0,
       netWeight: totalNetWeight,
-      unitPrice: unitPrice,
+      unitPrice: numericUnitPrice,
       totalAmount: totalAmountToCharge,
       paidAmount: paymentType === 'contado' ? totalAmountToCharge : 0,
       pendingAmount: paymentType === 'credito' ? totalAmountToCharge : 0,
@@ -427,9 +429,10 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   <span className="absolute left-3.5 top-3 text-slate-500 font-mono font-black text-xs">S/</span>
                   <input
                     type="number"
-                    step="0.10"
+                    step="0.01"
                     value={unitPrice}
-                    onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setUnitPrice(e.target.value)}
+                    placeholder="8.50"
                     className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-2xl pl-9 pr-3 py-2.5 text-sm font-black font-mono outline-none focus:border-blue-500"
                   />
                 </div>
@@ -587,10 +590,21 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                         </button>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <label className="cursor-pointer bg-white border border-dashed border-blue-300 hover:border-blue-500 p-2.5 rounded-xl flex items-center justify-center space-x-2 text-slate-700 transition-colors">
-                          <Camera className="w-4 h-4 text-blue-600" />
-                          <span className="text-xs font-bold">Tomar Foto Pesa #{index + 1}</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <label className="cursor-pointer bg-white border border-dashed border-blue-400 hover:border-blue-600 p-2.5 rounded-xl flex items-center justify-center space-x-1.5 text-slate-800 transition-colors shadow-2xs">
+                          <FolderOpen className="w-4 h-4 text-blue-600 shrink-0" />
+                          <span className="text-xs font-bold truncate">Carpeta / Galería</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
+                            className="hidden"
+                          />
+                        </label>
+
+                        <label className="cursor-pointer bg-white border border-slate-300 hover:border-slate-400 p-2.5 rounded-xl flex items-center justify-center space-x-1.5 text-slate-800 text-xs font-bold transition-colors shadow-2xs">
+                          <Camera className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="truncate">Cámara Móvil</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -611,10 +625,10 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                             const chosen = samplePhotos[index % samplePhotos.length];
                             handleUpdateScaleEntry(entry.id, 'photoUrl', chosen);
                           }}
-                          className="bg-white border border-slate-300 hover:border-slate-400 p-2.5 rounded-xl flex items-center justify-center space-x-1 text-slate-600 text-xs font-bold"
+                          className="bg-slate-50 border border-slate-200 hover:border-slate-300 p-2.5 rounded-xl flex items-center justify-center space-x-1 text-slate-600 text-xs font-bold"
                         >
-                          <Camera className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Foto Ejemplo Pesa #{index + 1}</span>
+                          <ImageIcon className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Ejemplo</span>
                         </button>
                       </div>
                     )}

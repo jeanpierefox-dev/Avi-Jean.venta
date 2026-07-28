@@ -50,9 +50,15 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
     (currentUser?.displayName && c.name.toLowerCase().includes(currentUser.displayName.toLowerCase().trim()))
   );
 
+  const matchedCompanyId = matchedClient?.companyId 
+    || weighings.find(w => (currentUser?.clientId && w.clientId === currentUser.clientId) || (currentUser?.displayName && w.clientName.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()))?.companyId 
+    || activeCompany?.id 
+    || currentUser?.companyId 
+    || 'comp_1';
+
   const clientInfo = matchedClient || {
     id: currentUser?.clientId || `cli_${currentUser?.uid || currentUser?.displayName || 'default'}`,
-    companyId: activeCompany?.id || currentUser?.companyId || 'comp_1',
+    companyId: matchedCompanyId,
     name: currentUser?.displayName || currentUser?.username || 'Cliente Comercial',
     phone: currentUser?.phone || '',
     email: currentUser?.email || '',
@@ -653,8 +659,8 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     <label className="cursor-pointer bg-slate-950 border border-dashed border-emerald-500/50 hover:border-emerald-400 p-3 rounded-2xl flex flex-col items-center justify-center text-center space-y-1">
-                      <Camera className="w-5 h-5 text-emerald-400" />
-                      <span className="text-[11px] font-bold text-white">Capturar Voucher</span>
+                      <Upload className="w-5 h-5 text-emerald-400" />
+                      <span className="text-[11px] font-bold text-white">Subir Voucher (Galería / PC)</span>
                       <input type="file" accept="image/*" onChange={handleVoucherUpload} className="hidden" />
                     </label>
 
@@ -663,7 +669,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
                       onClick={handlePresetVoucher}
                       className="bg-slate-950 border border-slate-800 hover:border-slate-700 p-3 rounded-2xl flex flex-col items-center justify-center text-center space-y-1"
                     >
-                      <Upload className="w-5 h-5 text-sky-400" />
+                      <Camera className="w-5 h-5 text-sky-400" />
                       <span className="text-[11px] font-bold text-slate-300">Voucher Ejemplo</span>
                     </button>
                   </div>
