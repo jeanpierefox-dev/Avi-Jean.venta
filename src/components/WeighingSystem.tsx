@@ -22,7 +22,9 @@ import {
   Image as ImageIcon,
   X,
   FolderOpen,
-  Eye
+  Eye,
+  Bird,
+  PlusCircle
 } from 'lucide-react';
 import { TicketModal } from './TicketModal';
 
@@ -47,6 +49,43 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   const [scaleEntries, setScaleEntries] = useState<ScaleEntry[]>([
     { id: '1', chickens: 120, grossWeight: 288.0, photoUrl: '' }
   ]);
+
+  // Quick Pesa Form State
+  const [quickChickens, setQuickChickens] = useState<string>('');
+  const [quickGrossWeight, setQuickGrossWeight] = useState<string>('');
+  const [quickPhotoUrl, setQuickPhotoUrl] = useState<string>('');
+
+  const handleQuickPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setQuickPhotoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddQuickPesa = () => {
+    const chickensNum = Number(quickChickens) || 0;
+    const weightNum = Number(quickGrossWeight) || 0;
+    if (chickensNum <= 0 && weightNum <= 0) return;
+
+    const newEntry: ScaleEntry = {
+      id: `scale_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      chickens: chickensNum,
+      grossWeight: weightNum,
+      tareWeight: 0,
+      netWeight: weightNum,
+      unitPrice: numericUnitPrice,
+      photoUrl: quickPhotoUrl
+    };
+
+    setScaleEntries(prev => [...prev, newEntry]);
+    setQuickChickens('');
+    setQuickGrossWeight('');
+    setQuickPhotoUrl('');
+  };
 
   // Overall / Default scale image if not specified per entry
   const [scaleImageUrl, setScaleImageUrl] = useState<string>('');
@@ -503,148 +542,281 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
           </div>
 
           {/* MULTI-SCALE PESADAS SECTION */}
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm space-y-4">
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm space-y-5">
             <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
-              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-700 flex items-center gap-2">
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-slate-800 flex items-center gap-2">
                 <Calculator className="w-4 h-4 text-emerald-600" />
                 2. Detalle de Pesas / Balanzas ({scaleEntries.length} {scaleEntries.length === 1 ? 'Pesa' : 'Pesas'})
               </h2>
+            </div>
+
+            {/* 1. CUADRO RESUMEN EN LA PARTE SUPERIOR */}
+            <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 border border-blue-900 text-white rounded-2xl p-4 sm:p-5 shadow-md space-y-3">
+              <div className="flex items-center justify-between border-b border-blue-800/60 pb-2">
+                <div className="flex items-center space-x-2">
+                  <Calculator className="w-4 h-4 text-emerald-400" />
+                  <span className="font-extrabold text-xs uppercase tracking-wider text-slate-100">
+                    Resumen del Pesaje Total
+                  </span>
+                </div>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                  {scaleEntries.length} {scaleEntries.length === 1 ? 'Pesa' : 'Pesas'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
+                {/* Cantidad de Pollos */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-2.5 sm:p-3">
+                  <div className="flex items-center justify-center space-x-1 text-amber-400 mb-1">
+                    <Bird className="w-4 h-4" />
+                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-tight text-slate-300">Pollos</span>
+                  </div>
+                  <div className="text-xl sm:text-3xl font-black text-amber-400 font-mono">
+                    {totalChickens}
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium">aves</span>
+                </div>
+
+                {/* Total Kilos */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-2.5 sm:p-3">
+                  <div className="flex items-center justify-center space-x-1 text-emerald-400 mb-1">
+                    <Scale className="w-4 h-4" />
+                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-tight text-slate-300">Total Kilos</span>
+                  </div>
+                  <div className="text-xl sm:text-3xl font-black text-emerald-400 font-mono">
+                    {totalNetWeight.toFixed(2)}
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium">kg</span>
+                </div>
+
+                {/* Promedio Pesa */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-2.5 sm:p-3">
+                  <div className="flex items-center justify-center space-x-1 text-sky-400 mb-1">
+                    <Layers className="w-4 h-4" />
+                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-tight text-slate-300">Promedio</span>
+                  </div>
+                  <div className="text-xl sm:text-3xl font-black text-sky-300 font-mono">
+                    {averageWeightPerChicken.toFixed(2)}
+                  </div>
+                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium">kg / ave</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. FORMULARIO CON ICONOS PARA INGRESAR NUEVA PESA */}
+            <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-emerald-200/80 pb-2">
+                <span className="font-extrabold text-xs uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
+                  <PlusCircle className="w-4 h-4 text-emerald-600" />
+                  Ingresar Nueva Pesa #{scaleEntries.length + 1}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Cantidad de Pollo */}
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <Bird className="w-4 h-4 text-amber-600" />
+                    <span>Cantidad de Pollos</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={quickChickens}
+                    onChange={(e) => setQuickChickens(e.target.value)}
+                    placeholder="ej. 120"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-base font-black font-mono text-slate-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+
+                {/* Kilo */}
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <Scale className="w-4 h-4 text-emerald-600" />
+                    <span>Peso Kilos (Balanza)</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={quickGrossWeight}
+                    onChange={(e) => setQuickGrossWeight(e.target.value)}
+                    placeholder="ej. 288.5"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-base font-black font-mono text-emerald-700 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+
+                {/* Agregar Foto */}
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-blue-600" />
+                    <span>Agregar Foto</span>
+                  </label>
+
+                  {quickPhotoUrl ? (
+                    <div className="relative rounded-xl overflow-hidden border border-emerald-400 bg-white h-10 flex items-center px-2">
+                      <img src={quickPhotoUrl} alt="Vista previa" className="w-7 h-7 object-cover rounded-lg mr-2" />
+                      <span className="text-[11px] text-emerald-800 font-bold truncate flex-1">Foto Adjuntada</span>
+                      <button
+                        type="button"
+                        onClick={() => setQuickPhotoUrl('')}
+                        className="p-1 bg-rose-500 text-white rounded-full hover:bg-rose-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <label className="cursor-pointer bg-white border border-dashed border-blue-400 hover:border-blue-600 py-1.5 px-2 rounded-xl flex items-center justify-center space-x-1 text-slate-800 transition-colors shadow-2xs">
+                        <FolderOpen className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span className="text-[11px] font-bold truncate">Galeria</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleQuickPhotoUpload(e)}
+                          className="hidden"
+                        />
+                      </label>
+
+                      <label className="cursor-pointer bg-white border border-slate-300 hover:border-slate-400 py-1.5 px-2 rounded-xl flex items-center justify-center space-x-1 text-slate-800 transition-colors shadow-2xs">
+                        <Camera className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="text-[11px] font-bold truncate">Cámara</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={(e) => handleQuickPhotoUpload(e)}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <button
                 type="button"
-                onClick={handleAddScaleEntry}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-transform active:scale-95"
+                onClick={handleAddQuickPesa}
+                disabled={!quickChickens && !quickGrossWeight}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-98"
               >
                 <Plus className="w-4 h-4" />
-                <span>+ AGREGAR OTRA PESA</span>
+                <span>+ AGREGAR PESA A LA LISTA</span>
               </button>
             </div>
 
-            <div className="space-y-4">
-              {scaleEntries.map((entry, index) => (
-                <div 
-                  key={entry.id} 
-                  className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 relative space-y-3 shadow-xs"
-                >
-                  <div className="flex items-center justify-between border-b border-slate-200/70 pb-2">
-                    <span className="font-extrabold text-xs text-blue-900 flex items-center gap-2">
-                      <Scale className="w-4 h-4 text-blue-600" />
-                      PESA #{index + 1}
-                    </span>
+            {/* 3. LISTADO DE PESAS QUE SE VAN PONIENDO CON SU RESPECTIVA FOTO */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <span className="font-extrabold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-blue-600" />
+                  Listado de Pesas Registradas ({scaleEntries.length})
+                </span>
+              </div>
 
-                    {scaleEntries.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveScaleEntry(entry.id)}
-                        className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Eliminar pesa"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                        Cantidad de Pollos (Aves)
-                      </label>
-                      <input
-                        type="number"
-                        value={entry.chickens === 0 ? '' : entry.chickens}
-                        onChange={(e) => handleUpdateScaleEntry(entry.id, 'chickens', e.target.value === '' ? 0 : parseInt(e.target.value))}
-                        className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2.5 text-base font-black font-mono outline-none focus:border-emerald-600"
-                        placeholder="ej. 120"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                        Peso Directo Balanza (kg)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={entry.grossWeight === 0 ? '' : entry.grossWeight}
-                        onChange={(e) => handleUpdateScaleEntry(entry.id, 'grossWeight', e.target.value === '' ? 0 : parseFloat(e.target.value))}
-                        className="w-full bg-white border border-slate-300 text-emerald-700 rounded-xl px-3 py-2.5 text-base font-black font-mono outline-none focus:border-emerald-600"
-                        placeholder="ej. 288.0"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Photo for this specific scale entry */}
-                  <div className="pt-1">
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1">
-                      Foto de esta Pesa #{index + 1}
-                    </label>
-                    {entry.photoUrl ? (
-                      <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white h-28">
-                        <img src={entry.photoUrl} alt={`Foto Pesa ${index+1}`} className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateScaleEntry(entry.id, 'photoUrl', '')}
-                          className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-full shadow"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <label className="cursor-pointer bg-white border border-dashed border-blue-400 hover:border-blue-600 p-2.5 rounded-xl flex items-center justify-center space-x-1.5 text-slate-800 transition-colors shadow-2xs">
-                          <FolderOpen className="w-4 h-4 text-blue-600 shrink-0" />
-                          <span className="text-xs font-bold truncate">Carpeta / Galería</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
-                            className="hidden"
-                          />
-                        </label>
-
-                        <label className="cursor-pointer bg-white border border-slate-300 hover:border-slate-400 p-2.5 rounded-xl flex items-center justify-center space-x-1.5 text-slate-800 text-xs font-bold transition-colors shadow-2xs">
-                          <Camera className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span className="truncate">Cámara Móvil</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
-                            className="hidden"
-                          />
-                        </label>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const samplePhotos = [
-                              'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80',
-                              'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-                              'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80'
-                            ];
-                            const chosen = samplePhotos[index % samplePhotos.length];
-                            handleUpdateScaleEntry(entry.id, 'photoUrl', chosen);
-                          }}
-                          className="bg-slate-50 border border-slate-200 hover:border-slate-300 p-2.5 rounded-xl flex items-center justify-center space-x-1 text-slate-600 text-xs font-bold"
-                        >
-                          <ImageIcon className="w-3.5 h-3.5 text-amber-600" />
-                          <span>Ejemplo</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
+              {scaleEntries.length === 0 ? (
+                <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-6 text-center text-slate-500 text-xs">
+                  Aún no se han registrado pesas. Utilice el formulario superior para agregar la primera pesa.
                 </div>
-              ))}
-            </div>
+              ) : (
+                <div className="space-y-3">
+                  {scaleEntries.map((entry, index) => {
+                    const entryAvg = entry.chickens > 0 ? (entry.grossWeight / entry.chickens) : 0;
+                    return (
+                      <div
+                        key={entry.id}
+                        className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 space-y-2.5 shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
+                          <span className="font-extrabold text-xs text-blue-900 bg-blue-100/80 px-2.5 py-0.5 rounded-lg flex items-center gap-1.5">
+                            <Scale className="w-3.5 h-3.5 text-blue-600" />
+                            PESA #{index + 1}
+                          </span>
 
-            <button
-              type="button"
-              onClick={handleAddScaleEntry}
-              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold py-3 rounded-2xl text-xs border border-slate-300 flex items-center justify-center gap-2"
-            >
-              <Plus className="w-4 h-4 text-emerald-600" />
-              <span>+ AGREGAR OTRA PESA / BALANZA AL REGISTRO</span>
-            </button>
+                          <div className="flex items-center space-x-3">
+                            <span className="text-[11px] font-mono text-slate-500">
+                              Promedio: <strong className="text-slate-800 font-extrabold">{entryAvg.toFixed(2)} kg/ave</strong>
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveScaleEntry(entry.id)}
+                              className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
+                              title="Eliminar pesa"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                          <div>
+                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-0.5">Pollos (Aves)</label>
+                            <input
+                              type="number"
+                              value={entry.chickens === 0 ? '' : entry.chickens}
+                              onChange={(e) => handleUpdateScaleEntry(entry.id, 'chickens', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                              className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-1.5 text-sm font-black font-mono outline-none focus:border-emerald-600"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-0.5">Peso Balanza (kg)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={entry.grossWeight === 0 ? '' : entry.grossWeight}
+                              onChange={(e) => handleUpdateScaleEntry(entry.id, 'grossWeight', e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                              className="w-full bg-white border border-slate-300 text-emerald-700 rounded-xl px-3 py-1.5 text-sm font-black font-mono outline-none focus:border-emerald-600"
+                            />
+                          </div>
+
+                          {/* Foto de la Pesa */}
+                          <div>
+                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-0.5">Foto de Pesa #{index + 1}</label>
+                            {entry.photoUrl ? (
+                              <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white h-12 flex items-center">
+                                <img src={entry.photoUrl} alt={`Pesa ${index+1}`} className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateScaleEntry(entry.id, 'photoUrl', '')}
+                                  className="absolute top-1 right-1 p-0.5 bg-rose-600 text-white rounded-full shadow"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-2 gap-1">
+                                <label className="cursor-pointer bg-white border border-dashed border-blue-400 hover:border-blue-600 py-1 px-1.5 rounded-xl flex items-center justify-center space-x-1 text-slate-800 transition-colors">
+                                  <FolderOpen className="w-3 h-3 text-blue-600 shrink-0" />
+                                  <span className="text-[10px] font-bold truncate">Carpeta</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
+                                    className="hidden"
+                                  />
+                                </label>
+
+                                <label className="cursor-pointer bg-white border border-slate-300 hover:border-slate-400 py-1 px-1.5 rounded-xl flex items-center justify-center space-x-1 text-slate-800 transition-colors">
+                                  <Camera className="w-3 h-3 text-emerald-600 shrink-0" />
+                                  <span className="text-[10px] font-bold truncate">Cámara</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={(e) => handleScalePhotoUploadForEntry(entry.id, e)}
+                                    className="hidden"
+                                  />
+                                </label>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Notes / Observation */}

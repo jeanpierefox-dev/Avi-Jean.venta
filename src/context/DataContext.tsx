@@ -103,17 +103,30 @@ interface DataContextType {
   updateAppName: (newName: string) => Promise<void>;
 }
 
+const getInitialState = <T,>(key: string, fallback: T): T => {
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {
+    console.warn(`Error loading cached ${key}:`, e);
+  }
+  return fallback;
+};
+
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, activeCompany, createUserProfile } = useAuth();
 
-  const [weighings, setWeighings] = useState<WeighingRecord[]>(INITIAL_WEIGHINGS);
-  const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
-  const [companies, setCompanies] = useState<Company[]>(INITIAL_COMPANIES);
-  const [payments, setPayments] = useState<PaymentRecord[]>(INITIAL_PAYMENTS);
-  const [inventory, setInventory] = useState<InventoryItem[]>(INITIAL_INVENTORY);
-  const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
+  const [weighings, setWeighings] = useState<WeighingRecord[]>(() => getInitialState('avis_weighings', INITIAL_WEIGHINGS));
+  const [clients, setClients] = useState<Client[]>(() => getInitialState('avis_clients', INITIAL_CLIENTS));
+  const [companies, setCompanies] = useState<Company[]>(() => getInitialState('avis_companies', INITIAL_COMPANIES));
+  const [payments, setPayments] = useState<PaymentRecord[]>(() => getInitialState('avis_payments', INITIAL_PAYMENTS));
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => getInitialState('avis_inventory', INITIAL_INVENTORY));
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => getInitialState('avis_notifications', INITIAL_NOTIFICATIONS));
   const [appName, setAppName] = useState<string>(() => {
     return localStorage.getItem('app_system_name') || 'Jean-Barsa Avícola System';
   });
@@ -145,42 +158,48 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const compSnap = await getDocs(collection(db, 'companies'));
         if (compSnap.empty) {
-          for (const c of INITIAL_COMPANIES) {
+          const comps = getInitialState('avis_companies', INITIAL_COMPANIES);
+          for (const c of comps) {
             await setDoc(doc(db, 'companies', c.id), c);
           }
         }
 
         const clientSnap = await getDocs(collection(db, 'clients'));
         if (clientSnap.empty) {
-          for (const cl of INITIAL_CLIENTS) {
+          const cls = getInitialState('avis_clients', INITIAL_CLIENTS);
+          for (const cl of cls) {
             await setDoc(doc(db, 'clients', cl.id), cl);
           }
         }
 
         const invSnap = await getDocs(collection(db, 'inventory'));
         if (invSnap.empty) {
-          for (const inv of INITIAL_INVENTORY) {
+          const invs = getInitialState('avis_inventory', INITIAL_INVENTORY);
+          for (const inv of invs) {
             await setDoc(doc(db, 'inventory', inv.id), inv);
           }
         }
 
         const weighSnap = await getDocs(collection(db, 'weighings'));
         if (weighSnap.empty) {
-          for (const w of INITIAL_WEIGHINGS) {
+          const weighs = getInitialState('avis_weighings', INITIAL_WEIGHINGS);
+          for (const w of weighs) {
             await setDoc(doc(db, 'weighings', w.id), w);
           }
         }
 
         const paySnap = await getDocs(collection(db, 'payments'));
         if (paySnap.empty) {
-          for (const p of INITIAL_PAYMENTS) {
+          const pays = getInitialState('avis_payments', INITIAL_PAYMENTS);
+          for (const p of pays) {
             await setDoc(doc(db, 'payments', p.id), p);
           }
         }
 
         const notifSnap = await getDocs(collection(db, 'notifications'));
         if (notifSnap.empty) {
-          for (const n of INITIAL_NOTIFICATIONS) {
+          const notifs = getInitialState('avis_notifications', INITIAL_NOTIFICATIONS);
+          for (const n of notifs) {
             await setDoc(doc(db, 'notifications', n.id), n);
           }
         }
@@ -209,8 +228,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as WeighingRecord));
           docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setWeighings(docs);
+          try { localStorage.setItem('avis_weighings', JSON.stringify(docs)); } catch (e) {}
         } else if (isWiped) {
           setWeighings([]);
+          try { localStorage.setItem('avis_weighings', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'weighings'));
 
@@ -220,8 +241,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Client));
           docs.sort((a, b) => a.name.localeCompare(b.name));
           setClients(docs);
+          try { localStorage.setItem('avis_clients', JSON.stringify(docs)); } catch (e) {}
         } else if (isWiped) {
           setClients([]);
+          try { localStorage.setItem('avis_clients', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'clients'));
 
@@ -230,8 +253,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Company));
           setCompanies(docs);
+          try { localStorage.setItem('avis_companies', JSON.stringify(docs)); } catch (e) {}
         } else if (isWiped) {
           setCompanies([INITIAL_COMPANIES[0]]);
+          try { localStorage.setItem('avis_companies', JSON.stringify([INITIAL_COMPANIES[0]])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'companies'));
 
@@ -241,8 +266,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as PaymentRecord));
           docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setPayments(docs);
+          try { localStorage.setItem('avis_payments', JSON.stringify(docs)); } catch (e) {}
         } else if (isWiped) {
           setPayments([]);
+          try { localStorage.setItem('avis_payments', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'payments'));
 
@@ -251,8 +278,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem));
           setInventory(docs);
+          try { localStorage.setItem('avis_inventory', JSON.stringify(docs)); } catch (e) {}
         } else if (isWiped) {
           setInventory([]);
+          try { localStorage.setItem('avis_inventory', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'inventory'));
 
@@ -262,8 +291,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppNotification));
           docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setNotifications(docs);
+          try { localStorage.setItem('avis_notifications', JSON.stringify(docs)); } catch (e) {}
         } else if (isWiped) {
           setNotifications([]);
+          try { localStorage.setItem('avis_notifications', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'notifications'));
 
