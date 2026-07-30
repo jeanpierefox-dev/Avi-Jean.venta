@@ -347,7 +347,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
             <div>
               <div className="flex items-center space-x-2">
                 <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
-                  JEANPIERE BARBOZA • 2025
+                  JEANPIERE BARBOZA • 2026
                 </span>
                 <span className="text-xs text-slate-400 font-semibold">• Operación de Balanza</span>
               </div>
@@ -445,6 +445,21 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                     </option>
                   ))}
                 </select>
+
+                {(!selectedGalpon || selectedGalpon.headCount === 0) && (
+                  <div className="mt-2.5 bg-amber-950/90 border border-amber-500/80 text-amber-300 p-2.5 rounded-2xl text-xs flex items-center justify-between shadow-md">
+                    <span className="font-semibold">⚠️ Galpón sin pollos en Kardex.</span>
+                    {onSelectTab && (
+                      <button
+                        type="button"
+                        onClick={() => onSelectTab('inventario')}
+                        className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-2.5 py-1 rounded-xl font-black text-[11px] shrink-0 uppercase cursor-pointer"
+                      >
+                        ＋ Cargar Aves
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -109,6 +109,21 @@ export interface PaymentRecord {
   createdBy: string;
 }
 
+export type AdjustmentReason = 'mortandad' | 'obsequio' | 'enfermedad' | 'merma' | 'otro';
+
+export interface InventoryAdjustment {
+  id: string;
+  companyId: string;
+  inventoryItemId: string;
+  galponName: string;
+  headCount: number;
+  weight: number;
+  reason: AdjustmentReason;
+  notes?: string;
+  createdAt: string;
+  createdBy: string;
+}
+
 export interface InventoryItem {
   id: string;
   companyId: string;

@@ -5,6 +5,7 @@ import {
   Company, 
   PaymentRecord, 
   InventoryItem, 
+  InventoryAdjustment,
   AppNotification, 
   PaymentType,
   PaymentStatus 
@@ -82,6 +83,7 @@ interface DataContextType {
   companies: Company[];
   payments: PaymentRecord[];
   inventory: InventoryItem[];
+  adjustments: InventoryAdjustment[];
   notifications: AppNotification[];
   addWeighing: (recordData: Omit<WeighingRecord, 'id' | 'ticketNumber' | 'createdAt' | 'createdBy' | 'pendingAmount' | 'paymentStatus'>) => Promise<WeighingRecord>;
   addPayment: (paymentData: Omit<PaymentRecord, 'id' | 'createdAt' | 'createdBy'>) => Promise<PaymentRecord>;
@@ -93,6 +95,7 @@ interface DataContextType {
   deleteCompany: (id: string) => Promise<void>;
   addInventoryItem: (itemData: Omit<InventoryItem, 'id' | 'updatedAt'>) => Promise<InventoryItem>;
   updateInventoryItem: (id: string, itemData: Partial<InventoryItem>) => Promise<void>;
+  addInventoryAdjustment: (adjustmentData: Omit<InventoryAdjustment, 'id' | 'createdAt' | 'createdBy'>) => Promise<InventoryAdjustment>;
   markNotificationRead: (id: string) => Promise<void>;
   clearAllNotifications: () => Promise<void>;
   checkOverduePayments: () => void;
@@ -126,6 +129,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [companies, setCompanies] = useState<Company[]>(() => getInitialState('avis_companies', INITIAL_COMPANIES));
   const [payments, setPayments] = useState<PaymentRecord[]>(() => getInitialState('avis_payments', INITIAL_PAYMENTS));
   const [inventory, setInventory] = useState<InventoryItem[]>(() => getInitialState('avis_inventory', INITIAL_INVENTORY));
+  const [adjustments, setAdjustments] = useState<InventoryAdjustment[]>(() => getInitialState('avis_adjustments', []));
   const [notifications, setNotifications] = useState<AppNotification[]>(() => getInitialState('avis_notifications', INITIAL_NOTIFICATIONS));
   const [appName, setAppName] = useState<string>(() => {
     return localStorage.getItem('app_system_name') || 'Jean-Barsa Avícola System';
@@ -678,6 +682,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const addInventoryAdjustment = async (adjustmentData: Omit<InventoryAdjustment, 'id' | 'createdAt' | 'createdBy'>): Promise<InventoryAdjustment> => {
+    const newAdj: InventoryAdjustment = {
+      ...adjustmentData,
+      id: `adj_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser?.displayName || currentUser?.username || 'Operador',
+    };
+
+    setAdjustments(prev => [newAdj, ...prev]);
+    try {
+      localStorage.setItem('avis_adjustments', JSON.stringify([newAdj, ...adjustments]));
+      await setDoc(doc(db, 'adjustments', newAdj.id), newAdj);
+    } catch (e) {
+      console.warn('Firestore adjustment save error:', e);
+    }
+
+    return newAdj;
+  };
+
   // Notifications
   const markNotificationRead = async (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
@@ -769,6 +792,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       companies,
       payments,
       inventory,
+      adjustments,
       notifications,
       addWeighing,
       addPayment,
@@ -780,6 +804,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       deleteCompany,
       addInventoryItem,
       updateInventoryItem,
+      addInventoryAdjustment,
       markNotificationRead,
       clearAllNotifications,
       checkOverduePayments,

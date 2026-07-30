@@ -40,6 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -89,8 +90,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Logo & Brand */}
           <div className="flex items-center space-x-2.5 shrink-0">
             <img 
-              src={activeCompany?.logoUrl || "/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg"} 
-              alt="JEANPIERE BARBOZA 2025 Logo" 
+              src="/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg" 
+              alt="JEANPIERE BARBOZA 2026 Logo Principal" 
               className="w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-xl bg-slate-950 border-2 border-amber-500 shadow-md shadow-amber-500/20 shrink-0"
             />
 
@@ -100,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   JEANPIERE BARBOZA
                 </span>
                 <span className="hidden sm:inline-block text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
-                  2025
+                  2026
                 </span>
               </div>
               <p className="text-[10px] text-slate-400 font-bold hidden lg:block">
@@ -200,10 +201,49 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
 
-            {/* User Profile Badge */}
-            <div className={`px-2.5 sm:px-3 py-1.5 rounded-xl border text-[11px] sm:text-xs font-extrabold flex items-center space-x-1 shadow-xs bg-slate-800 border-slate-700 text-slate-200`}>
-              <UserCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span className="hidden sm:inline">{currentUser?.displayName || 'Usuario'}</span>
+            {/* User Profile Badge with Menu Dropdown (Cerrar Sesión) */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setUserDropdownOpen(!userDropdownOpen);
+                  setCompanyDropdownOpen(false);
+                }}
+                title="Menú de Usuario / Cerrar Sesión"
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl border text-[11px] sm:text-xs font-extrabold flex items-center space-x-1.5 shadow-xs bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200 transition-colors cursor-pointer"
+              >
+                <UserCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="hidden sm:inline">{currentUser?.displayName || 'Usuario'}</span>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
+              </button>
+
+              {userDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 animate-fade-in text-slate-200">
+                  <div className="px-4 py-2.5 border-b border-slate-800 space-y-0.5">
+                    <p className="text-xs font-black text-white truncate">{currentUser?.displayName}</p>
+                    <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+                      {roleLabels[currentUser?.role || 'admin']}
+                    </p>
+                    {activeCompany && (
+                      <p className="text-[10px] text-slate-400 font-medium truncate pt-0.5">
+                        🏢 {activeCompany.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="p-1.5">
+                    <button
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        logout();
+                      }}
+                      className="w-full flex items-center space-x-2 text-left px-3 py-2.5 text-xs font-black text-rose-400 hover:bg-rose-950/70 hover:text-rose-200 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4 text-rose-400 shrink-0" />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* API Docs Button */}
@@ -226,15 +266,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {unreadCount}
                 </span>
               )}
-            </button>
-
-            {/* Logout */}
-            <button
-              onClick={logout}
-              title="Cerrar Sesión"
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/50 rounded-xl transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
             </button>
 
             {/* Mobile Hamburger Toggle */}
@@ -281,7 +312,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             })}
           </div>
 
-          <div className="pt-2 flex items-center justify-between">
+          <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
             <button
               onClick={() => {
                 onOpenApiDocs();
@@ -290,7 +321,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center space-x-2 text-xs text-amber-400 hover:underline font-bold"
             >
               <Code2 className="w-4 h-4" />
-              <span>Documentación API REST</span>
+              <span>Documentación API</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                logout();
+              }}
+              className="flex items-center space-x-1.5 bg-rose-950 text-rose-300 border border-rose-800 px-3 py-1.5 rounded-xl text-xs font-black"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span>Cerrar Sesión</span>
             </button>
           </div>
         </div>

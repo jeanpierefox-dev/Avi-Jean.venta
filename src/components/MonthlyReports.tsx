@@ -52,7 +52,7 @@ export const MonthlyReports: React.FC<MonthlyReportsProps> = ({ onSelectTab }) =
             <div>
               <div className="flex items-center space-x-2">
                 <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
-                  JEANPIERE BARBOZA • 2025
+                  JEANPIERE BARBOZA • 2026
                 </span>
                 <span className="text-xs text-slate-400 font-semibold">• Consolidado Mensual</span>
               </div>

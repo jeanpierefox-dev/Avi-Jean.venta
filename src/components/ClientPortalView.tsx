@@ -247,7 +247,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
           <div className="flex items-center space-x-3">
             <img 
               src={activeCompany?.logoUrl || "/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg"} 
-              alt="JEANPIERE BARBOZA 2025 Logo" 
+              alt="JEANPIERE BARBOZA 2026 Logo" 
               className="w-12 h-12 rounded-2xl bg-slate-900 border-2 border-amber-500 shadow-md shadow-amber-500/10 object-cover shrink-0"
             />
             <div>

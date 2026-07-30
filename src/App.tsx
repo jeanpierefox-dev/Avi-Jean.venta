@@ -16,7 +16,7 @@ import { CompanySelectorModal } from './components/CompanySelectorModal';
 import { Scale, Lock, ShieldCheck, Building2, User, RefreshCw, Eye } from 'lucide-react';
 
 function MainAppContent() {
-  const { currentUser, login, companies, activeCompany, setActiveCompanyId } = useAuth();
+  const { currentUser, login, quickDemoLogin, companies, activeCompany, setActiveCompanyId } = useAuth();
   const { appName } = useData();
 
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -42,31 +42,34 @@ function MainAppContent() {
     e.preventDefault();
     setLoginError('');
     try {
-      await login(loginEmail, loginPass);
+      const ok = await login(loginEmail, loginPass);
+      if (!ok) {
+        setLoginError('Credenciales incorrectas. Verifique usuario y contraseña.');
+      }
     } catch (err: any) {
-      setLoginError('Credenciales incorrectas. Pruebe usuario admin / contraseña 1234 o seleccione Acceso Rápido.');
+      setLoginError('Error de autenticación. Pruebe un acceso rápido abajo.');
     }
   };
 
-  // If no logged in user, show corporate auth landing with 1-tap quick access
+  // If no logged in user, show corporate auth landing with 1-tap quick access & logo
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-slate-100 flex flex-col justify-center items-center p-4 animate-fade-in relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 animate-fade-in relative overflow-hidden">
         {/* Background glow accents */}
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="w-full max-w-md bg-white text-slate-900 border border-slate-200/80 rounded-3xl p-8 shadow-2xl space-y-6 relative z-10">
+        <div className="w-full max-w-md bg-white text-slate-900 border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative z-10">
           
           <div className="text-center space-y-3">
             <div className="inline-block relative">
               <img 
                 src="/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg" 
-                alt="JEANPIERE BARBOZA 2025 Logo" 
+                alt="JEANPIERE BARBOZA 2026 Logo Principal" 
                 className="w-20 h-20 mx-auto object-cover rounded-2xl bg-slate-900 border-2 border-amber-500 shadow-xl shadow-amber-500/10 ring-4 ring-amber-50"
               />
               <span className="absolute -bottom-2 -right-2 bg-blue-900 text-amber-400 font-mono font-black text-[9px] uppercase px-2 py-0.5 rounded-full border border-amber-400/40 shadow-sm">
-                2025
+                2026
               </span>
             </div>
             <div>
@@ -78,19 +81,19 @@ function MainAppContent() {
               </p>
             </div>
             <p className="text-xs text-slate-500 font-medium leading-relaxed">
-              Sistema Corporativo de Pesa Industrial de Pollos, Emisión de Tickets y Control de Cobranzas en Soles (S/)
+              Ingrese su usuario y contraseña corporativa para acceder a la plataforma
             </p>
           </div>
 
           <form onSubmit={handleLoginFormSubmit} className="space-y-4 text-xs">
             {loginError && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-center font-medium">
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-center font-bold">
                 {loginError}
               </div>
             )}
 
             <div>
-              <label className="block text-slate-700 font-black mb-1.5 uppercase tracking-wider text-[11px]">Usuario de Ingreso</label>
+              <label className="block text-slate-700 font-black mb-1.5 uppercase tracking-wider text-[11px]">Usuario / Email</label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
@@ -98,14 +101,14 @@ function MainAppContent() {
                   required
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="Ej. admin u operador1"
+                  placeholder="Ej. admin o empresa"
                   className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-bold rounded-xl pl-10 pr-3.5 py-2.5 outline-none focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-slate-700 font-black mb-1.5 uppercase tracking-wider text-[11px]">Contraseña Corporativa</label>
+              <label className="block text-slate-700 font-black mb-1.5 uppercase tracking-wider text-[11px]">Contraseña</label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
@@ -121,7 +124,7 @@ function MainAppContent() {
 
             <button
               type="submit"
-              className="w-full bg-blue-900 hover:bg-blue-800 text-white font-black py-3.5 rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-blue-900/20 transition-all active:scale-98 cursor-pointer flex items-center justify-center space-x-2"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-3.5 rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-slate-900/20 transition-all active:scale-98 cursor-pointer flex items-center justify-center space-x-2"
             >
               <ShieldCheck className="w-4 h-4 text-amber-400" />
               <span>Ingresar al Sistema Corporativo</span>
