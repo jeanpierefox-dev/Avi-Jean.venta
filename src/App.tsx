@@ -14,7 +14,7 @@ import { ApiDocsModal } from './components/ApiDocsModal';
 import { NotificationsPopover } from './components/NotificationsPopover';
 import { CompanySelectorModal } from './components/CompanySelectorModal';
 import { Scale, Lock, ShieldCheck, Building2, User, RefreshCw, Eye } from 'lucide-react';
-import systemLogo from './assets/images/system_futuristic_logo_1785723812533.jpg';
+import systemLogo from './assets/images/jbalance_circular_j_rooster_logo_1785729209928.jpg';
 
 function MainAppContent() {
   const { currentUser, login, quickDemoLogin, companies, activeCompany, setActiveCompanyId } = useAuth();
@@ -63,17 +63,30 @@ function MainAppContent() {
         <div className="w-full max-w-md bg-white text-slate-900 border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative z-10">
           
           <div className="text-center space-y-3">
-            <div className="inline-block relative">
+            <div className="inline-block relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-amber-400 to-rose-500 rounded-3xl blur-sm opacity-40 group-hover:opacity-75 transition duration-500 animate-pulse"></div>
               <img 
                 src={systemLogo} 
-                alt="Logo Principal" 
-                className="w-28 h-28 mx-auto object-cover rounded-3xl bg-slate-950 border-2 border-amber-500 shadow-2xl shadow-amber-500/30 ring-4 ring-amber-500/20"
+                alt="Logo Principal Sistema" 
+                className="relative w-28 h-28 mx-auto object-cover rounded-3xl bg-slate-950 border-2 border-slate-800 shadow-xl group-hover:scale-105 transition-transform duration-300"
               />
-              <span className="absolute -bottom-2 -right-2 bg-blue-900 text-amber-400 font-mono font-black text-[9px] uppercase px-2 py-0.5 rounded-full border border-amber-400/40 shadow-sm">
+              <span className="absolute -bottom-2 -right-2 bg-slate-900 text-amber-400 font-mono font-black text-[9px] uppercase px-2.5 py-0.5 rounded-full border border-slate-700 shadow-md">
                 2026
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium leading-relaxed pt-1">
+            
+            <div className="pt-2">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 uppercase">
+                JBALANCE CONTROL
+              </h1>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5 flex items-center justify-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>
+                <span>Sistema de Pesaje & Gestión Avícola</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+              </p>
+            </div>
+
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
               Ingrese su usuario y contraseña corporativa para acceder a la plataforma
             </p>
           </div>

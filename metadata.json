@@ -1,5 +1,5 @@
 {
-  "name": "JEANPIERE BARBOZA - Control & Pesaje Avícola",
+  "name": "JBALANCE CONTROL - Control & Pesaje Avícola",
   "description": "Sistema corporativo de pesaje de pollos en soles, emisión de tickets, control de galpones, cuentas por cobrar y portal de clientes.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

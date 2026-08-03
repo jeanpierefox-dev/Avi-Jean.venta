@@ -39,7 +39,7 @@ export const ApiDocsModal: React.FC<ApiDocsModalProps> = ({ onClose }) => {
             </div>
             <div>
               <h2 className="font-extrabold text-base text-white flex items-center gap-2">
-                Documentación API REST AvisControl v2.5
+                Documentación API REST JBalance Control v2.5
                 <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full font-mono">
                   OpenAPI / Swagger Specs
                 </span>

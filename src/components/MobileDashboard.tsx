@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import systemLogo from '../assets/images/system_futuristic_logo_1785723812533.jpg';
+import systemLogo from '../assets/images/jbalance_circular_j_rooster_logo_1785729209928.jpg';
 import { 
   Zap, 
   Coins, 
@@ -132,8 +132,8 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
       {/* Background Watermark Logo for Menu */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06] select-none z-0">
         <img 
-          src={systemLogo} 
-          alt="Marca de Agua Sistema" 
+          src={activeCompany?.logoUrl || systemLogo} 
+          alt="Marca de Agua Empresa" 
           className="w-80 h-80 sm:w-96 sm:h-96 object-cover rounded-full" 
         />
       </div>
@@ -157,7 +157,7 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
             </h1>
             <p className="text-xs text-slate-300 flex items-center space-x-2 font-medium">
               <Building2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span>{activeCompany?.name || 'Empresa Avícola'}</span>
+              <span className="text-amber-300 font-extrabold">{activeCompany?.name || 'Empresa Avícola'}</span>
               <span className="text-slate-600">•</span>
               <span className="text-amber-300 font-mono text-[10px] uppercase bg-slate-900 px-2 py-0.5 rounded-md border border-slate-700">
                 ROL: {currentUser?.role?.toUpperCase()}
@@ -165,11 +165,12 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
             </p>
           </div>
 
-          <div className="flex items-center justify-center bg-slate-900/90 p-2 rounded-2xl border border-slate-800 shadow-md shrink-0">
+          <div className="relative group flex items-center justify-center p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md shrink-0" title={activeCompany ? `Logo: ${activeCompany.name}` : "Logo Sistema"}>
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-amber-400 to-rose-500 rounded-2xl blur-xs opacity-50 group-hover:opacity-100 transition duration-300"></div>
             <img 
-              src={systemLogo} 
-              alt="Logo Principal Sistema" 
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-950 border-2 border-amber-500 shadow-sm shadow-amber-500/20 object-cover shrink-0"
+              src={activeCompany?.logoUrl || systemLogo} 
+              alt={activeCompany?.name || "Logo Empresa"} 
+              className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-950 border border-slate-700 shadow-sm object-cover shrink-0"
             />
           </div>
         </div>

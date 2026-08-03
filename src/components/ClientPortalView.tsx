@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import systemLogo from '../assets/images/system_futuristic_logo_1785723812533.jpg';
+import systemLogo from '../assets/images/jbalance_circular_j_rooster_logo_1785729209928.jpg';
 import { 
   Scale, 
   Receipt, 
@@ -122,7 +122,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
 
   // WhatsApp Share Balance / Account State
   const handleShareWhatsAppSaldo = () => {
-    const text = `*ESTADO DE CUENTA Y SALDO PENDIENTE - AVISCONTROL*%0A` +
+    const text = `*ESTADO DE CUENTA Y SALDO PENDIENTE - JBALANCE CONTROL*%0A` +
       `🏢 *Empresa:* ${activeCompany?.name || 'Avícola Galpón Real'}%0A` +
       `👤 *Cliente:* ${clientInfo.name}%0A` +
       `📅 *Fecha:* ${new Date().toLocaleDateString('es-ES')}%0A` +
@@ -138,7 +138,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
 
   // WhatsApp Share Payment Voucher / Abono
   const handleShareWhatsAppAbono = (p: any) => {
-    const text = `*COMPROBANTE DE ABONO DE PAGO - AVISCONTROL*%0A` +
+    const text = `*COMPROBANTE DE ABONO DE PAGO - JBALANCE CONTROL*%0A` +
       `🏢 *Empresa:* ${activeCompany?.name || 'Avícola Galpón Real'}%0A` +
       `👤 *Cliente:* ${p.clientName || clientInfo.name}%0A` +
       `📅 *Fecha Pago:* ${new Date(p.createdAt).toLocaleString('es-ES')}%0A` +

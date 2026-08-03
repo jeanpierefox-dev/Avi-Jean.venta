@@ -328,7 +328,7 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
 
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(7);
-  doc.text('AvisControl - Sistema Corporativo Avícola', 40, y, { align: 'center' });
+  doc.text('JBALANCE CONTROL - Sistema Corporativo Avícola', 40, y, { align: 'center' });
   y += 3.5;
   doc.text('Atendido por: ' + record.createdBy, 40, y, { align: 'center' });
 
@@ -492,7 +492,7 @@ export function generateCobranzaTicketPDF(record: WeighingRecord, company?: Comp
 
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(7);
-  doc.text('AvisControl - Ticket de Cobranza y Abonos', 40, y, { align: 'center' });
+  doc.text('JBALANCE CONTROL - Ticket de Cobranza y Abonos', 40, y, { align: 'center' });
   y += 3.5;
   doc.text('Operador: ' + record.createdBy, 40, y, { align: 'center' });
 
@@ -513,7 +513,7 @@ export function downloadTicketPDF(record: WeighingRecord, company?: Company, pay
 export function generateStatementPDF(client: Client, weighings: WeighingRecord[], payments: PaymentRecord[], company?: Company) {
   const doc = new jsPDF();
 
-  const companyName = company?.name || 'AVISCONTROL';
+  const companyName = company?.name || 'JBALANCE CONTROL';
   let y = 15;
 
   // Header
@@ -595,7 +595,7 @@ export function generateMonthlyReportPDF(monthName: string, company: Company, we
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text(company.name || 'AVISCONTROL', 14, y);
+  doc.text(company.name || 'JBALANCE CONTROL', 14, y);
   y += 6;
 
   doc.setFontSize(12);
@@ -684,7 +684,7 @@ export function generatePaymentReceiptPDF(payment: PaymentRecord, client?: Clien
     format: [80, 150], // Ticket formato recibo
   });
 
-  const companyName = company?.name || 'AVISCONTROL PERÚ';
+  const companyName = company?.name || 'JBALANCE CONTROL PERÚ';
   let y = 10;
 
   doc.setFont('helvetica', 'bold');
@@ -757,7 +757,7 @@ export function generatePaymentsReportPDF(payments: PaymentRecord[], company?: C
   const doc = new jsPDF();
   let y = 15;
 
-  const companyName = company?.name || 'AVISCONTROL PERÚ';
+  const companyName = company?.name || 'JBALANCE CONTROL PERÚ';
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);

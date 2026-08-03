@@ -3,7 +3,7 @@ import { WeighingRecord } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { downloadTicketPDF } from '../lib/pdfGenerator';
-import systemLogo from '../assets/images/system_futuristic_logo_1785723812533.jpg';
+import systemLogo from '../assets/images/jbalance_circular_j_rooster_logo_1785729209928.jpg';
 import { 
   X, 
   Printer, 
@@ -39,7 +39,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
 
   const handleShareWhatsApp = () => {
     const scaleImg = record.scaleImageUrl || 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80';
-    const text = `*COMPROBANTE DE PESA - ${activeCompany?.name || 'JEAN-BARSA AVÍCOLA SYSTEM'}*%0A` +
+    const text = `*COMPROBANTE DE PESA - ${activeCompany?.name || 'JBALANCE CONTROL'}*%0A` +
       `Ticket: ${record.ticketNumber}%0A` +
       `Cliente: ${record.clientName}%0A` +
       `Fecha: ${new Date(record.createdAt).toLocaleDateString('es-ES')}%0A` +
@@ -321,7 +321,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
             ) : null}
 
             <div className="text-center pt-2 border-t border-dashed border-slate-400 text-[10px] italic text-slate-600 space-y-0.5">
-              <div>AvisControl - Sistema Corporativo Avícola</div>
+              <div>JBALANCE CONTROL - Sistema Corporativo Avícola</div>
               <div className="font-semibold text-slate-800">Atendido por: {record.createdBy}</div>
             </div>
 

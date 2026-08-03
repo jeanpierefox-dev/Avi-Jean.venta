@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import systemLogo from '../assets/images/system_futuristic_logo_1785723812533.jpg';
+import systemLogo from '../assets/images/jbalance_circular_j_rooster_logo_1785729209928.jpg';
 import { 
   Scale, 
   Users, 
@@ -86,12 +86,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           {/* Logo & Brand - Image Only Design */}
           <div className="flex items-center space-x-2 shrink-0">
-            <img 
-              src={systemLogo} 
-              alt="Logo Principal" 
-              className="w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-xl bg-slate-950 border-2 border-amber-500 shadow-md shadow-amber-500/20 shrink-0 cursor-pointer hover:scale-105 transition-transform"
-              onClick={() => setActiveTab('dashboard')}
-            />
+            <div className="relative group cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-amber-400 to-rose-500 rounded-xl blur-xs opacity-50 group-hover:opacity-100 transition duration-300"></div>
+              <img 
+                src={systemLogo} 
+                alt="Logo Principal" 
+                className="relative w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-xl bg-slate-950 border border-slate-700 shadow-md shrink-0 group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
           </div>
 
           {/* Desktop Navigation - Responsive & Segmented formal corporate bar */}
