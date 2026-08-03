@@ -277,13 +277,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
     }
   };
 
-  const displayCompanies = currentUser?.role === 'admin'
+  const displayCompanies = (currentUser?.role === 'admin'
     ? companies
-    : companies.filter(c => c.id === (currentUser?.companyId || activeCompany?.id));
+    : companies.filter(c => c && c.id === (currentUser?.companyId || activeCompany?.id))).filter(c => c && c.id);
 
-  const displayUsers = currentUser?.role === 'admin' 
+  const displayUsers = (currentUser?.role === 'admin' 
     ? allUsers 
-    : allUsers.filter(u => u.companyId === (currentUser?.companyId || activeCompany?.id) && u.role !== 'admin');
+    : allUsers.filter(u => u && u.companyId === (currentUser?.companyId || activeCompany?.id) && u.role !== 'admin')).filter(u => u && u.uid);
 
   const handleFullSystemReset = async () => {
     setIsResetting(true);

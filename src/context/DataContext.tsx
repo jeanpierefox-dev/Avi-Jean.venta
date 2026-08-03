@@ -112,7 +112,10 @@ const getInitialState = <T,>(key: string, fallback: T): T => {
     const saved = localStorage.getItem(key);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed as unknown as T;
+      if (Array.isArray(parsed)) {
+        const valid = parsed.filter(item => item && typeof item === 'object' && (item.id || item.uid));
+        if (valid.length > 0) return valid as unknown as T;
+      }
     }
   } catch (e) {
     console.warn(`Error loading cached ${key}:`, e);
@@ -240,7 +243,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const unsubWeighings = onSnapshot(collection(db, 'weighings'), (snap) => {
         if (!snap.empty) {
-          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as WeighingRecord));
+          const docs = snap.docs
+            .map(d => ({ id: d.id, ...d.data() } as WeighingRecord))
+            .filter(w => w && typeof w === 'object' && w.id);
           docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setWeighings(docs);
           try { localStorage.setItem('avis_weighings', JSON.stringify(docs)); } catch (e) {}
@@ -249,8 +254,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const unsubClients = onSnapshot(collection(db, 'clients'), (snap) => {
         if (!snap.empty) {
-          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Client));
-          docs.sort((a, b) => a.name.localeCompare(b.name));
+          const docs = snap.docs
+            .map(d => ({ id: d.id, ...d.data() } as Client))
+            .filter(c => c && typeof c === 'object' && c.id);
+          docs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
           setClients(docs);
           try { localStorage.setItem('avis_clients', JSON.stringify(docs)); } catch (e) {}
         }
@@ -258,9 +265,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const unsubCompanies = onSnapshot(collection(db, 'companies'), (snap) => {
         if (!snap.empty) {
-          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Company));
-          setCompanies(docs);
-          try { localStorage.setItem('avis_companies', JSON.stringify(docs)); } catch (e) {}
+          const docs = snap.docs
+            .map(d => ({ id: d.id, ...d.data() } as Company))
+            .filter(c => c && typeof c === 'object' && c.id);
+          if (docs.length > 0) {
+            setCompanies(docs);
+            try { localStorage.setItem('avis_companies', JSON.stringify(docs)); } catch (e) {}
+          } else {
+            setCompanies([DEFAULT_COMPANY]);
+          }
         } else {
           setCompanies([DEFAULT_COMPANY]);
         }
@@ -268,7 +281,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const unsubPayments = onSnapshot(collection(db, 'payments'), (snap) => {
         if (!snap.empty) {
-          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as PaymentRecord));
+          const docs = snap.docs
+            .map(d => ({ id: d.id, ...d.data() } as PaymentRecord))
+            .filter(p => p && typeof p === 'object' && p.id);
           docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setPayments(docs);
           try { localStorage.setItem('avis_payments', JSON.stringify(docs)); } catch (e) {}
@@ -277,7 +292,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const unsubInventory = onSnapshot(collection(db, 'inventory'), (snap) => {
         if (!snap.empty) {
-          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem));
+          const docs = snap.docs
+            .map(d => ({ id: d.id, ...d.data() } as InventoryItem))
+            .filter(i => i && typeof i === 'object' && i.id);
           setInventory(docs);
           try { localStorage.setItem('avis_inventory', JSON.stringify(docs)); } catch (e) {}
         }
@@ -285,7 +302,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const unsubNotifs = onSnapshot(collection(db, 'notifications'), (snap) => {
         if (!snap.empty) {
-          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppNotification));
+          const docs = snap.docs
+            .map(d => ({ id: d.id, ...d.data() } as AppNotification))
+            .filter(n => n && typeof n === 'object' && n.id);
           docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setNotifications(docs);
           try { localStorage.setItem('avis_notifications', JSON.stringify(docs)); } catch (e) {}

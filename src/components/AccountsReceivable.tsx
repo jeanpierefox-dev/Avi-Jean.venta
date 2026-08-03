@@ -61,12 +61,12 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentCompanyId = activeCompany?.id || currentUser?.companyId || '';
-  const companyClients = clients.filter(c => !currentCompanyId || c.companyId === currentCompanyId);
+  const companyClients = clients.filter(c => c && typeof c === 'object' && c.id && (!currentCompanyId || c.companyId === currentCompanyId));
 
   const companyClientIds = new Set(companyClients.map(c => c.id));
   const companyClientNames = new Set(companyClients.map(c => (c.name || '').toLowerCase().trim()));
 
-  const selectedClientObj = selectedClientFilter !== 'todos' ? companyClients.find(c => c.id === selectedClientFilter) : null;
+  const selectedClientObj = selectedClientFilter !== 'todos' ? companyClients.find(c => c && c.id === selectedClientFilter) : null;
   const selectedClientNameNorm = selectedClientObj ? (selectedClientObj.name || '').toLowerCase().trim() : '';
 
   const companyWeighings = weighings

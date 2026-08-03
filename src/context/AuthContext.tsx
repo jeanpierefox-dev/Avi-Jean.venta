@@ -56,7 +56,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const saved = localStorage.getItem('avis_users');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter(u => u && typeof u === 'object' && u.uid);
+          if (valid.length > 0) return valid;
+        }
       }
     } catch (e) {
       console.warn('Error reading avis_users from localStorage:', e);
@@ -69,7 +72,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const saved = localStorage.getItem('avis_companies');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter(c => c && typeof c === 'object' && c.id);
+          if (valid.length > 0) return valid;
+        }
       }
     } catch (e) {}
     return INITIAL_COMPANIES;
@@ -79,7 +85,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const saved = localStorage.getItem('avis_clients');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter(c => c && typeof c === 'object' && c.id);
+          if (valid.length > 0) return valid;
+        }
       }
     } catch (e) {}
     return INITIAL_CLIENTS;
@@ -137,8 +146,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const unsub = onSnapshot(collection(db, 'companies'), (snap) => {
         if (!snap.empty) {
-          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Company));
-          setCompanies(docs);
+          const docs = snap.docs
+            .map(d => ({ id: d.id, ...d.data() } as Company))
+            .filter(c => c && typeof c === 'object' && c.id);
+          if (docs.length > 0) {
+            setCompanies(docs);
+          } else {
+            setCompanies([DEFAULT_COMPANY]);
+          }
         } else {
           setCompanies([DEFAULT_COMPANY]);
         }
@@ -349,7 +364,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setActiveCompanyIdState(id);
   };
 
-  const activeCompany = companies.find(c => c.id === activeCompanyId) || companies[0] || DEFAULT_COMPANY;
+  const activeCompany = companies.find(c => c && c.id === activeCompanyId) || companies.find(c => c && c.id) || DEFAULT_COMPANY;
 
   return (
     <AuthContext.Provider value={{
