@@ -152,13 +152,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Automatic persistence listener to prevent data loss on app updates or reloads
+  useEffect(() => {
+    try {
+      if (weighings.length > 0) localStorage.setItem('avis_weighings', JSON.stringify(weighings));
+      if (clients.length > 0) localStorage.setItem('avis_clients', JSON.stringify(clients));
+      if (companies.length > 0) localStorage.setItem('avis_companies', JSON.stringify(companies));
+      if (payments.length > 0) localStorage.setItem('avis_payments', JSON.stringify(payments));
+      if (inventory.length > 0) localStorage.setItem('avis_inventory', JSON.stringify(inventory));
+      if (notifications.length > 0) localStorage.setItem('avis_notifications', JSON.stringify(notifications));
+      if (weighings.length > 0 || clients.length > 0 || payments.length > 0) {
+        localStorage.removeItem('system_wiped');
+      }
+    } catch (e) {
+      console.warn('Error persisting data state:', e);
+    }
+  }, [weighings, clients, companies, payments, inventory, notifications]);
+
   // Firestore Realtime Listeners with automatic initial cloud database seeding
   useEffect(() => {
     // 1) Seed Firestore collections if database is empty on first boot
     const seedCloudDatabaseIfEmpty = async () => {
-      const isWiped = localStorage.getItem('system_wiped') === 'true';
-      if (isWiped) return;
-
       try {
         const compSnap = await getDocs(collection(db, 'companies'));
         if (compSnap.empty) {
@@ -220,85 +234,58 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.appName) setAppName(data.appName);
-          if (data.wiped) {
-            localStorage.setItem('system_wiped', 'true');
-          }
         }
       }, (err) => handleFirestoreError(err, OperationType.GET, 'system_settings/general'));
 
       const unsubWeighings = onSnapshot(collection(db, 'weighings'), (snap) => {
-        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as WeighingRecord));
           docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setWeighings(docs);
           try { localStorage.setItem('avis_weighings', JSON.stringify(docs)); } catch (e) {}
-        } else if (isWiped) {
-          setWeighings([]);
-          try { localStorage.setItem('avis_weighings', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'weighings'));
 
       const unsubClients = onSnapshot(collection(db, 'clients'), (snap) => {
-        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Client));
           docs.sort((a, b) => a.name.localeCompare(b.name));
           setClients(docs);
           try { localStorage.setItem('avis_clients', JSON.stringify(docs)); } catch (e) {}
-        } else if (isWiped) {
-          setClients([]);
-          try { localStorage.setItem('avis_clients', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'clients'));
 
       const unsubCompanies = onSnapshot(collection(db, 'companies'), (snap) => {
-        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Company));
           setCompanies(docs);
           try { localStorage.setItem('avis_companies', JSON.stringify(docs)); } catch (e) {}
-        } else if (isWiped) {
-          setCompanies([INITIAL_COMPANIES[0]]);
-          try { localStorage.setItem('avis_companies', JSON.stringify([INITIAL_COMPANIES[0]])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'companies'));
 
       const unsubPayments = onSnapshot(collection(db, 'payments'), (snap) => {
-        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as PaymentRecord));
           docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setPayments(docs);
           try { localStorage.setItem('avis_payments', JSON.stringify(docs)); } catch (e) {}
-        } else if (isWiped) {
-          setPayments([]);
-          try { localStorage.setItem('avis_payments', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'payments'));
 
       const unsubInventory = onSnapshot(collection(db, 'inventory'), (snap) => {
-        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem));
           setInventory(docs);
           try { localStorage.setItem('avis_inventory', JSON.stringify(docs)); } catch (e) {}
-        } else if (isWiped) {
-          setInventory([]);
-          try { localStorage.setItem('avis_inventory', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'inventory'));
 
       const unsubNotifs = onSnapshot(collection(db, 'notifications'), (snap) => {
-        const isWiped = localStorage.getItem('system_wiped') === 'true';
         if (!snap.empty) {
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppNotification));
           docs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setNotifications(docs);
           try { localStorage.setItem('avis_notifications', JSON.stringify(docs)); } catch (e) {}
-        } else if (isWiped) {
-          setNotifications([]);
-          try { localStorage.setItem('avis_notifications', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'notifications'));
 

@@ -33,16 +33,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null); // Start at login or admin
   const [allUsers, setAllUsers] = useState<UserProfile[]>(() => {
-    if (localStorage.getItem('system_wiped') === 'true') {
-      return [INITIAL_USERS[0]];
+    try {
+      const saved = localStorage.getItem('avis_users');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Error reading avis_users from localStorage:', e);
     }
     return INITIAL_USERS;
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [companies, setCompanies] = useState<Company[]>(() => {
+    try {
+      const saved = localStorage.getItem('avis_companies');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
     return INITIAL_COMPANIES;
   });
   const [clients, setClients] = useState<Client[]>(() => {
+    try {
+      const saved = localStorage.getItem('avis_clients');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
     return INITIAL_CLIENTS;
   });
   const [activeCompanyId, setActiveCompanyIdState] = useState<string>('');
@@ -50,12 +70,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Realtime Firestore Users Sync with initial seed check
   useEffect(() => {
     const checkAndSeedUsers = async () => {
-      const isWiped = localStorage.getItem('system_wiped') === 'true';
-      if (isWiped) return;
       try {
         const userSnap = await getDocs(collection(db, 'users'));
         if (userSnap.empty) {
-          for (const u of INITIAL_USERS) {
+          const storedUsers = (() => {
+            try {
+              const saved = localStorage.getItem('avis_users');
+              if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+              }
+            } catch (e) {}
+            return INITIAL_USERS;
+          })();
+          for (const u of storedUsers) {
             await setDoc(doc(db, 'users', u.uid), u);
           }
         }
@@ -74,11 +102,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .filter(u => !(u as any).deleted);
           if (docs.length > 0) {
             setAllUsers(docs);
-          } else {
-            setAllUsers([INITIAL_USERS[0]]);
+            try { localStorage.setItem('avis_users', JSON.stringify(docs)); } catch (e) {}
           }
-        } else {
-          setAllUsers([INITIAL_USERS[0]]);
         }
       }, (err) => console.warn('Users snapshot listener error:', err));
 
