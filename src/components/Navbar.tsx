@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import systemLogo from '../assets/images/jbalance_circular_j_rooster_logo_1785729209928.jpg';
+import systemLogo from '../assets/images/jbalance_white_bg_logo_1785736789139.jpg';
 import { 
   Scale, 
   Users, 

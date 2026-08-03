@@ -14,7 +14,7 @@ import { ApiDocsModal } from './components/ApiDocsModal';
 import { NotificationsPopover } from './components/NotificationsPopover';
 import { CompanySelectorModal } from './components/CompanySelectorModal';
 import { Scale, Lock, ShieldCheck, Building2, User, RefreshCw, Eye } from 'lucide-react';
-import systemLogo from './assets/images/jbalance_circular_j_rooster_logo_1785729209928.jpg';
+import systemLogo from './assets/images/jbalance_white_bg_logo_1785736789139.jpg';
 
 function MainAppContent() {
   const { currentUser, login, quickDemoLogin, companies, activeCompany, setActiveCompanyId } = useAuth();
