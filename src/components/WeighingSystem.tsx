@@ -47,9 +47,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   const [notes, setNotes] = useState<string>('');
 
   // Multi-Scale / Pesadas State
-  const [scaleEntries, setScaleEntries] = useState<ScaleEntry[]>([
-    { id: '1', chickens: 120, grossWeight: 288.0, photoUrl: '' }
-  ]);
+  const [scaleEntries, setScaleEntries] = useState<ScaleEntry[]>([]);
 
   // Quick Pesa Form State & Single Input Toggle Mode
   const [inputMode, setInputMode] = useState<'chickens' | 'weight'>('chickens');
@@ -176,10 +174,6 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   };
 
   const handleRemoveScaleEntry = (id: string) => {
-    if (scaleEntries.length <= 1) {
-      alert('Debe mantener al menos una pesa o balanza en el registro.');
-      return;
-    }
     setScaleEntries(prev => prev.filter(s => s.id !== id));
   };
 
@@ -232,9 +226,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
 
   // Completely Reset / Clear All Weighing Form Fields
   const handleClearAll = () => {
-    setScaleEntries([
-      { id: Date.now().toString(), chickens: 0, grossWeight: 0, photoUrl: '' }
-    ]);
+    setScaleEntries([]);
     setScaleImageUrl('');
     setNotes('');
     setPaidAmount(0);
