@@ -31,7 +31,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null); // Start at login or admin
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem('avis_current_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && (parsed.uid || parsed.username)) return parsed;
+      }
+    } catch (e) {}
+    return null;
+  });
+
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        localStorage.setItem('avis_current_user', JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem('avis_current_user');
+      }
+    } catch (e) {}
+  }, [currentUser]);
   const [allUsers, setAllUsers] = useState<UserProfile[]>(() => {
     try {
       const saved = localStorage.getItem('avis_users');
@@ -294,22 +313,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetUsersExceptAdmin = async () => {
-    localStorage.setItem('system_wiped', 'true');
+    localStorage.removeItem('system_wiped');
     const adminUser = allUsers.find(u => u.role === 'admin' || u.username === 'admin') || INITIAL_USERS[0];
     const defaultAdminList = [adminUser];
     setAllUsers(defaultAdminList);
     setCurrentUser(adminUser);
     
+    try {
+      localStorage.setItem('avis_users', JSON.stringify(defaultAdminList));
+      localStorage.setItem('avis_current_user', JSON.stringify(adminUser));
+    } catch (e) {}
+
     // Also update Firestore users collection
     try {
-      // 1. Mark wiped in system settings
       await setDoc(doc(db, 'system_settings', 'general'), { wiped: true, wipedAt: new Date().toISOString() }, { merge: true });
 
-      // 2. Ensure admin document exists in Firestore
       const adminDocId = adminUser.uid || 'demo_admin';
       await setDoc(doc(db, 'users', adminDocId), adminUser);
 
-      // 3. Clear all other non-admin users in Firestore
       const snap = await getDocs(collection(db, 'users'));
       const deletePromises = snap.docs
         .filter(d => {

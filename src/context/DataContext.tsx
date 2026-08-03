@@ -742,13 +742,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetSystemToDefault = async () => {
     try {
-      localStorage.setItem('system_wiped', 'true');
+      localStorage.removeItem('system_wiped');
+      localStorage.removeItem('avis_weighings');
+      localStorage.removeItem('avis_clients');
+      localStorage.removeItem('avis_payments');
+      localStorage.removeItem('avis_inventory');
+      localStorage.removeItem('avis_notifications');
+      localStorage.removeItem('avis_adjustments');
+
       setWeighings([]);
       setClients([]);
       setPayments([]);
       setInventory([]);
       setNotifications([]);
       setCompanies([INITIAL_COMPANIES[0]]);
+
+      try {
+        localStorage.setItem('avis_companies', JSON.stringify([INITIAL_COMPANIES[0]]));
+      } catch (e) {}
 
       // Save wiped flag to system_settings in Firestore
       try {
