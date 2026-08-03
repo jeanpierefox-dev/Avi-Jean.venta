@@ -173,20 +173,10 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
         </div>
       </div>
 
-      {/* Main Grid - Light Theme Corporate Icon Buttons */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <h2 className="text-xs font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block shadow-xs shadow-blue-500" />
-            PLATAFORMAS DEL SISTEMA (SELECCIONE UN ÍCONO)
-          </h2>
-          <span className="text-[10px] font-mono font-bold text-blue-900 bg-blue-100 px-3 py-1 rounded-xl border border-blue-200">
-            {visibleItems.length} MÓDULOS ACTIVOS
-          </span>
-        </div>
-
-        {/* High-Tech Corporate Icon-Only Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+      {/* Main Grid - Clean Icon Buttons Without Platform Titles */}
+      <div className="space-y-4">
+        {/* High-Tech Icon Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-5">
           {visibleItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -194,23 +184,20 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
                 title={item.title}
-                className={`group bg-white border border-slate-200/90 hover:border-blue-500 p-5 sm:p-6 rounded-3xl shadow-md hover:shadow-xl hover:bg-blue-50/40 transition-all duration-300 flex flex-col items-center justify-center space-y-3 cursor-pointer relative overflow-hidden active:scale-95`}
+                className={`group bg-white border border-slate-200 hover:border-blue-500 p-4 sm:p-5 rounded-2xl shadow-xs hover:shadow-md hover:bg-blue-50/50 transition-all duration-200 flex flex-col items-center justify-center space-y-2.5 cursor-pointer relative overflow-hidden active:scale-95`}
               >
-                {/* Top Subtle Accent Bar */}
+                {/* Top Accent Bar */}
                 <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${item.accentColor}`} />
 
                 {/* Platform Icon Container */}
-                <div className={`p-4 sm:p-5 rounded-2xl bg-gradient-to-br ${item.accentColor} text-white shadow-md group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 ring-2 ring-white`}>
-                  <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                <div className={`p-3.5 sm:p-4 rounded-xl bg-gradient-to-br ${item.accentColor} text-white shadow-xs group-hover:scale-105 transition-transform duration-200`}>
+                  <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                 </div>
 
                 {/* Minimalist Badge Tag */}
-                <span className="text-[10px] font-mono font-black uppercase tracking-wider text-slate-700 group-hover:text-blue-900 transition-colors bg-slate-100 group-hover:bg-blue-100 px-2.5 py-1 rounded-xl border border-slate-200 shadow-xs">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-700 group-hover:text-blue-900 transition-colors bg-slate-100 group-hover:bg-blue-100 px-2 py-0.5 rounded-lg border border-slate-200/80">
                   {item.badge}
                 </span>
-
-                {/* Hover Indicator Dot */}
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-600 group-hover:scale-125 transition-all" />
               </button>
             );
           })}
