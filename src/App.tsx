@@ -73,7 +73,7 @@ function MainAppContent() {
               </span>
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 uppercase">
+              <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 uppercase">
                 JEANPIERE BARBOZA
               </h1>
               <p className="text-xs font-bold text-amber-700 uppercase tracking-widest mt-0.5">

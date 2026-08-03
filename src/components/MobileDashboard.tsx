@@ -134,38 +134,38 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2 flex-1 min-w-0">
-            <div className="flex items-center space-x-2.5">
-              <span className="w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse shadow-xs shadow-amber-400" />
-              <span className="text-[11px] font-mono font-black tracking-widest text-amber-400 uppercase bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/30">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shadow-xs shadow-amber-400" />
+              <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase bg-amber-400/10 px-2.5 py-0.5 rounded-md border border-amber-400/30">
                 SISTEMA PLATAFORMA 2026 • JEANPIERE BARBOZA
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">
+            <h1 className="text-base sm:text-lg font-extrabold text-white tracking-tight uppercase">
               {currentUser?.displayName || 'Usuario Corporativo'}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 flex items-center space-x-2 font-semibold">
-              <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
+            <p className="text-xs text-slate-300 flex items-center space-x-2 font-medium">
+              <Building2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <span>{activeCompany?.name || 'Empresa Avícola'}</span>
               <span className="text-slate-600">•</span>
-              <span className="text-amber-300 font-mono text-[11px] uppercase bg-slate-900 px-2.5 py-0.5 rounded-md border border-slate-700">
+              <span className="text-amber-300 font-mono text-[10px] uppercase bg-slate-900 px-2 py-0.5 rounded-md border border-slate-700">
                 ROL: {currentUser?.role?.toUpperCase()}
               </span>
             </p>
           </div>
 
-          <div className="flex items-center space-x-4 bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-xl shrink-0">
+          <div className="flex items-center space-x-3 bg-slate-900/90 p-3 rounded-xl border border-slate-800 shadow-md shrink-0">
             <img 
-              src={currentUser?.role === 'empresa' && activeCompany?.logoUrl ? activeCompany.logoUrl : "/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg"} 
-              alt="Logo Principal" 
-              className="w-16 h-16 rounded-2xl bg-slate-950 border-2 border-amber-500 shadow-md shadow-amber-500/20 object-cover shrink-0"
+              src="/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg" 
+              alt="Logo Principal Sistema" 
+              className="w-12 h-12 rounded-xl bg-slate-950 border-2 border-amber-500 shadow-sm shadow-amber-500/20 object-cover shrink-0"
             />
-            <div className="text-left space-y-0.5 pr-2">
-              <span className="text-xs font-black text-white block uppercase">
-                {currentUser?.role === 'empresa' ? activeCompany?.name || 'Empresa Avícola' : 'Plataforma Oficial'}
+            <div className="text-left space-y-0.5 pr-1">
+              <span className="text-xs font-bold text-white block uppercase">
+                JEANPIERE BARBOZA 2026
               </span>
-              <span className="inline-flex items-center text-[9px] font-extrabold text-emerald-400 bg-emerald-950/90 px-2 py-0.5 rounded-md border border-emerald-800 mt-1">
+              <span className="inline-flex items-center text-[9px] font-extrabold text-emerald-400 bg-emerald-950/90 px-2 py-0.5 rounded-md border border-emerald-800">
                 ● Servidor Conectado
               </span>
             </div>

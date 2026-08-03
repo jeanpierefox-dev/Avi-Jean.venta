@@ -122,20 +122,20 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
     <div className="space-y-6 pb-12">
       
       {/* Top Header Card for Clients Manager */}
-      <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg text-white space-y-3">
+      <div className="bg-slate-900 border border-slate-800 px-4 py-3 rounded-2xl shadow-sm text-white space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-blue-600 rounded-2xl shadow-md border border-blue-400">
-              <Users className="w-6 h-6 text-white" />
+            <div className="p-2 bg-blue-600 rounded-xl border border-blue-400">
+              <Users className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
                   JEANPIERE BARBOZA • 2026
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">• Directorio Empresarial</span>
+                <span className="text-xs text-slate-400 font-medium">• Directorio Empresarial</span>
               </div>
-              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase">
+              <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight uppercase">
                 Cartera de Clientes y Límites de Crédito
               </h1>
             </div>

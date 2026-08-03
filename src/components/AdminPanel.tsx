@@ -303,20 +303,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
     <div className="space-y-6 pb-12 animate-fade-in">
       
       {/* Top Header Card for Admin Panel */}
-      <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg text-white space-y-4">
+      <div className="bg-slate-900 border border-slate-800 px-4 py-3 rounded-2xl shadow-sm text-white space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-purple-600 rounded-2xl shadow-md border border-purple-400">
-              <ShieldCheck className="w-6 h-6 text-white" />
+            <div className="p-2 bg-purple-600 rounded-xl border border-purple-400">
+              <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
                   JEANPIERE BARBOZA • 2026
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">• Panel de Administración</span>
+                <span className="text-xs text-slate-400 font-medium">• Panel de Administración</span>
               </div>
-              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase">
+              <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight uppercase">
                 Gestión Empresarial, Seguridad y Control de Usuarios
               </h1>
             </div>

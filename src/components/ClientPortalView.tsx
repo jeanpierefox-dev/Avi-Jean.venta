@@ -242,22 +242,22 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
     <div className="space-y-6 pb-12 animate-fade-in">
       
       {/* Top Header Card for Client Portal */}
-      <div className="bg-white border border-slate-200/90 p-5 rounded-3xl shadow-xs space-y-4">
+      <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             <img 
-              src={activeCompany?.logoUrl || "/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg"} 
-              alt="JEANPIERE BARBOZA 2026 Logo" 
-              className="w-12 h-12 rounded-2xl bg-slate-900 border-2 border-amber-500 shadow-md shadow-amber-500/10 object-cover shrink-0"
+              src="/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg" 
+              alt="JEANPIERE BARBOZA 2026 Logo Sistema" 
+              className="w-10 h-10 rounded-xl bg-slate-900 border-2 border-amber-500 shadow-xs object-cover shrink-0"
             />
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-blue-100 text-blue-900 rounded-md border border-blue-200">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-100 text-blue-900 rounded-md border border-blue-200">
                   Portal del Cliente
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">• Sync en Vivo</span>
+                <span className="text-xs text-slate-400 font-medium">• Sync en Vivo</span>
               </div>
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
                 {clientInfo.name}
               </h1>
               <p className="text-xs text-slate-500 font-medium">

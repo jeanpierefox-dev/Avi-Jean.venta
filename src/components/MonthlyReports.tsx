@@ -43,20 +43,20 @@ export const MonthlyReports: React.FC<MonthlyReportsProps> = ({ onSelectTab }) =
     <div className="space-y-6 pb-12">
       
       {/* Top Header Card for Monthly Reports */}
-      <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-lg text-white space-y-3">
+      <div className="bg-slate-900 border border-slate-800 px-4 py-3 rounded-2xl shadow-sm text-white space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-emerald-600 rounded-2xl shadow-md border border-emerald-400">
-              <BarChart3 className="w-6 h-6 text-white" />
+            <div className="p-2 bg-emerald-600 rounded-xl border border-emerald-400">
+              <BarChart3 className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
                   JEANPIERE BARBOZA • 2026
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">• Consolidado Mensual</span>
+                <span className="text-xs text-slate-400 font-medium">• Consolidado Mensual</span>
               </div>
-              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase">
+              <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight uppercase">
                 Reportes Financieros y Balance de Ventas en PDF
               </h1>
             </div>

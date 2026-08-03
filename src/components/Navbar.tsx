@@ -45,17 +45,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Set Favicon dynamically to Company Logo or default
+  // Set Favicon dynamically to System Logo
   useEffect(() => {
     const faviconEl = document.getElementById('favicon');
     if (faviconEl) {
-      if (activeCompany?.logoUrl) {
-        faviconEl.setAttribute('href', activeCompany.logoUrl);
-      } else {
-        faviconEl.setAttribute('href', "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐔</text></svg>");
-      }
+      faviconEl.setAttribute('href', "/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg");
     }
-  }, [activeCompany]);
+  }, []);
 
   const roleLabels = {
     admin: 'Super Administrador',

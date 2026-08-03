@@ -218,24 +218,21 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
   return (
     <div className="space-y-6 pb-16 animate-fade-in">
       
-      {/* High-Tech Futuristic Header Banner */}
-      <div className="bg-slate-950 border border-slate-800 p-6 rounded-3xl shadow-2xl relative overflow-hidden text-white ring-1 ring-slate-800">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
-          <div className="flex items-center space-x-4">
-            <div className="p-3.5 bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-2xl shadow-lg border border-emerald-400">
-              <Warehouse className="w-7 h-7" />
+      {/* Header Banner */}
+      <div className="bg-slate-900 border border-slate-800 px-4 py-3 rounded-2xl shadow-sm text-white relative overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-xl border border-emerald-400">
+              <Warehouse className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-mono font-black uppercase tracking-widest px-2.5 py-0.5 bg-amber-400/10 text-amber-400 rounded-md border border-amber-400/30">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
                   JEANPIERE BARBOZA • 2026
                 </span>
-                <span className="text-xs text-slate-400 font-bold">• Módulo Galpones & Kardex</span>
+                <span className="text-xs text-slate-400 font-medium">• Galpones & Kardex</span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
+              <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight uppercase">
                 Control de Granja, Lotes de Pollos y Kardex de Inventario
               </h1>
             </div>
