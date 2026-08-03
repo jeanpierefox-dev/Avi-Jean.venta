@@ -131,19 +131,19 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
   const galponesList = inventory.filter(i => i.companyId === currentCompanyId && (i.category === 'pollo_vivo' || i.unit === 'aves'));
 
   useEffect(() => {
-    if (companyClients.length > 0 && !selectedClientId) {
+    if (companyClients.length > 0 && (!selectedClientId || !companyClients.some(c => c.id === selectedClientId))) {
       setSelectedClientId(companyClients[0].id);
     }
-  }, [companyClients]);
+  }, [clients, currentCompanyId]);
 
   useEffect(() => {
-    if (galponesList.length > 0 && !selectedGalponId) {
+    if (galponesList.length > 0 && (!selectedGalponId || !galponesList.some(g => g.id === selectedGalponId))) {
       setSelectedGalponId(galponesList[0].id);
     }
-  }, [galponesList]);
+  }, [inventory, currentCompanyId]);
 
-  const selectedClient = companyClients.find(c => c.id === selectedClientId) || companyClients[0];
-  const selectedGalpon = galponesList.find(g => g.id === selectedGalponId) || galponesList[0];
+  const selectedClient = companyClients.find(c => c.id === selectedClientId) || companyClients[0] || null;
+  const selectedGalpon = galponesList.find(g => g.id === selectedGalponId) || galponesList[0] || null;
 
   const numericUnitPrice = unitPrice === '' ? 0 : Number(unitPrice) || 0;
 

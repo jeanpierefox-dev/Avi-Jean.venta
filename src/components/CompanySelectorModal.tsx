@@ -26,7 +26,7 @@ export const CompanySelectorModal: React.FC<CompanySelectorModalProps> = ({
   if (!isOpen) return null;
 
   const filteredCompanies = companies.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (c.taxId && c.taxId.includes(searchTerm))
   );
 

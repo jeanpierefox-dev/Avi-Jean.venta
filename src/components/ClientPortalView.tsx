@@ -45,15 +45,15 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
   // Find client record matching current user strictly by name or ID without wrong fallback
   const matchedClient = clients.find(c => 
     (currentUser?.clientId && c.id === currentUser.clientId) ||
-    (currentUser?.displayName && c.name.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()) ||
-    (currentUser?.username && c.name.toLowerCase().trim() === currentUser.username.toLowerCase().trim()) ||
+    (currentUser?.displayName && c.name?.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()) ||
+    (currentUser?.username && c.name?.toLowerCase().trim() === currentUser.username.toLowerCase().trim()) ||
     (currentUser?.phone && c.phone && c.phone.replace(/\D/g, '') === currentUser.phone.replace(/\D/g, '')) ||
     (currentUser?.email && c.email && c.email.toLowerCase().trim() === currentUser.email.toLowerCase().trim()) ||
-    (currentUser?.displayName && c.name.toLowerCase().includes(currentUser.displayName.toLowerCase().trim()))
+    (currentUser?.displayName && c.name?.toLowerCase().includes(currentUser.displayName.toLowerCase().trim()))
   );
 
   const matchedCompanyId = matchedClient?.companyId 
-    || weighings.find(w => (currentUser?.clientId && w.clientId === currentUser.clientId) || (currentUser?.displayName && w.clientName.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()))?.companyId 
+    || weighings.find(w => (currentUser?.clientId && w.clientId === currentUser.clientId) || (currentUser?.displayName && w.clientName?.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim()))?.companyId 
     || activeCompany?.id 
     || currentUser?.companyId 
     || 'comp_1';

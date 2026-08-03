@@ -109,8 +109,8 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   const totalCollectedSoles = companyPayments.reduce((sum, p) => sum + p.amount, 0);
 
   const filteredWeighings = companyWeighings.filter(w => {
-    const matchesSearch = w.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          w.ticketNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (w.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (w.ticketNumber || '').toLowerCase().includes(searchTerm.toLowerCase());
     if (!matchesSearch) return false;
 
     if (filterStatus === 'vencidos') return w.dueDate && w.dueDate < today && w.paymentStatus !== 'pagado';
@@ -122,7 +122,7 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   const filteredPayments = companyPayments.filter(p => 
     (p.clientName || '').toLowerCase().includes(paymentsSearch.toLowerCase()) ||
     (p.reference || '').toLowerCase().includes(paymentsSearch.toLowerCase()) ||
-    p.method.toLowerCase().includes(paymentsSearch.toLowerCase())
+    (p.method || '').toLowerCase().includes(paymentsSearch.toLowerCase())
   );
 
   const handleOpenPaymentModal = (weighing: WeighingRecord) => {

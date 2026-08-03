@@ -50,7 +50,7 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
   const companyClients = clients.filter(c => c.companyId === currentCompanyId);
 
   const filteredClients = companyClients.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (c.phone && c.phone.includes(searchTerm)) ||
     (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );

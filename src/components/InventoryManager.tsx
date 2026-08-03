@@ -79,7 +79,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
     }
 
     const totalWeightCalculated = headCount * estimatedAvgWeight;
-    const existing = companyInventory.find(i => i.name.toLowerCase().includes(selectedGalpon.toLowerCase()));
+    const existing = companyInventory.find(i => (i.name || '').toLowerCase().includes((selectedGalpon || '').toLowerCase()));
 
     if (existing) {
       const newHeadCount = existing.headCount + headCount;
