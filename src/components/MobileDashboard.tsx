@@ -132,8 +132,8 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
       {/* Background Watermark Logo for Menu */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06] select-none z-0">
         <img 
-          src={activeCompany?.logoUrl || systemLogo} 
-          alt="Marca de Agua Empresa" 
+          src={systemLogo} 
+          alt="Marca de Agua Sistema" 
           className="w-80 h-80 sm:w-96 sm:h-96 object-cover rounded-full" 
         />
       </div>
