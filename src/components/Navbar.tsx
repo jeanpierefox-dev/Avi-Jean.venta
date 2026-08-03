@@ -84,14 +84,13 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-2">
           
-          {/* Logo & Brand - Image Only Design */}
+          {/* Logo & Brand - Clean Emblem Design */}
           <div className="flex items-center space-x-2 shrink-0">
             <div className="relative group cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-amber-400 to-rose-500 rounded-xl blur-xs opacity-50 group-hover:opacity-100 transition duration-300"></div>
               <img 
                 src={systemLogo} 
                 alt="Logo Principal" 
-                className="relative w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-xl bg-slate-950 border border-slate-700 shadow-md shrink-0 group-hover:scale-105 transition-transform duration-300"
+                className="w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-full shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300"
               />
             </div>
           </div>

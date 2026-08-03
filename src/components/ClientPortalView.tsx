@@ -249,7 +249,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
             <img 
               src={systemLogo} 
               alt="Logo Sistema" 
-              className="w-10 h-10 rounded-xl bg-slate-900 border-2 border-amber-500 shadow-xs object-cover shrink-0"
+              className="w-10 h-10 rounded-full shadow-xs object-cover shrink-0"
             />
             <div>
               <div className="flex items-center space-x-2">

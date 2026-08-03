@@ -165,12 +165,11 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
             </p>
           </div>
 
-          <div className="relative group flex items-center justify-center p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md shrink-0" title={activeCompany ? `Logo: ${activeCompany.name}` : "Logo Sistema"}>
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-amber-400 to-rose-500 rounded-2xl blur-xs opacity-50 group-hover:opacity-100 transition duration-300"></div>
+          <div className="flex items-center justify-center shrink-0" title={activeCompany ? `Logo: ${activeCompany.name}` : "Logo Sistema"}>
             <img 
               src={activeCompany?.logoUrl || systemLogo} 
               alt={activeCompany?.name || "Logo Empresa"} 
-              className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-950 border border-slate-700 shadow-sm object-cover shrink-0"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-md object-cover shrink-0"
             />
           </div>
         </div>

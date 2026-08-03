@@ -25,12 +25,10 @@ function MainAppContent() {
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [showCompanySelector, setShowCompanySelector] = useState<boolean>(false);
 
-  // Route user directly based on role when logged in
+  // Route ALL users directly to main menu ('dashboard') when logged in
   useEffect(() => {
-    if (currentUser?.role === 'admin') {
-      setActiveTab('admin');
-    } else if (currentUser?.role === 'cliente') {
-      setActiveTab('mi_portal');
+    if (currentUser) {
+      setActiveTab('dashboard');
     }
   }, [currentUser?.uid]);
 
@@ -64,13 +62,12 @@ function MainAppContent() {
           
           <div className="text-center space-y-3">
             <div className="inline-block relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-amber-400 to-rose-500 rounded-3xl blur-sm opacity-40 group-hover:opacity-75 transition duration-500 animate-pulse"></div>
               <img 
                 src={systemLogo} 
                 alt="Logo Principal Sistema" 
-                className="relative w-28 h-28 mx-auto object-cover rounded-3xl bg-slate-950 border-2 border-slate-800 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                className="w-28 h-28 mx-auto object-cover rounded-full shadow-lg group-hover:scale-105 transition-transform duration-300"
               />
-              <span className="absolute -bottom-2 -right-2 bg-slate-900 text-amber-400 font-mono font-black text-[9px] uppercase px-2.5 py-0.5 rounded-full border border-slate-700 shadow-md">
+              <span className="absolute -bottom-1 -right-1 bg-slate-900 text-amber-400 font-mono font-black text-[9px] uppercase px-2.5 py-0.5 rounded-full border border-slate-700 shadow-md">
                 2026
               </span>
             </div>
