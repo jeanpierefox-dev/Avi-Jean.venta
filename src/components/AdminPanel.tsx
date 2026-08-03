@@ -21,7 +21,10 @@ import {
   X,
   Edit3,
   Trash2,
-  RotateCcw
+  RotateCcw,
+  Crown,
+  Shield,
+  UserCheck
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -299,6 +302,69 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
     }
   };
 
+  const renderUserTable = (usersList: UserProfile[]) => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-xs text-slate-800">
+        <thead className="bg-slate-100/90 text-slate-700 font-extrabold uppercase text-[10px] border-b border-slate-200">
+          <tr>
+            <th className="p-3 pl-4">Usuario / Nombre</th>
+            <th className="p-3">Rol / Tipo</th>
+            <th className="p-3">Nivel Acceso</th>
+            <th className="p-3">Empresa</th>
+            <th className="p-3 text-right pr-4">Acciones</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 bg-white">
+          {usersList.map((u, idx) => (
+            <tr key={u.uid + idx} className="hover:bg-slate-50 transition-colors">
+              <td className="p-3 pl-4 font-bold text-slate-900 flex items-center space-x-2.5">
+                <div className="w-8 h-8 bg-purple-100 border border-purple-200 rounded-full flex items-center justify-center text-purple-800 font-mono text-xs font-black shrink-0">
+                  {u.displayName ? u.displayName.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="truncate">
+                  <div className="text-slate-900 font-bold">{u.displayName}</div>
+                  <div className="text-[11px] text-blue-600 font-mono font-bold">
+                    @{u.username || u.email?.split('@')[0]}
+                  </div>
+                </div>
+              </td>
+              <td className="p-3">
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase font-mono ${
+                  u.role === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                  u.role === 'empresa' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                  u.role === 'cliente' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                  'bg-sky-100 text-sky-800 border border-sky-200'
+                }`}>
+                  {u.role === 'empresa' ? '👑 Empresa' : u.role === 'admin' ? '⭐ Admin' : u.role === 'cliente' ? '👤 Cliente' : '🛠️ Operador'}
+                </span>
+              </td>
+              <td className="p-3 font-mono text-emerald-700 font-bold">{u.accessLevel || 'operador'}</td>
+              <td className="p-3 text-slate-600 font-medium">
+                {companies.find(c => c.id === u.companyId)?.name || 'Galpón Real'}
+              </td>
+              <td className="p-3 text-right pr-4 space-x-2">
+                <button
+                  onClick={() => handleStartEditUser(u)}
+                  title="Editar Usuario"
+                  className="p-1.5 bg-slate-100 hover:bg-slate-200 text-purple-700 rounded-lg border border-slate-200 inline-flex items-center cursor-pointer"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDeleteUserClick(u)}
+                  title="Eliminar Usuario"
+                  className="p-1.5 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded-lg border border-slate-200 hover:border-rose-300 inline-flex items-center cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       
@@ -553,86 +619,189 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
 
       {/* SUBTAB 2: SCROLLABLE USUARIOS TABLE */}
       {activeSubTab === 'usuarios' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-              <Users className="w-4 h-4 text-purple-600" />
-              Gestión de Usuarios ({allUsers.length})
-            </h2>
+        <div className="space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+            <div>
+              <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <Users className="w-4.5 h-4.5 text-purple-600" />
+                {currentUser?.role === 'admin' ? 'Administración Global de Usuarios por Empresa' : `Usuarios de ${activeCompany?.name || 'la Empresa'}`}
+              </h2>
+              <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                {currentUser?.role === 'admin' 
+                  ? 'Vista jerárquica de Administradores de Empresa, Operadores y Clientes.' 
+                  : 'Gestione los administradores, operadores de balanza y clientes asignados a su empresa.'}
+              </p>
+            </div>
+
             <button
               onClick={() => setShowUserModal(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 shadow-sm transition-transform active:scale-95"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 shadow-sm transition-transform active:scale-95 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               <span>Crear Nuevo Usuario</span>
             </button>
           </div>
 
-          {/* Scrollable Container with Max Height */}
-          <div className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-sm">
-            <div className="max-h-96 overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300">
-              <table className="w-full text-left text-xs text-slate-800">
-                <thead className="sticky top-0 z-10 bg-slate-100 text-slate-700 font-extrabold uppercase text-[10px] border-b border-slate-200">
-                  <tr>
-                    <th className="p-4">Usuario / Nombre</th>
-                    <th className="p-4">Rol</th>
-                    <th className="p-4">Nivel Acceso</th>
-                    <th className="p-4">Empresa</th>
-                    <th className="p-4 text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {displayUsers.map((u, idx) => (
-                    <tr key={u.uid + idx} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-4 font-bold text-slate-900 flex items-center space-x-2.5">
-                        <div className="w-8 h-8 bg-purple-100 border border-purple-200 rounded-full flex items-center justify-center text-purple-800 font-mono text-xs font-black shrink-0">
-                          {u.displayName ? u.displayName.charAt(0).toUpperCase() : 'U'}
+          {currentUser?.role === 'admin' ? (
+            /* SUPER ADMIN VIEW: GROUPED BY COMPANY */
+            <div className="space-y-6">
+              {/* Global Super Admins Section */}
+              {allUsers.filter(u => u.role === 'admin').length > 0 && (
+                <div className="bg-white border border-purple-200 rounded-3xl overflow-hidden shadow-sm">
+                  <div className="bg-purple-900 text-white p-3.5 px-5 flex items-center justify-between">
+                    <div className="flex items-center space-x-2 font-extrabold text-xs">
+                      <ShieldCheck className="w-4 h-4 text-purple-300" />
+                      <span>Super Administradores Globales del Sistema</span>
+                    </div>
+                    <span className="bg-purple-800 text-purple-200 text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold">
+                      {allUsers.filter(u => u.role === 'admin').length} usuarios
+                    </span>
+                  </div>
+                  {renderUserTable(allUsers.filter(u => u.role === 'admin'))}
+                </div>
+              )}
+
+              {/* Iterate each Company */}
+              {companies.map(comp => {
+                const compUsers = allUsers.filter(u => u.companyId === comp.id && u.role !== 'admin');
+                const empresaAdmins = compUsers.filter(u => u.role === 'empresa');
+                const operadores = compUsers.filter(u => u.role !== 'empresa' && u.role !== 'cliente');
+                const clientes = compUsers.filter(u => u.role === 'cliente');
+
+                return (
+                  <div key={comp.id} className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-sm space-y-0">
+                    {/* Company Header */}
+                    <div className="bg-slate-900 text-white p-4 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-purple-600/30 border border-purple-400/30 rounded-xl flex items-center justify-center text-purple-300 font-bold">
+                          <Building2 className="w-4 h-4" />
                         </div>
-                        <div className="truncate">
-                          <div className="text-slate-900 font-bold">{u.displayName}</div>
-                          <div className="text-[11px] text-blue-600 font-mono font-bold">
-                            @{u.username || u.email?.split('@')[0]}
+                        <div>
+                          <h3 className="font-extrabold text-xs sm:text-sm text-white uppercase tracking-tight">
+                            Empresa: {comp.name}
+                          </h3>
+                          <div className="flex items-center space-x-2 text-[10px] text-slate-400 font-mono">
+                            <span>RUC: {comp.taxId || '20601234567'}</span>
+                            <span>•</span>
+                            <span>Tel: {comp.phone || 'N/A'}</span>
                           </div>
                         </div>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase font-mono ${
-                          u.role === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
-                          u.role === 'empresa' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                          'bg-sky-100 text-sky-800 border border-sky-200'
-                        }`}>
-                          {u.role}
+                      </div>
+
+                      <div className="flex items-center space-x-2 text-[10px] font-mono font-bold">
+                        <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+                          👑 Admin: {empresaAdmins.length}
                         </span>
-                      </td>
-                      <td className="p-4 font-mono text-emerald-700 font-bold">{u.accessLevel || 'operador'}</td>
-                      <td className="p-4 text-slate-600 font-medium">
-                        {companies.find(c => c.id === u.companyId)?.name || 'Galpón Real'}
-                      </td>
-                      <td className="p-4 text-right space-x-2">
-                        <button
-                          onClick={() => handleStartEditUser(u)}
-                          title="Editar Usuario"
-                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-purple-700 rounded-lg border border-slate-200 inline-flex items-center"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUserClick(u)}
-                          title="Eliminar Usuario"
-                          className="p-1.5 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded-lg border border-slate-200 hover:border-rose-300 inline-flex items-center"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <span className="bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2.5 py-1 rounded-full">
+                          🛠️ Operadores: {operadores.length}
+                        </span>
+                        <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded-full">
+                          👥 Clientes: {clientes.length}
+                        </span>
+                      </div>
+                    </div>
+
+                    {compUsers.length === 0 ? (
+                      <div className="p-6 text-center text-slate-400 text-xs italic font-medium">
+                        No hay usuarios registrados para esta empresa todavía.
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {/* 1. Usuario Empresa Admins */}
+                        {empresaAdmins.length > 0 && (
+                          <div>
+                            <div className="bg-emerald-50/80 px-4 py-2 text-[11px] font-extrabold text-emerald-900 border-b border-emerald-100 flex items-center gap-1.5">
+                              <Crown className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Usuario Administrador de Empresa ({comp.name})</span>
+                            </div>
+                            {renderUserTable(empresaAdmins)}
+                          </div>
+                        )}
+
+                        {/* 2. Operadores */}
+                        {operadores.length > 0 && (
+                          <div>
+                            <div className="bg-sky-50/80 px-4 py-2 text-[11px] font-extrabold text-sky-900 border-b border-sky-100 flex items-center gap-1.5">
+                              <Shield className="w-3.5 h-3.5 text-sky-600" />
+                              <span>Operadores de Balanza</span>
+                            </div>
+                            {renderUserTable(operadores)}
+                          </div>
+                        )}
+
+                        {/* 3. Clientes */}
+                        {clientes.length > 0 && (
+                          <div>
+                            <div className="bg-purple-50/80 px-4 py-2 text-[11px] font-extrabold text-purple-900 border-b border-purple-100 flex items-center gap-1.5">
+                              <UserCheck className="w-3.5 h-3.5 text-purple-600" />
+                              <span>Clientes de Portal</span>
+                            </div>
+                            {renderUserTable(clientes)}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <div className="p-3 bg-slate-50 text-center text-[10px] text-slate-500 border-t border-slate-200 font-mono font-medium">
-              ↑ Deslice hacia arriba o abajo para navegar entre los usuarios registrados ↑
+          ) : (
+            /* COMPANY USER VIEW: ONLY SHOW CURRENT COMPANY USERS GROUPED */
+            <div className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-sm space-y-0">
+              <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Building2 className="w-4 h-4 text-purple-400" />
+                  <span className="font-extrabold text-xs text-white">
+                    Usuarios de {activeCompany?.name || 'su Empresa'}
+                  </span>
+                </div>
+                <span className="text-[10px] bg-purple-600/40 text-purple-200 px-3 py-1 rounded-full font-mono font-bold">
+                  Total: {displayUsers.length} usuarios
+                </span>
+              </div>
+
+              {displayUsers.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 text-xs font-medium">
+                  No se encontraron otros usuarios registrados para su empresa.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {/* 1. Empresa Admins */}
+                  {displayUsers.filter(u => u.role === 'empresa').length > 0 && (
+                    <div>
+                      <div className="bg-emerald-50 px-4 py-2 text-[11px] font-extrabold text-emerald-900 border-b border-emerald-100 flex items-center gap-1.5">
+                        <Crown className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Administradores de Empresa</span>
+                      </div>
+                      {renderUserTable(displayUsers.filter(u => u.role === 'empresa'))}
+                    </div>
+                  )}
+
+                  {/* 2. Operadores */}
+                  {displayUsers.filter(u => u.role !== 'empresa' && u.role !== 'cliente').length > 0 && (
+                    <div>
+                      <div className="bg-sky-50 px-4 py-2 text-[11px] font-extrabold text-sky-900 border-b border-sky-100 flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5 text-sky-600" />
+                        <span>Operadores de Balanza</span>
+                      </div>
+                      {renderUserTable(displayUsers.filter(u => u.role !== 'empresa' && u.role !== 'cliente'))}
+                    </div>
+                  )}
+
+                  {/* 3. Clientes */}
+                  {displayUsers.filter(u => u.role === 'cliente').length > 0 && (
+                    <div>
+                      <div className="bg-purple-50 px-4 py-2 text-[11px] font-extrabold text-purple-900 border-b border-purple-100 flex items-center gap-1.5">
+                        <UserCheck className="w-3.5 h-3.5 text-purple-600" />
+                        <span>Clientes de Portal</span>
+                      </div>
+                      {renderUserTable(displayUsers.filter(u => u.role === 'cliente'))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       )}
 

@@ -138,6 +138,13 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
 
   // WhatsApp Share Payment Voucher / Abono
   const handleShareWhatsAppAbono = (p: any) => {
+    let voucherSection = '';
+    if (p.voucherUrl && (p.voucherUrl.startsWith('http://') || p.voucherUrl.startsWith('https://'))) {
+      voucherSection = `📷 *FOTO VOUCHER:*%0A${p.voucherUrl}%0A%0A`;
+    } else if (p.voucherUrl && p.voucherUrl.startsWith('data:image')) {
+      voucherSection = `📷 *FOTO VOUCHER:* Adjunta en el Recibo / Sistema%0A%0A`;
+    }
+
     const text = `*COMPROBANTE DE ABONO DE PAGO - JBALANCE CONTROL*%0A` +
       `🏢 *Empresa:* ${activeCompany?.name || 'Avícola Galpón Real'}%0A` +
       `👤 *Cliente:* ${p.clientName || clientInfo.name}%0A` +
@@ -147,7 +154,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
       `💳 *Método de Pago:* ${p.method.toUpperCase()}%0A` +
       `🔢 *N° Operación / Ref:* ${p.reference || 'N/A'}%0A` +
       `----------------------------------%0A` +
-      (p.voucherUrl ? `📷 *FOTO VOUCHER:*%0A${encodeURIComponent(p.voucherUrl)}%0A%0A` : '') +
+      voucherSection +
       `¡Abono procesado correctamente!`;
 
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
@@ -155,7 +162,14 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
 
   // WhatsApp Share with Scale Image
   const handleShareWhatsAppPesa = (w: any) => {
-    const scaleImg = w.scaleImageUrl || 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80';
+    const scaleImg = w.scaleImageUrl;
+    let imgSection = '';
+    if (scaleImg && (scaleImg.startsWith('http://') || scaleImg.startsWith('https://'))) {
+      imgSection = `📷 *FOTO DE LA PESA EN BALANZA:*%0A${scaleImg}%0A%0A`;
+    } else if (scaleImg && scaleImg.startsWith('data:image')) {
+      imgSection = `📷 *FOTO DE PESA:* Adjunta en el Ticket / Sistema%0A%0A`;
+    }
+
     const avgW = w.chickenCount > 0 ? (w.netWeight / w.chickenCount).toFixed(2) : '0.00';
 
     const text = `*COMPROBANTE DE PESAJE DE POLLOS - TICKET #${w.ticketNumber}*%0A` +
@@ -171,7 +185,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
       `💵 *Monto Pagado:* S/ ${w.paidAmount.toFixed(2)}%0A` +
       `⚠️ *SALDO PENDIENTE COBRANZA:* S/ ${w.pendingAmount.toFixed(2)}%0A` +
       `----------------------------------%0A` +
-      `📷 *FOTO / IMAGEN DE LA PESA EN BALANZA:*%0A${encodeURIComponent(scaleImg)}%0A%0A` +
+      imgSection +
       `¡Muchas gracias por su preferencia!`;
 
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');

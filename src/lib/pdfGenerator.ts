@@ -1,9 +1,26 @@
 import jsPDF from 'jspdf';
 import { WeighingRecord, Company, Client, PaymentRecord } from '../types';
+import systemLogo from '../assets/images/jbalance_white_bg_logo_1785736789139.jpg';
 
-function drawCompanyHeaderLogo(doc: jsPDF, company?: Company, startY: number = 6): number {
+function addSystemWatermark(doc: jsPDF, pageHeight: number) {
+  try {
+    if ((doc as any).GState) {
+      doc.setGState(new (doc as any).GState({ opacity: 0.08 }));
+    }
+    const logoX = (80 - 50) / 2;
+    const logoY = Math.max(10, (pageHeight - 50) / 2);
+    doc.addImage(systemLogo, 'JPEG', logoX, logoY, 50, 50);
+    if ((doc as any).GState) {
+      doc.setGState(new (doc as any).GState({ opacity: 1.0 }));
+    }
+  } catch (e) {
+    console.warn('System watermark logo background failed:', e);
+  }
+}
+
+function drawCompanyHeaderLogo(doc: jsPDF, company?: Company, startY: number = 5): number {
   let y = startY;
-  const companyName = company?.name || 'AVICOLA EL GALPÓN REAL S.A.C.';
+  const companyName = company?.name || 'AGROPECUARIA CAMPOVERDE S.A.C.';
   const phone = company?.phone || '(+51) 987-654-321';
   const taxId = company?.taxId || 'RUC 20601234567';
   const address = company?.address || 'Av. Panamericana Sur Km 35, Lima - Perú';
@@ -16,20 +33,20 @@ function drawCompanyHeaderLogo(doc: jsPDF, company?: Company, startY: number = 6
   doc.rect(5, y, 70, 24);
 
   let logoSuccess = false;
-  if (company?.logoUrl && company.logoUrl.startsWith('data:image')) {
+  if (company?.logoUrl) {
     try {
-      const format = company.logoUrl.includes('image/png') ? 'PNG' : company.logoUrl.includes('image/jpeg') ? 'JPEG' : 'PNG';
+      const format = company.logoUrl.includes('image/png') ? 'PNG' : 'JPEG';
       doc.addImage(company.logoUrl, format, 8, y + 2.5, 18, 19);
       logoSuccess = true;
     } catch (e) {
-      console.warn('Error rendering base64 company logo in PDF:', e);
+      console.warn('Error rendering company logo in PDF:', e);
     }
   }
 
   if (logoSuccess) {
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
-    doc.text(companyName.substring(0, 22), 28, y + 6);
+    doc.setFontSize(8.5);
+    doc.text(companyName.substring(0, 24), 28, y + 6);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.text(taxId, 28, y + 10.5);
@@ -37,13 +54,13 @@ function drawCompanyHeaderLogo(doc: jsPDF, company?: Company, startY: number = 6
     doc.text(address.substring(0, 26), 28, y + 18.5);
   } else {
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10.5);
-    doc.text(companyName, 40, y + 6, { align: 'center' });
+    doc.setFontSize(9.5);
+    doc.text(companyName.substring(0, 32), 40, y + 6, { align: 'center' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.text(taxId, 40, y + 10.5, { align: 'center' });
     doc.text(`Tel: ${phone}`, 40, y + 14.5, { align: 'center' });
-    doc.text(address, 40, y + 18.5, { align: 'center' });
+    doc.text(address.substring(0, 32), 40, y + 18.5, { align: 'center' });
   }
 
   return y + 26;
@@ -51,13 +68,14 @@ function drawCompanyHeaderLogo(doc: jsPDF, company?: Company, startY: number = 6
 
 export function generateTicketPDF(record: WeighingRecord, company?: Company, paymentsHistory?: PaymentRecord[]): jsPDF {
   const isCobranza = paymentsHistory && paymentsHistory.length > 0;
-  const hasScaleImg = record.scaleImageUrl && record.scaleImageUrl.startsWith('data:image');
+  const entriesWithPhotos = record.scaleEntries?.filter(se => Boolean(se.photoUrl)) || [];
+  const photoCount = entriesWithPhotos.length > 0 ? entriesWithPhotos.length : (record.scaleImageUrl ? 1 : 0);
   
-  const calculatedHeight = 240 + (isCobranza ? (paymentsHistory.length * 6 + 20) : 0) + (hasScaleImg ? 35 : 0);
+  const calculatedHeight = 250 + (isCobranza ? (paymentsHistory.length * 6 + 20) : 0) + (photoCount * 35);
 
   const doc = new jsPDF({
     unit: 'mm',
-    format: [80, calculatedHeight], // Formato Ticket Térmico 80mm estilo AviControl Campo Verde
+    format: [80, calculatedHeight], // Formato Ticket Térmico 80mm
   });
 
   let y = 5;
@@ -67,21 +85,32 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
   doc.setDrawColor(15, 23, 42);
   doc.rect(3, 3, 74, calculatedHeight - 6);
 
-  // 1. Company Header
-  const companyName = company?.name || 'AGROPECUARIA CAMPOVERDE SAC';
+  // Background System Watermark Logo
+  addSystemWatermark(doc, calculatedHeight);
+
+  // 1. Company Header Logo Box
+  y = drawCompanyHeaderLogo(doc, company, y);
+
+  // Title Banner
+  doc.setFillColor(15, 23, 42);
+  doc.rect(5, y, 70, 7, 'F');
+  doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10.5);
-  doc.text(companyName, 40, y + 4, { align: 'center' });
-  
   doc.setFontSize(9);
-  doc.text('TICKET DE PESAJE', 40, y + 9, { align: 'center' });
+  doc.text('TICKET DE PESAJE DE POLLOS', 40, y + 4.8, { align: 'center' });
+  
+  y += 9;
+  doc.setTextColor(0, 0, 0);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   const dateStr = new Date(record.createdAt).toLocaleDateString('es-ES') + ', ' + new Date(record.createdAt).toLocaleTimeString('es-ES');
-  doc.text(`FECHA: ${dateStr}`, 40, y + 13, { align: 'center' });
+  doc.text(`FECHA: ${dateStr}`, 40, y, { align: 'center' });
+  y += 4;
+  doc.setFont('helvetica', 'bold');
+  doc.text(`TICKET Nº: ${record.ticketNumber}`, 40, y, { align: 'center' });
 
-  y += 16;
+  y += 5;
 
   // Solid horizontal separator
   doc.setLineWidth(0.6);
@@ -129,9 +158,6 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
     cantidadRows.push({ label: 'TOTAL MUERTOS:', val: `${record.deadChickensCount}` });
   }
   cantidadRows.push({ label: 'Prom. Peso Neto:', val: `${avgWeight} kg` });
-  if (hasDead) {
-    cantidadRows.push({ label: 'Prom. P. Muerto:', val: '0.00 kg' });
-  }
 
   doc.setFontSize(7.5);
   cantidadRows.forEach((r) => {
@@ -156,7 +182,7 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
   doc.rect(5, y, 70, 4.5, 'F');
   doc.rect(5, y, 70, 4.5);
   doc.setFontSize(7);
-  doc.text(hasTare ? `LLENAS (${filledBaskets}p)` : `PESADAS (${record.scaleEntries?.length || 1})`, 40, y + 3.2, { align: 'center' });
+  doc.text(hasTare ? `LLENAS (${record.scaleEntries?.length || 1} pesadas)` : `PESADAS DE BALANZA (${record.scaleEntries?.length || 1})`, 40, y + 3.2, { align: 'center' });
 
   y += 4.5;
 
@@ -242,12 +268,6 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
   doc.text('Prom. Peso Neto:', 7, y + 3);
   doc.text(`${avgWeight} kg`, 73, y + 3, { align: 'right' });
 
-  if (hasDead) {
-    y += 4.5;
-    doc.text('Prom. P. Muerto:', 7, y + 3);
-    doc.text('0.00 kg', 73, y + 3, { align: 'right' });
-  }
-
   y += 6;
 
   // Solid separator line
@@ -290,8 +310,7 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
     y += 8;
   }
 
-  // Scale photos if present (for individual scale entries or primary photo)
-  const entriesWithPhotos = record.scaleEntries?.filter(se => se.photoUrl && se.photoUrl.startsWith('data:image')) || [];
+  // Scale photos if present
   if (entriesWithPhotos.length > 0) {
     entriesWithPhotos.forEach((se, i) => {
       try {
@@ -309,7 +328,7 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
         console.warn('Error adding scale entry image to PDF:', e);
       }
     });
-  } else if (hasScaleImg) {
+  } else if (record.scaleImageUrl) {
     try {
       doc.setFillColor(248, 250, 252);
       doc.rect(5, y, 70, 32, 'F');
@@ -318,8 +337,8 @@ export function generateTicketPDF(record: WeighingRecord, company?: Company, pay
       doc.setFontSize(6.5);
       doc.text('FOTO DE BALANZA ELECTRÓNICA ADJUNTA:', 7, y + 4);
       
-      const format = record.scaleImageUrl!.includes('image/png') ? 'PNG' : 'JPEG';
-      doc.addImage(record.scaleImageUrl!, format, 8, y + 5.5, 64, 24);
+      const format = record.scaleImageUrl.includes('image/png') ? 'PNG' : 'JPEG';
+      doc.addImage(record.scaleImageUrl, format, 8, y + 5.5, 64, 24);
       y += 35;
     } catch (e) {
       console.warn('Error adding scale image to PDF:', e);
@@ -679,71 +698,114 @@ export function generateMonthlyReportPDF(monthName: string, company: Company, we
 }
 
 export function generatePaymentReceiptPDF(payment: PaymentRecord, client?: Client, company?: Company): jsPDF {
+  const hasVoucher = Boolean(payment.voucherUrl);
+  const calculatedHeight = 160 + (hasVoucher ? 38 : 0);
+
   const doc = new jsPDF({
     unit: 'mm',
-    format: [80, 150], // Ticket formato recibo
+    format: [80, calculatedHeight], // Formato Ticket 80mm
   });
 
-  const companyName = company?.name || 'JBALANCE CONTROL PERÚ';
-  let y = 10;
+  let y = 5;
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text(companyName, 40, y, { align: 'center' });
-  y += 5;
+  // Frame Outer Border
+  doc.setLineWidth(0.4);
+  doc.setDrawColor(15, 23, 42);
+  doc.rect(3, 3, 74, calculatedHeight - 6);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.text('COMPROBANTE DE ABONO / PAGO', 40, y, { align: 'center' });
-  y += 5;
+  // Background System Watermark
+  addSystemWatermark(doc, calculatedHeight);
 
-  doc.setLineWidth(0.3);
-  doc.line(5, y, 75, y);
-  y += 5;
+  // 1. Company Header Logo Box
+  y = drawCompanyHeaderLogo(doc, company, y);
 
+  // Title Navy Box
+  doc.setFillColor(15, 23, 42);
+  doc.rect(5, y, 70, 7, 'F');
+  doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.text(`Recibo #: REC-${payment.id.substring(4, 10).toUpperCase()}`, 5, y);
-  y += 4;
+  doc.text('COMPROBANTE DE ABONO Y PAGO', 40, y + 4.8, { align: 'center' });
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.text(`Fecha: ${new Date(payment.createdAt).toLocaleString('es-ES')}`, 5, y);
-  y += 4;
-  doc.text(`Cliente: ${payment.clientName || client?.name || 'Cliente'}`, 5, y);
-  y += 4;
-  doc.text(`Método Pago: ${payment.method.toUpperCase()}`, 5, y);
-  if (payment.reference) {
-    y += 4;
-    doc.text(`Nº Operación: ${payment.reference}`, 5, y);
-  }
-  y += 6;
+  y += 10;
+  doc.setTextColor(0, 0, 0);
 
-  doc.line(5, y, 75, y);
+  // Recibo & Datos Cliente
+  doc.setFillColor(241, 245, 249);
+  doc.rect(5, y, 70, 5, 'F');
+  doc.rect(5, y, 70, 5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('DATOS DE LA TRANSACCIÓN', 7, y + 3.5);
+
   y += 5;
+
+  const receiptNum = `REC-${payment.id.substring(0, 8).toUpperCase()}`;
+  const dateStr = new Date(payment.createdAt).toLocaleString('es-ES');
+  const clientName = payment.clientName || client?.name || 'Cliente Registrar';
+
+  doc.rect(5, y, 70, 22);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.text(`RECIBO Nº: ${receiptNum}`, 7, y + 4.5);
+  doc.text(`FECHA PAGO: ${dateStr}`, 7, y + 8.5);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`CLIENTE: ${clientName.substring(0, 28)}`, 7, y + 12.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`MÉTODO DE PAGO: ${payment.method.toUpperCase()}`, 7, y + 16.5);
+  if (payment.reference) {
+    doc.text(`Nº OPERACIÓN: ${payment.reference.substring(0, 24)}`, 7, y + 20.5);
+  }
+
+  y += 25;
+
+  // Highlighted Payment Amount Box
+  doc.setFillColor(15, 23, 42); // Navy Dark
+  doc.rect(5, y, 70, 14, 'F');
+  doc.setTextColor(255, 255, 255);
 
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('MONTO ABONADO:', 7, y + 5.5);
   doc.setFontSize(11);
-  doc.text('MONTO ABONADO:', 5, y);
-  doc.text(`S/ ${payment.amount.toFixed(2)}`, 75, y, { align: 'right' });
-  y += 6;
+  doc.setTextColor(52, 211, 153); // Emerald
+  doc.text(`S/ ${payment.amount.toFixed(2)}`, 73, y + 6, { align: 'right' });
 
-  if (client) {
-    doc.setFontSize(8);
+  if (client && client.currentBalance !== undefined) {
+    doc.setTextColor(226, 232, 240);
     doc.setFont('helvetica', 'normal');
-    doc.text('Saldo Actual Restante:', 5, y);
-    doc.text(`S/ ${(client.currentBalance || 0).toFixed(2)}`, 75, y, { align: 'right' });
-    y += 5;
+    doc.setFontSize(7);
+    doc.text('Saldo Actual Restante del Cliente:', 7, y + 11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`S/ ${client.currentBalance.toFixed(2)}`, 73, y + 11, { align: 'right' });
   }
 
-  doc.line(5, y, 75, y);
-  y += 5;
+  y += 17;
+  doc.setTextColor(0, 0, 0);
+
+  // Attached Voucher Photo
+  if (payment.voucherUrl) {
+    try {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(5, y, 70, 32, 'F');
+      doc.rect(5, y, 70, 32);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.text('📷 FOTO / COMPROBANTE VOUCHER ADJUNTO:', 7, y + 4);
+
+      const format = payment.voucherUrl.includes('image/png') ? 'PNG' : 'JPEG';
+      doc.addImage(payment.voucherUrl, format, 8, y + 5.5, 64, 24);
+      y += 35;
+    } catch (e) {
+      console.warn('Error rendering voucher image in PDF:', e);
+    }
+  }
 
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(7);
-  doc.text('Comprobante generado exitosamente en Soles', 40, y, { align: 'center' });
-  y += 3;
-  doc.text('¡Gracias por su puntualidad en el pago!', 40, y, { align: 'center' });
+  doc.text('JBALANCE CONTROL - Comprobante de Abono Registrado', 40, y, { align: 'center' });
+  y += 3.5;
+  doc.text('Operador: ' + (payment.createdBy || 'Sistema'), 40, y, { align: 'center' });
 
   return doc;
 }
