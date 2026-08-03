@@ -126,10 +126,19 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
   });
 
   return (
-    <div className="space-y-8 pb-16 animate-fade-in bg-slate-100/90 p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-xl relative">
+    <div className="space-y-8 pb-16 animate-fade-in bg-slate-100/90 p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden">
       
+      {/* Background Watermark Logo for Menu */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06] select-none z-0">
+        <img 
+          src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
+          alt="Marca de Agua Sistema" 
+          className="w-80 h-80 sm:w-96 sm:h-96 object-cover rounded-full" 
+        />
+      </div>
+
       {/* Corporate Executive Hero Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden text-white ring-1 ring-slate-800">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden text-white ring-1 ring-slate-800 z-10">
         {/* Subtle background glow */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -157,7 +166,7 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
 
           <div className="flex items-center space-x-3 bg-slate-900/90 p-3 rounded-xl border border-slate-800 shadow-md shrink-0">
             <img 
-              src="/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg" 
+              src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
               alt="Logo Principal Sistema" 
               className="w-12 h-12 rounded-xl bg-slate-950 border-2 border-amber-500 shadow-sm shadow-amber-500/20 object-cover shrink-0"
             />

@@ -83,8 +83,18 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
         {/* Printable Ticket Area */}
         <div className="p-6 overflow-y-auto space-y-6 bg-slate-100/60">
           
-          <div id="thermal-ticket-print" className="bg-white text-slate-900 p-6 rounded-2xl shadow-lg font-sans text-xs space-y-4 max-w-sm mx-auto border-2 border-slate-900">
+          <div id="thermal-ticket-print" className="bg-white text-slate-900 p-6 rounded-2xl shadow-lg font-sans text-xs space-y-4 max-w-sm mx-auto border-2 border-slate-900 relative overflow-hidden">
             
+            {/* Background System Watermark */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.07] select-none z-0">
+              <img 
+                src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
+                alt="Marca de agua sistema" 
+                className="w-56 h-56 object-cover rounded-full" 
+              />
+            </div>
+
+            <div className="relative z-10 space-y-4">
             {/* 1. Header Ticket info - Matches reference image */}
             <div className="text-center space-y-0.5 pb-2">
               {activeCompany?.logoUrl && (
@@ -312,6 +322,8 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
             <div className="text-center pt-2 border-t border-dashed border-slate-400 text-[10px] italic text-slate-600 space-y-0.5">
               <div>AvisControl - Sistema Corporativo Avícola</div>
               <div className="font-semibold text-slate-800">Atendido por: {record.createdBy}</div>
+            </div>
+
             </div>
 
           </div>

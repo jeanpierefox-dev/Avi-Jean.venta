@@ -64,9 +64,9 @@ function MainAppContent() {
           <div className="text-center space-y-3">
             <div className="inline-block relative">
               <img 
-                src="/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg" 
+                src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
                 alt="JEANPIERE BARBOZA 2026 Logo Principal" 
-                className="w-20 h-20 mx-auto object-cover rounded-2xl bg-slate-900 border-2 border-amber-500 shadow-xl shadow-amber-500/10 ring-4 ring-amber-50"
+                className="w-24 h-24 mx-auto object-cover rounded-2xl bg-slate-950 border-2 border-amber-500 shadow-xl shadow-amber-500/20 ring-4 ring-amber-500/20"
               />
               <span className="absolute -bottom-2 -right-2 bg-blue-900 text-amber-400 font-mono font-black text-[9px] uppercase px-2 py-0.5 rounded-full border border-amber-400/40 shadow-sm">
                 2026

@@ -49,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   useEffect(() => {
     const faviconEl = document.getElementById('favicon');
     if (faviconEl) {
-      faviconEl.setAttribute('href', "/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg");
+      faviconEl.setAttribute('href', "/src/assets/images/system_futuristic_logo_1785723812533.jpg");
     }
   }, []);
 
@@ -86,7 +86,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Logo & Brand */}
           <div className="flex items-center space-x-2.5 shrink-0">
             <img 
-              src="/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg" 
+              src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
               alt="JEANPIERE BARBOZA 2026 Logo Principal" 
               className="w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-xl bg-slate-950 border-2 border-amber-500 shadow-md shadow-amber-500/20 shrink-0"
             />
