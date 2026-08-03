@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import systemLogo from '../assets/images/system_futuristic_logo_1785723812533.jpg';
 import { 
   Zap, 
   Coins, 
@@ -131,7 +132,7 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
       {/* Background Watermark Logo for Menu */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06] select-none z-0">
         <img 
-          src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
+          src={systemLogo} 
           alt="Marca de Agua Sistema" 
           className="w-80 h-80 sm:w-96 sm:h-96 object-cover rounded-full" 
         />
@@ -148,7 +149,7 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shadow-xs shadow-amber-400" />
               <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase bg-amber-400/10 px-2.5 py-0.5 rounded-md border border-amber-400/30">
-                SISTEMA PLATAFORMA 2026 • JEANPIERE BARBOZA
+                SISTEMA PLATAFORMA 2026
               </span>
             </div>
             <h1 className="text-base sm:text-lg font-extrabold text-white tracking-tight uppercase">
@@ -164,20 +165,12 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
             </p>
           </div>
 
-          <div className="flex items-center space-x-3 bg-slate-900/90 p-3 rounded-xl border border-slate-800 shadow-md shrink-0">
+          <div className="flex items-center justify-center bg-slate-900/90 p-2 rounded-2xl border border-slate-800 shadow-md shrink-0">
             <img 
-              src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
+              src={systemLogo} 
               alt="Logo Principal Sistema" 
-              className="w-12 h-12 rounded-xl bg-slate-950 border-2 border-amber-500 shadow-sm shadow-amber-500/20 object-cover shrink-0"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-950 border-2 border-amber-500 shadow-sm shadow-amber-500/20 object-cover shrink-0"
             />
-            <div className="text-left space-y-0.5 pr-1">
-              <span className="text-xs font-bold text-white block uppercase">
-                JEANPIERE BARBOZA 2026
-              </span>
-              <span className="inline-flex items-center text-[9px] font-extrabold text-emerald-400 bg-emerald-950/90 px-2 py-0.5 rounded-md border border-emerald-800">
-                ● Servidor Conectado
-              </span>
-            </div>
           </div>
         </div>
       </div>

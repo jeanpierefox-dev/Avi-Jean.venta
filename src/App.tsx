@@ -14,6 +14,7 @@ import { ApiDocsModal } from './components/ApiDocsModal';
 import { NotificationsPopover } from './components/NotificationsPopover';
 import { CompanySelectorModal } from './components/CompanySelectorModal';
 import { Scale, Lock, ShieldCheck, Building2, User, RefreshCw, Eye } from 'lucide-react';
+import systemLogo from './assets/images/system_futuristic_logo_1785723812533.jpg';
 
 function MainAppContent() {
   const { currentUser, login, quickDemoLogin, companies, activeCompany, setActiveCompanyId } = useAuth();
@@ -64,23 +65,15 @@ function MainAppContent() {
           <div className="text-center space-y-3">
             <div className="inline-block relative">
               <img 
-                src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
-                alt="JEANPIERE BARBOZA 2026 Logo Principal" 
-                className="w-24 h-24 mx-auto object-cover rounded-2xl bg-slate-950 border-2 border-amber-500 shadow-xl shadow-amber-500/20 ring-4 ring-amber-500/20"
+                src={systemLogo} 
+                alt="Logo Principal" 
+                className="w-28 h-28 mx-auto object-cover rounded-3xl bg-slate-950 border-2 border-amber-500 shadow-2xl shadow-amber-500/30 ring-4 ring-amber-500/20"
               />
               <span className="absolute -bottom-2 -right-2 bg-blue-900 text-amber-400 font-mono font-black text-[9px] uppercase px-2 py-0.5 rounded-full border border-amber-400/40 shadow-sm">
                 2026
               </span>
             </div>
-            <div>
-              <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 uppercase">
-                JEANPIERE BARBOZA
-              </h1>
-              <p className="text-xs font-bold text-amber-700 uppercase tracking-widest mt-0.5">
-                Control & Pesaje Avícola
-              </p>
-            </div>
-            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+            <p className="text-xs text-slate-500 font-medium leading-relaxed pt-1">
               Ingrese su usuario y contraseña corporativa para acceder a la plataforma
             </p>
           </div>

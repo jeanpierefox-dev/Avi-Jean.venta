@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import systemLogo from '../assets/images/system_futuristic_logo_1785723812533.jpg';
 import { 
   Scale, 
   Users, 
@@ -49,7 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   useEffect(() => {
     const faviconEl = document.getElementById('favicon');
     if (faviconEl) {
-      faviconEl.setAttribute('href', "/src/assets/images/system_futuristic_logo_1785723812533.jpg");
+      faviconEl.setAttribute('href', systemLogo);
     }
   }, []);
 
@@ -83,27 +84,14 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-2">
           
-          {/* Logo & Brand */}
-          <div className="flex items-center space-x-2.5 shrink-0">
+          {/* Logo & Brand - Image Only Design */}
+          <div className="flex items-center space-x-2 shrink-0">
             <img 
-              src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
-              alt="JEANPIERE BARBOZA 2026 Logo Principal" 
-              className="w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-xl bg-slate-950 border-2 border-amber-500 shadow-md shadow-amber-500/20 shrink-0"
+              src={systemLogo} 
+              alt="Logo Principal" 
+              className="w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-xl bg-slate-950 border-2 border-amber-500 shadow-md shadow-amber-500/20 shrink-0 cursor-pointer hover:scale-105 transition-transform"
+              onClick={() => setActiveTab('dashboard')}
             />
-
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <span className="font-black text-sm sm:text-base xl:text-lg tracking-tight text-white truncate max-w-[140px] sm:max-w-none uppercase">
-                  JEANPIERE BARBOZA
-                </span>
-                <span className="hidden sm:inline-block text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/40">
-                  2026
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 font-bold hidden lg:block">
-                Sistema Corporativo de Pesaje & Control Avícola
-              </p>
-            </div>
           </div>
 
           {/* Desktop Navigation - Responsive & Segmented formal corporate bar */}

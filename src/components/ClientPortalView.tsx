@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import systemLogo from '../assets/images/system_futuristic_logo_1785723812533.jpg';
 import { 
   Scale, 
   Receipt, 
@@ -246,8 +247,8 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             <img 
-              src="/src/assets/images/jb_barboza_logo_2025_1785266795162.jpg" 
-              alt="JEANPIERE BARBOZA 2026 Logo Sistema" 
+              src={systemLogo} 
+              alt="Logo Sistema" 
               className="w-10 h-10 rounded-xl bg-slate-900 border-2 border-amber-500 shadow-xs object-cover shrink-0"
             />
             <div>

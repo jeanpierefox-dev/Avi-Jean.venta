@@ -3,6 +3,7 @@ import { WeighingRecord } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { downloadTicketPDF } from '../lib/pdfGenerator';
+import systemLogo from '../assets/images/system_futuristic_logo_1785723812533.jpg';
 import { 
   X, 
   Printer, 
@@ -88,7 +89,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
             {/* Background System Watermark */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.07] select-none z-0">
               <img 
-                src="/src/assets/images/system_futuristic_logo_1785723812533.jpg" 
+                src={systemLogo} 
                 alt="Marca de agua sistema" 
                 className="w-56 h-56 object-cover rounded-full" 
               />
