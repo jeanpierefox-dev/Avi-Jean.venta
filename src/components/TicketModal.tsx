@@ -41,9 +41,10 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
     const scaleImg = record.scaleImageUrl;
     let imgSection = '';
     if (scaleImg && (scaleImg.startsWith('http://') || scaleImg.startsWith('https://'))) {
-      imgSection = `📷 *FOTO DE LA PESA EN BALANZA:*%0A${scaleImg}%0A%0A`;
-    } else if (scaleImg && scaleImg.startsWith('data:image')) {
-      imgSection = `📷 *FOTO DE PESA:* Adjunta en el Ticket / Sistema%0A%0A`;
+      imgSection = `📷 *LINK FOTO DE LA PESA:*%0A${scaleImg}%0A%0A`;
+    } else if (scaleImg || (record.scaleEntries && record.scaleEntries.some(s => Boolean(s.photoUrl)))) {
+      const ticketLink = `${window.location.origin}/?ticket=${record.ticketNumber}`;
+      imgSection = `📷 *LINK FOTO Y TICKET EN LÍNEA:*%0A${ticketLink}%0A%0A`;
     }
 
     const text = `*COMPROBANTE DE PESA - ${activeCompany?.name || 'JBALANCE CONTROL'}*%0A` +

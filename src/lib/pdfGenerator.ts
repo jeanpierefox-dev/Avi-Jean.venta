@@ -533,77 +533,189 @@ export function generateStatementPDF(client: Client, weighings: WeighingRecord[]
   const doc = new jsPDF();
 
   const companyName = company?.name || 'JBALANCE CONTROL';
-  let y = 15;
+  const taxId = company?.taxId ? `RUC: ${company.taxId}` : 'RUC: 20601234567';
+  const phone = company?.phone || '+51 987 654 321';
+  const address = company?.address || 'Lima, Perú';
 
-  // Header
+  let y = 12;
+
+  // Company Header Block
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
+  doc.setFontSize(15);
   doc.text(companyName, 14, y);
-  y += 6;
+  y += 5;
 
-  doc.setFontSize(10);
+  doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
-  doc.text('ESTADO DE CUENTA Y HISTORIAL DE PESAS', 14, y);
-  y += 10;
+  doc.text(`${taxId} | Tel: ${phone} | ${address}`, 14, y);
+  y += 7;
 
-  // Info Cliente
-  doc.setFillColor(240, 244, 248);
-  doc.rect(14, y, 182, 24, 'F');
-  
-  doc.setFont('helvetica', 'bold');
-  doc.text(`Cliente: ${client.name}`, 18, y + 6);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Teléfono: ${client.phone || 'N/A'} | Email: ${client.email || 'N/A'}`, 18, y + 12);
-  doc.text(`Límite Crédito: S/ ${client.creditLimit.toFixed(2)} | Días Crédito: ${client.creditDays} días`, 18, y + 18);
-  
-  const totalPending = weighings.reduce((sum, w) => sum + (w.pendingAmount || 0), 0);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(194, 24, 7); // Rojo alerta
-  doc.text(`SALDO TOTAL PENDIENTE: S/ ${totalPending.toFixed(2)}`, 110, y + 18);
-  doc.setTextColor(0, 0, 0);
-
-  y += 30;
-
-  // Tabla de Pesas
+  // Title Banner
+  doc.setFillColor(15, 23, 42); // Dark Navy
+  doc.rect(14, y, 182, 8, 'F');
+  doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text('Historial de Pesajes / Tickets', 14, y);
-  y += 6;
+  doc.text('ESTADO DE CUENTA Y REPORTES DE PAGOS', 105, y + 5.5, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
 
-  // Encabezados tabla
-  doc.setFontSize(8);
-  doc.setFillColor(15, 23, 42); // Navy
+  y += 12;
+
+  // Info Cliente Card
+  doc.setFillColor(248, 250, 252);
+  doc.rect(14, y, 182, 22, 'F');
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(14, y, 182, 22);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text(`Cliente: ${client.name.toUpperCase()}`, 18, y + 6);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.text(`Teléfono: ${client.phone || 'N/A'} | Email: ${client.email || 'N/A'}`, 18, y + 12);
+  doc.text(`Límite de Crédito: S/ ${client.creditLimit.toFixed(2)} | Días Crédito: ${client.creditDays} días`, 18, y + 17);
+
+  const totalSalesAmount = weighings.reduce((sum, w) => sum + (w.totalAmount || 0), 0);
+  const totalPaymentsAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalPendingBalance = weighings.reduce((sum, w) => sum + (w.pendingAmount || 0), 0);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  if (totalPendingBalance > 0) {
+    doc.setTextColor(190, 18, 60); // Red
+  } else {
+    doc.setTextColor(16, 185, 129); // Emerald
+  }
+  doc.text(`SALDO PENDIENTE: S/ ${totalPendingBalance.toFixed(2)}`, 115, y + 12);
+  doc.setTextColor(0, 0, 0);
+
+  y += 28;
+
+  // TABLA 1: HISTORIAL DE COMPRAS / TICKETS DE PESAJE
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('1. Historial de Compras / Tickets de Pesaje', 14, y);
+  y += 5;
+
+  doc.setFontSize(7.5);
+  doc.setFillColor(30, 41, 59); // Dark slate header
   doc.setTextColor(255, 255, 255);
-  doc.rect(14, y, 182, 7, 'F');
-  doc.text('Ticket #', 16, y + 5);
-  doc.text('Fecha', 45, y + 5);
-  doc.text('Pollos', 75, y + 5);
-  doc.text('Peso Neto', 95, y + 5);
-  doc.text('Total S/', 125, y + 5);
-  doc.text('Saldo S/', 155, y + 5);
-  doc.text('Estado', 180, y + 5);
+  doc.rect(14, y, 182, 6, 'F');
+  doc.text('Ticket #', 16, y + 4);
+  doc.text('Fecha', 42, y + 4);
+  doc.text('Aves', 68, y + 4);
+  doc.text('Peso Neto', 85, y + 4);
+  doc.text('Total S/', 115, y + 4);
+  doc.text('Abonado S/', 140, y + 4);
+  doc.text('Saldo S/', 165, y + 4);
+  doc.text('Estado', 184, y + 4);
 
-  y += 7;
+  y += 6;
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
 
-  weighings.forEach((w) => {
-    if (y > 270) {
-      doc.addPage();
-      y = 15;
-    }
-    doc.text(w.ticketNumber, 16, y + 5);
-    doc.text(new Date(w.createdAt).toLocaleDateString('es-ES'), 45, y + 5);
-    doc.text(`${w.chickenCount}`, 75, y + 5);
-    doc.text(`${w.netWeight.toFixed(1)} kg`, 95, y + 5);
-    doc.text(`S/ ${w.totalAmount.toFixed(2)}`, 125, y + 5);
-    doc.text(`S/ ${w.pendingAmount.toFixed(2)}`, 155, y + 5);
-    doc.text(w.paymentStatus.toUpperCase(), 180, y + 5);
-
-    doc.setLineWidth(0.1);
-    doc.line(14, y + 7, 196, y + 7);
+  if (weighings.length === 0) {
+    doc.text('No hay registros de compras registrados para este cliente.', 16, y + 5);
     y += 8;
-  });
+  } else {
+    weighings.forEach((w) => {
+      if (y > 270) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.text(w.ticketNumber, 16, y + 4.5);
+      doc.text(new Date(w.createdAt).toLocaleDateString('es-ES'), 42, y + 4.5);
+      doc.text(`${w.chickenCount}`, 68, y + 4.5);
+      doc.text(`${w.netWeight.toFixed(1)} kg`, 85, y + 4.5);
+      doc.text(`S/ ${w.totalAmount.toFixed(2)}`, 115, y + 4.5);
+      doc.text(`S/ ${w.paidAmount.toFixed(2)}`, 140, y + 4.5);
+      doc.text(`S/ ${w.pendingAmount.toFixed(2)}`, 165, y + 4.5);
+      doc.text((w.paymentStatus || 'pendiente').toUpperCase(), 184, y + 4.5);
+
+      doc.setLineWidth(0.1);
+      doc.setDrawColor(226, 232, 240);
+      doc.line(14, y + 6, 196, y + 6);
+      y += 6.5;
+    });
+  }
+
+  y += 6;
+
+  // TABLA 2: HISTORIAL DE ABONOS Y PAGOS REALIZADOS
+  if (y > 230) {
+    doc.addPage();
+    y = 15;
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('2. Historial de Abonos y Pagos Realizados (Vouchers)', 14, y);
+  y += 5;
+
+  doc.setFontSize(7.5);
+  doc.setFillColor(16, 185, 129); // Emerald header for payments
+  doc.setTextColor(255, 255, 255);
+  doc.rect(14, y, 182, 6, 'F');
+  doc.text('Ref / Comprobante', 16, y + 4);
+  doc.text('Fecha y Hora', 55, y + 4);
+  doc.text('Método', 95, y + 4);
+  doc.text('Notas / Concepto', 125, y + 4);
+  doc.text('Monto Abonado', 170, y + 4);
+
+  y += 6;
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+
+  if (payments.length === 0) {
+    doc.text('No hay abonos ni vouchers registrados para este cliente.', 16, y + 5);
+    y += 8;
+  } else {
+    payments.forEach((p) => {
+      if (y > 270) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.text((p.reference || p.id || 'N/A').substring(0, 20), 16, y + 4.5);
+      doc.text(new Date(p.createdAt).toLocaleString('es-ES'), 55, y + 4.5);
+      doc.text((p.method || 'yape').toUpperCase(), 95, y + 4.5);
+      doc.text((p.notes || 'Abono de cuenta').substring(0, 26), 125, y + 4.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`S/ ${p.amount.toFixed(2)}`, 170, y + 4.5);
+      doc.setFont('helvetica', 'normal');
+
+      doc.setLineWidth(0.1);
+      doc.setDrawColor(226, 232, 240);
+      doc.line(14, y + 6, 196, y + 6);
+      y += 6.5;
+    });
+  }
+
+  y += 8;
+
+  // RESUMEN CONSOLIDADO FINAL
+  if (y > 240) {
+    doc.addPage();
+    y = 15;
+  }
+
+  doc.setFillColor(15, 23, 42); // Dark Navy Box
+  doc.rect(14, y, 182, 22, 'F');
+  doc.setTextColor(255, 255, 255);
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Total Compras Realizadas: S/ ${totalSalesAmount.toFixed(2)}`, 20, y + 7);
+  doc.text(`Total Abonos / Pagos Registrados: S/ ${totalPaymentsAmount.toFixed(2)}`, 20, y + 15);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  if (totalPendingBalance > 0) {
+    doc.setTextColor(252, 165, 165); // Light red text
+  } else {
+    doc.setTextColor(110, 231, 183); // Light emerald text
+  }
+  doc.text(`SALDO PENDIENTE ACTUAL: S/ ${totalPendingBalance.toFixed(2)}`, 110, y + 12);
 
   doc.save(`Estado_Cuenta_${client.name.replace(/\s+/g, '_')}.pdf`);
 }

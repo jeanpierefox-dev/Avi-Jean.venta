@@ -433,10 +433,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Add Payment
   const addPayment = async (paymentData: Omit<PaymentRecord, 'id' | 'createdAt' | 'createdBy'>): Promise<PaymentRecord> => {
-    const resolvedCompanyId = paymentData.companyId || activeCompany?.id || currentUser?.companyId || clients.find(c => c.id === paymentData.clientId)?.companyId || weighings.find(w => w.clientId === paymentData.clientId)?.companyId || 'comp_1';
+    // 1. Find target client matching clientId or name
+    const targetClient = clients.find(c => 
+      c.id === paymentData.clientId || 
+      (paymentData.clientName && c.name.toLowerCase().trim() === paymentData.clientName.toLowerCase().trim()) ||
+      (currentUser?.clientId && c.id === currentUser.clientId) ||
+      (currentUser?.displayName && c.name.toLowerCase().trim() === currentUser.displayName.toLowerCase().trim())
+    );
+
+    const resolvedClientId = targetClient?.id || paymentData.clientId;
+    const resolvedClientName = targetClient?.name || paymentData.clientName || 'Cliente Comercial';
+    const resolvedCompanyId = targetClient?.companyId || paymentData.companyId || activeCompany?.id || currentUser?.companyId || weighings.find(w => w.clientId === resolvedClientId)?.companyId || 'comp_1';
 
     const newPayment: PaymentRecord = {
       ...paymentData,
+      clientId: resolvedClientId,
+      clientName: resolvedClientName,
       companyId: resolvedCompanyId,
       id: `pay_${Date.now()}`,
       createdAt: new Date().toISOString(),
@@ -531,10 +543,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Reduce Client Balance
-    const targetClient = clients.find(c => 
-      c.id === paymentData.clientId || 
-      (paymentData.clientName && c.name.toLowerCase().trim() === paymentData.clientName.toLowerCase().trim())
-    );
     if (targetClient) {
       const updatedBalance = Math.max(0, (targetClient.currentBalance || 0) - paymentData.amount);
       await updateClient(targetClient.id, { currentBalance: updatedBalance });

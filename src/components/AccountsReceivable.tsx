@@ -53,7 +53,7 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   // Payment modal state
   const [selectedWeighing, setSelectedWeighing] = useState<WeighingRecord | null>(null);
   const [viewPaymentsTicket, setViewPaymentsTicket] = useState<WeighingRecord | null>(null);
-  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentAmount, setPaymentAmount] = useState<number | ''>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('yape');
   const [reference, setReference] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
@@ -154,7 +154,8 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
 
   const handleProcessPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedWeighing || paymentAmount <= 0 || isSubmitting) return;
+    const amountVal = typeof paymentAmount === 'number' ? paymentAmount : parseFloat(paymentAmount || '0');
+    if (!selectedWeighing || amountVal <= 0 || isSubmitting) return;
 
     setIsSubmitting(true);
 
@@ -164,7 +165,7 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
         weighingId: selectedWeighing.id,
         clientId: selectedWeighing.clientId,
         clientName: selectedWeighing.clientName,
-        amount: paymentAmount,
+        amount: amountVal,
         method: paymentMethod,
         reference: reference || `OPER-${Math.floor(Math.random() * 899999 + 100000)}`,
         status: 'aprobado' as const,
@@ -183,7 +184,7 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
         }
       }
 
-      alert(`¡Abono de S/ ${paymentAmount.toFixed(2)} registrado con éxito!`);
+      alert(`¡Abono de S/ ${amountVal.toFixed(2)} registrado con éxito!`);
       setSelectedWeighing(null);
     } catch (e) {
       console.error('Error processing payment:', e);
@@ -197,9 +198,10 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
     const scaleImg = w.scaleImageUrl;
     let imgSection = '';
     if (scaleImg && (scaleImg.startsWith('http://') || scaleImg.startsWith('https://'))) {
-      imgSection = `📷 *FOTO / IMAGEN DE LA PESA:*%0A${scaleImg}%0A%0A`;
-    } else if (scaleImg && scaleImg.startsWith('data:image')) {
-      imgSection = `📷 *FOTO DE PESA:* Adjunta en Ticket / Sistema%0A%0A`;
+      imgSection = `📷 *LINK FOTO DE LA PESA:*%0A${scaleImg}%0A%0A`;
+    } else if (scaleImg || (w.scaleEntries && w.scaleEntries.some(s => Boolean(s.photoUrl)))) {
+      const ticketLink = `${window.location.origin}/?ticket=${w.ticketNumber}`;
+      imgSection = `📷 *LINK FOTO Y TICKET EN LÍNEA:*%0A${ticketLink}%0A%0A`;
     }
 
     const text = `*RECORDATORIO DE COBRANZA - ${activeCompany?.name || 'JBALANCE CONTROL'}*%0A` +
@@ -668,7 +670,10 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
                   max={selectedWeighing.pendingAmount}
                   required
                   value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPaymentAmount(val === '' ? '' : (parseFloat(val) || 0));
+                  }}
                   className="w-full bg-slate-950 border border-slate-700 text-emerald-400 text-lg font-extrabold font-mono rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
                 />
               </div>
