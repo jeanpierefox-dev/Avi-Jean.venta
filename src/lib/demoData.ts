@@ -1,6 +1,16 @@
 import { Company, Client, WeighingRecord, PaymentRecord, InventoryItem, AppNotification, UserProfile } from '../types';
 
-export const INITIAL_COMPANIES: Company[] = [];
+export const DEFAULT_COMPANY: Company = {
+  id: 'comp_default',
+  name: 'Empresa Principal',
+  taxId: '20000000001',
+  address: 'Oficina Central / Planta de Pesaje',
+  phone: '+51 900 000 000',
+  active: true,
+  createdAt: new Date().toISOString()
+};
+
+export const INITIAL_COMPANIES: Company[] = [DEFAULT_COMPANY];
 
 export const INITIAL_CLIENTS: Client[] = [];
 

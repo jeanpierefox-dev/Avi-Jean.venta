@@ -8,7 +8,7 @@ import {
   onAuthStateChanged 
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, getDocs, query, where, deleteDoc, onSnapshot } from 'firebase/firestore';
-import { INITIAL_USERS, INITIAL_COMPANIES, INITIAL_CLIENTS } from '../lib/demoData';
+import { INITIAL_USERS, INITIAL_COMPANIES, INITIAL_CLIENTS, DEFAULT_COMPANY } from '../lib/demoData';
 
 interface AuthContextType {
   currentUser: UserProfile | null;
@@ -140,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Company));
           setCompanies(docs);
         } else {
-          setCompanies([]);
+          setCompanies([DEFAULT_COMPANY]);
         }
       }, (err) => console.warn('Companies snapshot listener:', err));
 
@@ -349,7 +349,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setActiveCompanyIdState(id);
   };
 
-  const activeCompany = companies.find(c => c.id === activeCompanyId) || companies[0] || null;
+  const activeCompany = companies.find(c => c.id === activeCompanyId) || companies[0] || DEFAULT_COMPANY;
 
   return (
     <AuthContext.Provider value={{

@@ -32,7 +32,8 @@ import {
   INITIAL_COMPANIES, 
   INITIAL_PAYMENTS, 
   INITIAL_INVENTORY, 
-  INITIAL_NOTIFICATIONS 
+  INITIAL_NOTIFICATIONS,
+  DEFAULT_COMPANY
 } from '../lib/demoData';
 import { useAuth } from './AuthContext';
 
@@ -260,6 +261,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Company));
           setCompanies(docs);
           try { localStorage.setItem('avis_companies', JSON.stringify(docs)); } catch (e) {}
+        } else {
+          setCompanies([DEFAULT_COMPANY]);
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'companies'));
 

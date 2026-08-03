@@ -105,7 +105,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
         companyId: currentCompanyId,
         name: quickClientName,
         phone: quickClientPhone,
-        creditLimit: quickClientLimit,
+        creditLimit: typeof quickClientLimit === 'number' ? quickClientLimit : (parseFloat(quickClientLimit) || 0),
         creditDays: 15,
         currentBalance: 0,
       });

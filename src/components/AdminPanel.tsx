@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { Company, UserProfile, AccessLevel } from '../types';
+import { Company, UserProfile, AccessLevel, UserRole } from '../types';
 import { 
   ShieldCheck, 
   Building2, 
@@ -67,7 +67,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   const [userUsername, setUserUsername] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userPass, setUserPass] = useState('');
-  const [userRole, setUserRole] = useState<'admin' | 'empresa' | 'cliente'>('empresa');
+  const [userRole, setUserRole] = useState<UserRole>('empresa');
   const [userCompanyId, setUserCompanyId] = useState(companies[0]?.id || '');
   const [userAccessLevel, setUserAccessLevel] = useState<AccessLevel>('operador');
   const [empresaCompName, setEmpresaCompName] = useState('');
@@ -80,7 +80,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   const [editName, setEditName] = useState('');
   const [editUsername, setEditUsername] = useState('');
   const [editEmail, setEditEmail] = useState('');
-  const [editRole, setEditRole] = useState<'admin' | 'empresa' | 'cliente'>('empresa');
+  const [editRole, setEditRole] = useState<UserRole>('empresa');
   const [editAccessLevel, setEditAccessLevel] = useState<AccessLevel>('operador');
   const [editPassword, setEditPassword] = useState('');
 
