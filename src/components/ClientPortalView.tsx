@@ -568,7 +568,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
                       <img 
                         src={w.scaleImageUrl} 
                         alt="Foto de la Balanza" 
-                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform" 
+                        className="w-full h-auto max-h-[500px] object-contain rounded-xl transition-transform group-hover:scale-[1.01]" 
                       />
                       <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                         <span className="bg-blue-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-lg flex items-center space-x-1">

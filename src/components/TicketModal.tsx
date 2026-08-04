@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WeighingRecord } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -16,7 +16,9 @@ import {
   Calendar,
   DollarSign,
   Receipt,
-  CheckCircle2
+  CheckCircle2,
+  Camera,
+  Eye
 } from 'lucide-react';
 
 interface TicketModalProps {
@@ -27,6 +29,7 @@ interface TicketModalProps {
 export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => {
   const { activeCompany } = useAuth();
   const { payments } = useData();
+  const [activeZoomImage, setActiveZoomImage] = useState<string | null>(null);
 
   // Find all payments registered for this weighing ticket
   const ticketPayments = payments.filter(p => p.weighingId === record.id);
@@ -301,30 +304,52 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
                 <div className="text-center font-extrabold text-[10px] uppercase tracking-wider text-slate-800 border-t border-slate-300 pt-2">
                   FOTOS DE PESAS DE BALANZA REGISTRADAS:
                 </div>
-                <div className="grid grid-cols-1 gap-2.5">
+                <div className="grid grid-cols-1 gap-3">
                   {record.scaleEntries.map((se, idx) => se.photoUrl ? (
-                    <div key={se.id || idx} className="border-2 border-slate-800 rounded-xl p-2 text-center space-y-1 bg-slate-50">
-                      <div className="font-extrabold text-[10px] uppercase text-slate-900 flex justify-between px-1">
+                    <div key={se.id || idx} className="border-2 border-slate-800 rounded-xl p-2 text-center space-y-1.5 bg-slate-900 text-white">
+                      <div className="font-extrabold text-[10px] uppercase text-slate-200 flex justify-between px-1">
                         <span>📷 Foto Pesa #{idx + 1} ({se.chickens} pollos)</span>
-                        <span className="text-emerald-700 font-mono font-black">{se.grossWeight.toFixed(2)} kg</span>
+                        <span className="text-emerald-400 font-mono font-black">{se.grossWeight.toFixed(2)} kg</span>
                       </div>
-                      <img 
-                        src={se.photoUrl} 
-                        alt={`Foto Pesa #${idx + 1}`} 
-                        className="w-full h-40 object-cover rounded-lg border border-slate-300"
-                      />
+                      <div 
+                        onClick={() => setActiveZoomImage(se.photoUrl!)}
+                        className="relative group cursor-pointer overflow-hidden rounded-lg bg-slate-950 border border-slate-700"
+                      >
+                        <img 
+                          src={se.photoUrl} 
+                          alt={`Foto Pesa #${idx + 1}`} 
+                          className="w-full h-auto max-h-[500px] object-contain rounded-lg transition-transform group-hover:scale-[1.01]"
+                        />
+                        <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <span className="bg-blue-600 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                            <Eye className="w-4 h-4" />
+                            <span>Ver Foto Completa</span>
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   ) : null)}
                 </div>
               </div>
             ) : record.scaleImageUrl ? (
-              <div className="border-2 border-slate-800 rounded-xl p-2 text-center space-y-1 bg-slate-50">
-                <div className="font-bold text-[9px] uppercase text-slate-600">📷 Foto Adjunta de Balanza Electrónica:</div>
-                <img 
-                  src={record.scaleImageUrl} 
-                  alt="Foto Balanza" 
-                  className="w-full h-40 object-cover rounded-lg border border-slate-300"
-                />
+              <div className="border-2 border-slate-800 rounded-xl p-2 text-center space-y-1.5 bg-slate-900 text-white">
+                <div className="font-bold text-[9px] uppercase text-slate-300">📷 Foto Adjunta de Balanza Electrónica:</div>
+                <div 
+                  onClick={() => setActiveZoomImage(record.scaleImageUrl!)}
+                  className="relative group cursor-pointer overflow-hidden rounded-lg bg-slate-950 border border-slate-700"
+                >
+                  <img 
+                    src={record.scaleImageUrl} 
+                    alt="Foto Balanza" 
+                    className="w-full h-auto max-h-[500px] object-contain rounded-lg transition-transform group-hover:scale-[1.01]"
+                  />
+                  <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <span className="bg-blue-600 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                      <Eye className="w-4 h-4" />
+                      <span>Ver Foto Completa</span>
+                    </span>
+                  </div>
+                </div>
               </div>
             ) : null}
 
@@ -367,6 +392,32 @@ export const TicketModal: React.FC<TicketModalProps> = ({ record, onClose }) => 
         </div>
 
       </div>
+
+      {/* Full-size Photo Lightbox Modal */}
+      {activeZoomImage && (
+        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+          <div className="relative max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden p-3 shadow-2xl flex flex-col items-center">
+            <button
+              onClick={() => setActiveZoomImage(null)}
+              className="absolute top-4 right-4 p-2.5 bg-slate-800 hover:bg-rose-600 text-white rounded-full transition-colors z-10 cursor-pointer shadow-lg"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-full flex items-center justify-center bg-slate-950 rounded-2xl p-2 max-h-[82vh] overflow-auto">
+              <img 
+                src={activeZoomImage} 
+                alt="Foto Ampliada de Balanza" 
+                className="w-full h-auto max-h-[78vh] object-contain rounded-xl" 
+              />
+            </div>
+            <div className="p-2.5 text-center text-xs text-slate-300 font-mono font-bold flex items-center justify-center gap-2">
+              <Camera className="w-4 h-4 text-emerald-400" />
+              <span>Fotografía Original de Balanza — Sin Recortes</span>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
