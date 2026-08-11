@@ -36,13 +36,13 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
   // Lote Entry Form State
-  const [headCount, setHeadCount] = useState<number>(500);
+  const [headCount, setHeadCount] = useState<number | string>(500);
   const [selectedGalpon, setSelectedGalpon] = useState<string>('Galpón 1');
-  const [estimatedAvgWeight, setEstimatedAvgWeight] = useState<number>(2.4);
+  const [estimatedAvgWeight, setEstimatedAvgWeight] = useState<number | string>(2.4);
 
   // Discount/Loss Form State
   const [targetGalponId, setTargetGalponId] = useState<string>('');
-  const [discountCount, setDiscountCount] = useState<number>(10);
+  const [discountCount, setDiscountCount] = useState<number | string>(10);
   const [discountReason, setDiscountReason] = useState<AdjustmentReason>('mortandad');
   const [discountNotes, setDiscountNotes] = useState<string>('');
 
@@ -73,18 +73,21 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
 
   const handleSaveLote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (headCount <= 0) {
+    const numHead = typeof headCount === 'number' ? headCount : (parseInt(String(headCount), 10) || 0);
+    const numAvg = typeof estimatedAvgWeight === 'number' ? estimatedAvgWeight : (parseFloat(String(estimatedAvgWeight)) || 0);
+
+    if (numHead <= 0) {
       alert('Por favor ingrese una cantidad válida de pollos.');
       return;
     }
 
-    const totalWeightCalculated = headCount * estimatedAvgWeight;
+    const totalWeightCalculated = numHead * numAvg;
     const existing = companyInventory.find(i => (i.name || '').toLowerCase().includes((selectedGalpon || '').toLowerCase()));
 
     if (existing) {
-      const newHeadCount = existing.headCount + headCount;
+      const newHeadCount = existing.headCount + numHead;
       const newTotalWeight = existing.totalWeight + totalWeightCalculated;
-      const newAvgWeight = newHeadCount > 0 ? (newTotalWeight / newHeadCount) : estimatedAvgWeight;
+      const newAvgWeight = newHeadCount > 0 ? (newTotalWeight / newHeadCount) : numAvg;
 
       await updateInventoryItem(existing.id, {
         headCount: newHeadCount,
@@ -92,20 +95,20 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
         averageWeight: newAvgWeight,
       });
 
-      alert(`¡Se agregaron +${headCount} pollos a ${selectedGalpon}! Nuevo total: ${newHeadCount} aves en Kardex.`);
+      alert(`¡Se agregaron +${numHead} pollos a ${selectedGalpon}! Nuevo total: ${newHeadCount} aves en Kardex.`);
     } else {
       await addInventoryItem({
         companyId: currentCompanyId,
         name: selectedGalpon,
         category: 'pollo_vivo',
-        headCount,
+        headCount: numHead,
         totalWeight: totalWeightCalculated,
-        averageWeight: estimatedAvgWeight,
+        averageWeight: numAvg,
         unit: 'aves',
         minAlertThreshold: 200,
       });
 
-      alert(`¡Lote registrado exitosamente en ${selectedGalpon} con ${headCount} pollos!`);
+      alert(`¡Lote registrado exitosamente en ${selectedGalpon} con ${numHead} pollos!`);
     }
 
     resetLoteForm();
@@ -113,11 +116,13 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
 
   const handleSaveDiscount = async (e: React.FormEvent) => {
     e.preventDefault();
+    const numDiscount = typeof discountCount === 'number' ? discountCount : (parseInt(String(discountCount), 10) || 0);
+
     if (!targetGalponId) {
       alert('Seleccione un Galpón para aplicar la baja/descuento.');
       return;
     }
-    if (discountCount <= 0) {
+    if (numDiscount <= 0) {
       alert('Ingrese una cantidad mayor a 0 para el descuento.');
       return;
     }
@@ -128,13 +133,13 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
       return;
     }
 
-    if (discountCount > targetItem.headCount) {
-      alert(`No puede descontar ${discountCount} pollos. El Galpón ${targetItem.name} solo tiene ${targetItem.headCount} pollos disponible.`);
+    if (numDiscount > targetItem.headCount) {
+      alert(`No puede descontar ${numDiscount} pollos. El Galpón ${targetItem.name} solo tiene ${targetItem.headCount} pollos disponible.`);
       return;
     }
 
-    const newHeadCount = Math.max(0, targetItem.headCount - discountCount);
-    const weightLost = discountCount * targetItem.averageWeight;
+    const newHeadCount = Math.max(0, targetItem.headCount - numDiscount);
+    const weightLost = numDiscount * targetItem.averageWeight;
     const newTotalWeight = Math.max(0, targetItem.totalWeight - weightLost);
 
     await updateInventoryItem(targetItem.id, {
@@ -146,13 +151,13 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
       companyId: currentCompanyId,
       inventoryItemId: targetItem.id,
       galponName: targetItem.name,
-      headCount: discountCount,
+      headCount: numDiscount,
       weight: weightLost,
       reason: discountReason,
       notes: discountNotes || `Baja registrada por ${discountReason.toUpperCase()}`,
     });
 
-    alert(`¡Se descontaron -${discountCount} pollos de ${targetItem.name} por motivo: ${discountReason.toUpperCase()}! Quedan ${newHeadCount} pollos.`);
+    alert(`¡Se descontaron -${numDiscount} pollos de ${targetItem.name} por motivo: ${discountReason.toUpperCase()}! Quedan ${newHeadCount} pollos.`);
 
     setShowDiscountModal(false);
     setDiscountCount(10);
@@ -583,7 +588,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
                   required
                   min="1"
                   value={headCount}
-                  onChange={(e) => setHeadCount(parseInt(e.target.value) || 0)}
+                  onChange={(e) => setHeadCount(e.target.value)}
                   placeholder="ej. 500"
                   className="w-full bg-slate-950 border border-slate-700 text-emerald-400 font-black text-xl rounded-2xl px-3.5 py-2.5 outline-none focus:border-emerald-400 font-mono"
                 />
@@ -595,7 +600,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
                   type="number"
                   step="0.05"
                   value={estimatedAvgWeight}
-                  onChange={(e) => setEstimatedAvgWeight(parseFloat(e.target.value) || 2.4)}
+                  onChange={(e) => setEstimatedAvgWeight(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 text-white font-bold rounded-2xl px-3.5 py-2 text-xs outline-none focus:border-emerald-400 font-mono"
                 />
               </div>
@@ -603,7 +608,10 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
               <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex justify-between items-center text-xs font-mono">
                 <span className="text-slate-400 font-bold uppercase">Peso Total Calculado:</span>
                 <span className="font-black text-emerald-400 text-sm">
-                  {(headCount * estimatedAvgWeight).toFixed(1)} kg
+                  {(
+                    (typeof headCount === 'number' ? headCount : (parseInt(String(headCount), 10) || 0)) *
+                    (typeof estimatedAvgWeight === 'number' ? estimatedAvgWeight : (parseFloat(String(estimatedAvgWeight)) || 0))
+                  ).toFixed(1)} kg
                 </span>
               </div>
 
@@ -723,7 +731,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ onSelectTab 
                   required
                   min="1"
                   value={discountCount}
-                  onChange={(e) => setDiscountCount(parseInt(e.target.value) || 0)}
+                  onChange={(e) => setDiscountCount(e.target.value)}
                   placeholder="ej. 10"
                   className="w-full bg-slate-950 border border-slate-700 text-rose-400 font-black text-xl rounded-2xl px-3.5 py-2.5 outline-none focus:border-rose-400 font-mono"
                 />

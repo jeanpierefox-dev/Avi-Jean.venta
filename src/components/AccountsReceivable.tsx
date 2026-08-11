@@ -53,7 +53,7 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   // Payment modal state
   const [selectedWeighing, setSelectedWeighing] = useState<WeighingRecord | null>(null);
   const [viewPaymentsTicket, setViewPaymentsTicket] = useState<WeighingRecord | null>(null);
-  const [paymentAmount, setPaymentAmount] = useState<number | ''>(0);
+  const [paymentAmount, setPaymentAmount] = useState<number | string>('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('yape');
   const [reference, setReference] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
@@ -670,10 +670,7 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
                   max={selectedWeighing.pendingAmount}
                   required
                   value={paymentAmount}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setPaymentAmount(val === '' ? '' : (parseFloat(val) || 0));
-                  }}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 text-emerald-400 text-lg font-extrabold font-mono rounded-xl px-3 py-2 outline-none focus:border-emerald-500"
                 />
               </div>
