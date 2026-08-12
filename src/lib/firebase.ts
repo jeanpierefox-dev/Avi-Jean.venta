@@ -1,6 +1,14 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, setLogLevel, doc, getDocFromServer } from 'firebase/firestore';
+import { 
+  initializeFirestore, 
+  getFirestore, 
+  setLogLevel, 
+  doc, 
+  getDocFromServer,
+  persistentLocalCache,
+  persistentMultipleTabManager
+} from 'firebase/firestore';
 import firebaseConfigJson from '../../firebase-applet-config.json';
 
 const firebaseConfig = {
@@ -15,24 +23,36 @@ const firebaseConfig = {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Support custom firestore database ID from config if defined
-export const db = firebaseConfigJson.firestoreDatabaseId && firebaseConfigJson.firestoreDatabaseId !== '(default)'
-  ? getFirestore(app, firebaseConfigJson.firestoreDatabaseId)
-  : getFirestore(app);
+const customDbId = firebaseConfigJson.firestoreDatabaseId && firebaseConfigJson.firestoreDatabaseId !== '(default)'
+  ? firebaseConfigJson.firestoreDatabaseId
+  : undefined;
 
-// Silence verbose connection retry logs to prevent unnecessary console error alarms during offline mode
-setLogLevel('error');
+let firestoreDb;
+try {
+  firestoreDb = customDbId 
+    ? initializeFirestore(app, {
+        experimentalForceLongPolling: true,
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+      }, customDbId)
+    : initializeFirestore(app, {
+        experimentalForceLongPolling: true,
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+      });
+} catch (e) {
+  firestoreDb = customDbId ? getFirestore(app, customDbId) : getFirestore(app);
+}
+
+export const db = firestoreDb;
+
+// Silence verbose connection logs to prevent console alarm errors
+setLogLevel('silent');
 
 export async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'system_settings', 'general'));
-  } catch (error) {
-    if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('unavailable'))) {
-      console.warn("Firestore is operating in offline mode with cached storage.");
-    }
+  } catch (_error) {
+    // Silently ignore initial connection check error as Firestore handles offline cache transparently
   }
 }
-
-testConnection();
 
 export default app;

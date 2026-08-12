@@ -88,17 +88,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   const [currentNameInput, setCurrentNameInput] = useState(targetCompanyForPhone?.name || appName || '');
   const [phoneSavedSuccess, setPhoneSavedSuccess] = useState(false);
 
-  // Synchronize inputs when active company, companies list, or supportPhone changes
+  // Synchronize inputs when active company or companies list changes
   useEffect(() => {
     const targetComp = activeCompany || companies[0];
     if (targetComp) {
-      setCurrentPhoneInput(targetComp.phone || supportPhone || '+51 987 654 321');
+      setCurrentPhoneInput(targetComp.phone || '');
       setCurrentNameInput(targetComp.name || '');
     } else {
       setCurrentPhoneInput(supportPhone || '+51 987 654 321');
       setCurrentNameInput(appName || 'JBALANCE CONTROL');
     }
-  }, [activeCompany, companies, supportPhone, appName]);
+  }, [activeCompany, companies]);
 
   // User Edit Modal State
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
@@ -641,15 +641,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Teléfono / WhatsApp de Atención al Cliente — {activeCompany?.name || 'Mi Empresa'}
+                    Teléfono / WhatsApp Individual — {activeCompany?.name || 'Empresa Activa'}
                   </h3>
                   <p className="text-[11px] text-slate-500 font-medium">
-                    Modifique aquí el número de atención al cliente. Se aplicará automáticamente en el portal de clientes, tickets e informes.
+                    Configure el número de teléfono/WhatsApp de atención al cliente propio de esta empresa. Se usará de forma independiente en sus tickets, comprobantes y portal de clientes.
                   </p>
                 </div>
               </div>
               <span className="bg-emerald-100 text-emerald-800 text-[10px] font-mono font-extrabold px-3 py-1 rounded-full border border-emerald-300">
-                Número Activo: {activeCompany?.phone || '+51 987 654 321'}
+                Teléfono Empresa: {activeCompany?.phone || currentPhoneInput || 'No registrado'}
               </span>
             </div>
 
@@ -662,10 +662,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
                     phone: currentPhoneInput,
                     name: currentNameInput || targetComp.name,
                   });
-                }
-                await updateSupportPhone(currentPhoneInput);
-                if (currentNameInput) {
-                  await updateAppName(currentNameInput);
+                } else {
+                  await updateSupportPhone(currentPhoneInput);
+                  if (currentNameInput) {
+                    await updateAppName(currentNameInput);
+                  }
                 }
                 setPhoneSavedSuccess(true);
                 setTimeout(() => setPhoneSavedSuccess(false), 3500);
@@ -684,7 +685,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
               </div>
 
               <div className="sm:col-span-1">
-                <label className="block text-[10px] font-extrabold text-slate-700 uppercase mb-1">Teléfono / WhatsApp de Atención al Cliente *</label>
+                <label className="block text-[10px] font-extrabold text-slate-700 uppercase mb-1">Teléfono / WhatsApp de la Empresa *</label>
                 <input
                   type="text"
                   required
@@ -701,14 +702,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-transform active:scale-95 flex items-center justify-center space-x-1.5 cursor-pointer"
                 >
                   <Phone className="w-4 h-4" />
-                  <span>Guardar Datos y Teléfono de Atención</span>
+                  <span>Guardar Teléfono de Empresa</span>
                 </button>
               </div>
             </form>
 
             {phoneSavedSuccess && (
               <p className="text-xs font-bold text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 animate-fade-in">
-                ✓ ¡Número de Atención al Cliente guardado con éxito! Actualizado a <strong className="font-mono">{currentPhoneInput}</strong> para tickets, comprobantes y el Portal del Cliente.
+                ✓ ¡Número de teléfono individual de la empresa guardado con éxito! Se aplicó a <strong className="font-mono">{currentPhoneInput}</strong>.
               </p>
             )}
           </div>
@@ -776,7 +777,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
                   </div>
 
                   <div className="text-xs text-slate-700 space-y-1 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/90 font-medium">
-                    <div><strong>Teléfono:</strong> {comp.phone || '+51 987 654 321'}</div>
+                    <div><strong>Teléfono Individual:</strong> {comp.phone || 'No registrado'}</div>
                     <div><strong>Dirección:</strong> {comp.address || 'Av. Panamericana Sur Km 35, Lima'}</div>
                     <div className="pt-1 text-[10px] text-emerald-700 font-extrabold uppercase">● Empresa Activa en Firebase Cloud</div>
                   </div>
