@@ -35,7 +35,7 @@ interface AdminPanelProps {
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   const { companies, createUserProfile, updateUserProfile, deleteUserProfile, resetUsersExceptAdmin, currentUser, allUsers, activeCompany, setActiveCompanyId } = useAuth();
-  const { addCompany, updateCompany, deleteCompany, resetSystemToDefault, appName, updateAppName } = useData();
+  const { addCompany, updateCompany, deleteCompany, resetSystemToDefault, appName, updateAppName, supportPhone, updateSupportPhone } = useData();
 
   const [activeSubTab, setActiveSubTab] = useState<'empresas' | 'usuarios' | 'permisos'>('empresas');
   const [appNameInput, setAppNameInput] = useState(appName);
@@ -84,9 +84,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
 
   // Quick Customer Service Phone & Company Name State
   const targetCompanyForPhone = activeCompany || companies[0];
-  const [currentPhoneInput, setCurrentPhoneInput] = useState(targetCompanyForPhone?.phone || '+51 987 654 321');
-  const [currentNameInput, setCurrentNameInput] = useState(targetCompanyForPhone?.name || '');
+  const [currentPhoneInput, setCurrentPhoneInput] = useState(targetCompanyForPhone?.phone || supportPhone || '+51 987 654 321');
+  const [currentNameInput, setCurrentNameInput] = useState(targetCompanyForPhone?.name || appName || '');
   const [phoneSavedSuccess, setPhoneSavedSuccess] = useState(false);
+
+  // Synchronize inputs when active company, companies list, or supportPhone changes
+  useEffect(() => {
+    const targetComp = activeCompany || companies[0];
+    if (targetComp) {
+      setCurrentPhoneInput(targetComp.phone || supportPhone || '+51 987 654 321');
+      setCurrentNameInput(targetComp.name || '');
+    } else {
+      setCurrentPhoneInput(supportPhone || '+51 987 654 321');
+      setCurrentNameInput(appName || 'JBALANCE CONTROL');
+    }
+  }, [activeCompany, companies, supportPhone, appName]);
 
   // User Edit Modal State
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
@@ -145,10 +157,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   };
 
   const handleDeleteCompany = async (comp: Company) => {
-    if (companies.length <= 1) {
-      alert('No se puede eliminar la única empresa registrada en el sistema.');
-      return;
-    }
     if (confirm(`¿Está seguro de eliminar permanentemente la empresa "${comp.name}"?`)) {
       await deleteCompany(comp.id);
       alert('Empresa eliminada correctamente.');
@@ -649,11 +657,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
               onSubmit={async (e) => {
                 e.preventDefault();
                 const targetComp = activeCompany || companies[0];
-                if (!targetComp) return;
-                await updateCompany(targetComp.id, {
-                  phone: currentPhoneInput,
-                  name: currentNameInput || targetComp.name,
-                });
+                if (targetComp) {
+                  await updateCompany(targetComp.id, {
+                    phone: currentPhoneInput,
+                    name: currentNameInput || targetComp.name,
+                  });
+                }
+                await updateSupportPhone(currentPhoneInput);
+                if (currentNameInput) {
+                  await updateAppName(currentNameInput);
+                }
                 setPhoneSavedSuccess(true);
                 setTimeout(() => setPhoneSavedSuccess(false), 3500);
               }}
@@ -1558,6 +1571,102 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
                 <button
                   type="submit"
                   className="w-1/2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl shadow-sm"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Company Modal */}
+      {editingCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white border border-slate-200 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2 text-indigo-700">
+                <Building2 className="w-5 h-5" />
+                <h3 className="text-base font-extrabold text-slate-800">Editar Empresa</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCompany(null)}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCompany} className="space-y-3.5 text-xs text-slate-700">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Nombre Comercial de la Empresa *</label>
+                <input
+                  type="text"
+                  required
+                  value={editCompName}
+                  onChange={(e) => setEditCompName(e.target.value)}
+                  placeholder="ej. Avícola Central S.A.C."
+                  className="bg-slate-50 border border-slate-300 text-slate-900 font-medium px-3.5 py-2.5 rounded-xl outline-none focus:border-indigo-600 w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">RUC / ID Fiscal</label>
+                  <input
+                    type="text"
+                    value={editCompTaxId}
+                    onChange={(e) => setEditCompTaxId(e.target.value)}
+                    placeholder="20123456789"
+                    className="bg-slate-50 border border-slate-300 text-slate-900 font-mono px-3.5 py-2.5 rounded-xl outline-none focus:border-indigo-600 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Teléfono / WhatsApp</label>
+                  <input
+                    type="text"
+                    value={editCompPhone}
+                    onChange={(e) => setEditCompPhone(e.target.value)}
+                    placeholder="+51 900 000 000"
+                    className="bg-slate-50 border border-slate-300 text-slate-900 font-mono px-3.5 py-2.5 rounded-xl outline-none focus:border-indigo-600 w-full"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Dirección / Planta de Pesaje</label>
+                <input
+                  type="text"
+                  value={editCompAddress}
+                  onChange={(e) => setEditCompAddress(e.target.value)}
+                  placeholder="Av. Principal 123 - Planta Chiclayo"
+                  className="bg-slate-50 border border-slate-300 text-slate-900 font-medium px-3.5 py-2.5 rounded-xl outline-none focus:border-indigo-600 w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Logo URL (Opcional)</label>
+                <input
+                  type="text"
+                  value={editCompLogoUrl}
+                  onChange={(e) => setEditCompLogoUrl(e.target.value)}
+                  placeholder="https://ejemplo.com/logo.png"
+                  className="bg-slate-50 border border-slate-300 text-slate-900 font-mono px-3.5 py-2.5 rounded-xl outline-none focus:border-indigo-600 w-full"
+                />
+              </div>
+
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCompany(null)}
+                  className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow-sm"
                 >
                   Guardar Cambios
                 </button>

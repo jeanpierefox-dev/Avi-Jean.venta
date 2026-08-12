@@ -30,7 +30,7 @@ interface ClientPortalViewProps {
 
 export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab }) => {
   const { currentUser, activeCompany, clients } = useAuth();
-  const { weighings, payments, addPayment, companies } = useData();
+  const { weighings, payments, addPayment, companies, supportPhone: generalSupportPhone } = useData();
   
   const [activeZoomImage, setActiveZoomImage] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -324,7 +324,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
       {/* Atención al Cliente / Soporte Comercial Card */}
       {(() => {
         const supportCompany = companies.find(c => c.id === matchedCompanyId) || activeCompany;
-        const supportPhone = supportCompany?.phone || '+51 987 654 321';
+        const supportPhone = supportCompany?.phone || generalSupportPhone || '+51 987 654 321';
         const cleanPhone = supportPhone.replace(/\D/g, '');
         return (
           <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 text-white p-4 rounded-3xl shadow-md border border-blue-800/50 flex flex-wrap items-center justify-between gap-3">

@@ -105,6 +105,8 @@ interface DataContextType {
   deleteWeighing: (id: string) => Promise<void>;
   appName: string;
   updateAppName: (newName: string) => Promise<void>;
+  supportPhone: string;
+  updateSupportPhone: (newPhone: string) => Promise<void>;
 }
 
 const getInitialState = <T,>(key: string, fallback: T): T => {
@@ -136,7 +138,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [adjustments, setAdjustments] = useState<InventoryAdjustment[]>(() => getInitialState('avis_adjustments', []));
   const [notifications, setNotifications] = useState<AppNotification[]>(() => getInitialState('avis_notifications', INITIAL_NOTIFICATIONS));
   const [appName, setAppName] = useState<string>(() => {
-    return localStorage.getItem('app_system_name') || 'Jean-Barsa Avícola System';
+    return localStorage.getItem('app_system_name') || 'JBALANCE CONTROL';
+  });
+  const [supportPhone, setSupportPhone] = useState<string>(() => {
+    return localStorage.getItem('app_support_phone') || '+51 987 654 321';
   });
 
   useEffect(() => {
@@ -153,6 +158,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await setDoc(doc(db, 'system_settings', 'general'), { appName: trimmed }, { merge: true });
     } catch (e) {
       console.warn('Could not save appName to firestore:', e);
+    }
+  };
+
+  const updateSupportPhone = async (newPhone: string) => {
+    const trimmed = newPhone.trim();
+    if (!trimmed) return;
+    setSupportPhone(trimmed);
+    localStorage.setItem('app_support_phone', trimmed);
+    try {
+      await setDoc(doc(db, 'system_settings', 'general'), { supportPhone: trimmed }, { merge: true });
+    } catch (e) {
+      console.warn('Could not save supportPhone to firestore:', e);
     }
   };
 
@@ -238,6 +255,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.appName) setAppName(data.appName);
+          if (data.supportPhone) setSupportPhone(data.supportPhone);
         }
       }, (err) => handleFirestoreError(err, OperationType.GET, 'system_settings/general'));
 
@@ -272,10 +290,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setCompanies(docs);
             try { localStorage.setItem('avis_companies', JSON.stringify(docs)); } catch (e) {}
           } else {
-            setCompanies([DEFAULT_COMPANY]);
+            setCompanies([]);
+            try { localStorage.setItem('avis_companies', JSON.stringify([])); } catch (e) {}
           }
         } else {
-          setCompanies([DEFAULT_COMPANY]);
+          setCompanies([]);
+          try { localStorage.setItem('avis_companies', JSON.stringify([])); } catch (e) {}
         }
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'companies'));
 
@@ -568,7 +588,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateCompany = async (id: string, companyData: Partial<Company>) => {
-    setCompanies(prev => prev.map(c => c.id === id ? { ...c, ...companyData } : c));
+    setCompanies(prev => {
+      const updated = prev.map(c => c.id === id ? { ...c, ...companyData } : c);
+      try { localStorage.setItem('avis_companies', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
     try {
       await setDoc(doc(db, 'companies', id), companyData, { merge: true });
     } catch (e) {
@@ -577,7 +601,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteCompany = async (id: string) => {
-    setCompanies(prev => prev.filter(c => c.id !== id));
+    setCompanies(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      try { localStorage.setItem('avis_companies', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
     try {
       await deleteDoc(doc(db, 'companies', id));
     } catch (e) {
@@ -658,7 +686,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString(),
     };
 
-    setCompanies(prev => [...prev, newComp]);
+    setCompanies(prev => {
+      const updated = [...prev, newComp];
+      try { localStorage.setItem('avis_companies', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
 
     try {
       await setDoc(doc(db, 'companies', newComp.id), newComp);
@@ -771,34 +803,29 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('avis_inventory');
       localStorage.removeItem('avis_notifications');
       localStorage.removeItem('avis_adjustments');
+      localStorage.setItem('avis_companies', JSON.stringify([]));
 
       setWeighings([]);
       setClients([]);
       setPayments([]);
       setInventory([]);
       setNotifications([]);
-      setCompanies([INITIAL_COMPANIES[0]]);
+      setCompanies([]);
 
+      // Save wiped flag while preserving app general registration data
       try {
-        localStorage.setItem('avis_companies', JSON.stringify([INITIAL_COMPANIES[0]]));
-      } catch (e) {}
-
-      // Save wiped flag to system_settings in Firestore
-      try {
-        await setDoc(doc(db, 'system_settings', 'general'), { wiped: true, wipedAt: new Date().toISOString() }, { merge: true });
+        await setDoc(doc(db, 'system_settings', 'general'), {
+          wiped: true,
+          wipedAt: new Date().toISOString(),
+          appName: appName || 'JBALANCE CONTROL',
+          supportPhone: supportPhone || '+51 987 654 321'
+        }, { merge: true });
       } catch (e) {
         console.warn('Error marking system_settings wiped:', e);
       }
 
-      // Ensure default company doc exists
-      try {
-        await setDoc(doc(db, 'companies', INITIAL_COMPANIES[0].id), INITIAL_COMPANIES[0]);
-      } catch (e) {
-        console.warn('Error setting default company doc:', e);
-      }
-
-      // Attempt to clear Firestore collections
-      const collectionsToWipe = ['weighings', 'clients', 'payments', 'inventory', 'notifications'];
+      // Clear Firestore collections including companies
+      const collectionsToWipe = ['weighings', 'clients', 'payments', 'inventory', 'notifications', 'companies', 'adjustments'];
       for (const colName of collectionsToWipe) {
         try {
           const snap = await getDocs(collection(db, colName));
@@ -840,7 +867,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       resetSystemToDefault,
       deleteWeighing,
       appName,
-      updateAppName
+      updateAppName,
+      supportPhone,
+      updateSupportPhone
     }}>
       {children}
     </DataContext.Provider>

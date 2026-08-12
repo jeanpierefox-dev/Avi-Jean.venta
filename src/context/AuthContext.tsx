@@ -152,10 +152,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (docs.length > 0) {
             setCompanies(docs);
           } else {
-            setCompanies([DEFAULT_COMPANY]);
+            setCompanies([]);
           }
         } else {
-          setCompanies([DEFAULT_COMPANY]);
+          setCompanies([]);
         }
       }, (err) => console.warn('Companies snapshot listener:', err));
 
@@ -364,7 +364,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setActiveCompanyIdState(id);
   };
 
-  const activeCompany = companies.find(c => c && c.id === activeCompanyId) || companies.find(c => c && c.id) || DEFAULT_COMPANY;
+  const activeCompany = companies.find(c => c && c.id === activeCompanyId) || companies.find(c => c && c.id) || null;
 
   return (
     <AuthContext.Provider value={{

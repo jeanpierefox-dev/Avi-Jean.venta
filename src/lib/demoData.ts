@@ -10,7 +10,7 @@ export const DEFAULT_COMPANY: Company = {
   createdAt: new Date().toISOString()
 };
 
-export const INITIAL_COMPANIES: Company[] = [DEFAULT_COMPANY];
+export const INITIAL_COMPANIES: Company[] = [];
 
 export const INITIAL_CLIENTS: Client[] = [];
 
