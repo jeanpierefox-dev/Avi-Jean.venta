@@ -17,7 +17,9 @@ import {
   CheckCircle2, 
   ArrowRight,
   ArrowLeft,
-  QrCode
+  QrCode,
+  Phone,
+  MessageCircle
 } from 'lucide-react';
 import { downloadTicketPDF, generateStatementPDF, downloadPaymentReceiptPDF } from '../lib/pdfGenerator';
 import { PaymentMethod } from '../types';
@@ -28,7 +30,7 @@ interface ClientPortalViewProps {
 
 export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab }) => {
   const { currentUser, activeCompany, clients } = useAuth();
-  const { weighings, payments, addPayment } = useData();
+  const { weighings, payments, addPayment, companies } = useData();
   
   const [activeZoomImage, setActiveZoomImage] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -319,6 +321,45 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
         </div>
       </div>
 
+      {/* Atención al Cliente / Soporte Comercial Card */}
+      {(() => {
+        const supportCompany = companies.find(c => c.id === matchedCompanyId) || activeCompany;
+        const supportPhone = supportCompany?.phone || '+51 987 654 321';
+        const cleanPhone = supportPhone.replace(/\D/g, '');
+        return (
+          <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 text-white p-4 rounded-3xl shadow-md border border-blue-800/50 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center space-x-3.5">
+              <div className="p-3 bg-blue-600/30 border border-blue-400/30 text-blue-300 rounded-2xl shrink-0">
+                <Phone className="w-5 h-5 text-blue-300" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-blue-300 font-extrabold block">
+                  Atención al Cliente & Soporte Comercial
+                </span>
+                <h3 className="text-sm sm:text-base font-extrabold text-white">
+                  {supportCompany?.name || 'Oficina de Ventas'}
+                </h3>
+                <p className="text-xs text-slate-300 font-medium">
+                  Teléfono / WhatsApp: <strong className="text-emerald-400 font-mono font-bold">{supportPhone}</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 shrink-0">
+              <a
+                href={`https://api.whatsapp.com/send?phone=${cleanPhone}&text=Hola%20${encodeURIComponent(supportCompany?.name || '')},%20tengo%20una%20consulta%20sobre%20mi%20cuenta.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 shadow-sm transition-transform active:scale-95"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Contactar por WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Account Metrics in Soles - High Visibility Light Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         
@@ -441,65 +482,110 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
       </div>
 
       {/* Submitted Vouchers & Payment Abonos History */}
-      {(filterMode === 'vouchers' || filterMode === 'todas') && clientPayments.length > 0 && (
+      {(filterMode === 'vouchers' || filterMode === 'todas') && (
         <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-2xs space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-            <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
-              <QrCode className="w-4 h-4 text-emerald-600" />
-              Historial de Abonos y Vouchers Enviados
-            </h3>
-            <span className="text-xs font-mono font-bold text-slate-500">{clientPayments.length} pagos</span>
+          <div className="flex flex-wrap justify-between items-center border-b border-slate-200 pb-3 gap-2">
+            <div>
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-emerald-600" />
+                Historial Detallado de Abonos y Vouchers Enviados
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Suma total acumulada de abonos a la fecha: <strong className="text-emerald-700 font-mono">S/ {clientPayments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</strong>
+              </p>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-mono font-bold text-slate-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
+                {clientPayments.length} abonos registrados
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {clientPayments.map((p) => (
-              <div key={p.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
-                <div className="flex justify-between items-center">
-                  <span className="font-black text-emerald-700 font-mono text-base">S/ {p.amount.toFixed(2)}</span>
-                  <span className="text-[10px] font-black uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 rounded-lg font-mono">
-                    {p.method}
-                  </span>
-                </div>
-                <div className="text-xs text-slate-600 font-medium">
-                  Ref: <strong className="text-slate-900 font-mono">{p.reference || 'N/A'}</strong>
-                </div>
-                <div className="text-[11px] text-slate-500 font-medium">
-                  Fecha: {new Date(p.createdAt).toLocaleString('es-ES')}
-                </div>
-
-                {p.voucherUrl && (
-                  <div 
-                    onClick={() => setActiveZoomImage(p.voucherUrl!)}
-                    className="relative group rounded-xl overflow-hidden border border-slate-300 h-28 bg-slate-100 cursor-pointer"
-                  >
-                    <img src={p.voucherUrl} alt="Voucher" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <span className="text-xs text-white font-bold bg-emerald-600 px-3 py-1 rounded-xl shadow">Ver Voucher</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <button
-                    onClick={() => handleShareWhatsAppAbono(p)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-2 rounded-xl flex items-center justify-center space-x-1.5 shadow-2xs cursor-pointer transition-colors"
-                    title="Compartir comprobante de abono a WhatsApp"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Compartir WP</span>
-                  </button>
-
-                  <button
-                    onClick={() => downloadPaymentReceiptPDF(p, clientInfo, activeCompany || undefined)}
-                    className="bg-white hover:bg-slate-100 text-slate-800 font-extrabold text-xs py-2 rounded-xl border border-slate-300 flex items-center justify-center space-x-1.5 cursor-pointer transition-colors"
-                  >
-                    <FileDown className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Recibo PDF</span>
-                  </button>
-                </div>
+          {clientPayments.length === 0 ? (
+            <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-6 space-y-3">
+              <div className="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto">
+                <QrCode className="w-6 h-6" />
               </div>
-            ))}
-          </div>
+              <h4 className="text-xs font-extrabold text-slate-800 uppercase">Sin Abonos Registrados</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Aún no registra comprobantes o abonos de pago en su cuenta. Puede subir sus vouchers en cualquier momento.
+              </p>
+              <button
+                onClick={() => setIsPaymentModalOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-xs transition-transform active:scale-95 inline-flex items-center space-x-1.5 cursor-pointer"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Registrar Primer Abono / Voucher</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {clientPayments.map((p) => (
+                <div key={p.id} className="bg-slate-50/90 border border-slate-200 rounded-2xl p-4 space-y-3 hover:border-emerald-300 transition-all shadow-2xs">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-extrabold block">Monto Abonado</span>
+                      <span className="font-black text-emerald-700 font-mono text-lg">S/ {p.amount.toFixed(2)}</span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg font-mono">
+                      {p.method}
+                    </span>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1">
+                    <div className="text-xs text-slate-700 font-medium flex justify-between">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold">N° Operación / Ref:</span>
+                      <strong className="text-slate-900 font-mono">{p.reference || 'N/A'}</strong>
+                    </div>
+                    <div className="text-xs text-slate-700 font-medium flex justify-between">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold">Fecha / Hora:</span>
+                      <span className="text-slate-700 font-mono text-[11px]">{new Date(p.createdAt).toLocaleString('es-ES')}</span>
+                    </div>
+                    {p.notes && (
+                      <div className="text-xs text-slate-600 pt-1 border-t border-slate-100 italic">
+                        "{p.notes}"
+                      </div>
+                    )}
+                  </div>
+
+                  {p.voucherUrl && (
+                    <div 
+                      onClick={() => setActiveZoomImage(p.voucherUrl!)}
+                      className="relative group rounded-xl overflow-hidden border border-slate-300 h-28 bg-slate-900 cursor-pointer"
+                    >
+                      <img src={p.voucherUrl} alt="Voucher" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <span className="text-xs text-white font-bold bg-emerald-600 px-3 py-1.5 rounded-xl shadow">Ver Voucher Completo</span>
+                      </div>
+                      <div className="absolute bottom-2 left-2 bg-slate-900/80 text-[10px] text-emerald-300 font-bold px-2 py-0.5 rounded font-mono">
+                        📷 Voucher Adjunto
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      onClick={() => handleShareWhatsAppAbono(p)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-2 rounded-xl flex items-center justify-center space-x-1.5 shadow-2xs cursor-pointer transition-colors"
+                      title="Compartir comprobante de abono a WhatsApp"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Compartir WP</span>
+                    </button>
+
+                    <button
+                      onClick={() => downloadPaymentReceiptPDF(p, clientInfo, activeCompany || undefined)}
+                      className="bg-white hover:bg-slate-100 text-slate-800 font-extrabold text-xs py-2 rounded-xl border border-slate-300 flex items-center justify-center space-x-1.5 cursor-pointer transition-colors"
+                    >
+                      <FileDown className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Recibo PDF</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

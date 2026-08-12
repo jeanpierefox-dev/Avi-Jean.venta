@@ -533,191 +533,289 @@ export function generateStatementPDF(client: Client, weighings: WeighingRecord[]
   const doc = new jsPDF();
 
   const companyName = company?.name || 'JBALANCE CONTROL';
-  const taxId = company?.taxId ? `RUC: ${company.taxId}` : 'RUC: 20601234567';
+  const taxId = company?.taxId ? `RUC ${company.taxId}` : 'RUC 20601234567';
   const phone = company?.phone || '+51 987 654 321';
   const address = company?.address || 'Lima, Perú';
-
-  let y = 12;
-
-  // Company Header Block
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.text(companyName, 14, y);
-  y += 5;
-
-  doc.setFontSize(8.5);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`${taxId} | Tel: ${phone} | ${address}`, 14, y);
-  y += 7;
-
-  // Title Banner
-  doc.setFillColor(15, 23, 42); // Dark Navy
-  doc.rect(14, y, 182, 8, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('ESTADO DE CUENTA Y REPORTES DE PAGOS', 105, y + 5.5, { align: 'center' });
-  doc.setTextColor(0, 0, 0);
-
-  y += 12;
-
-  // Info Cliente Card
-  doc.setFillColor(248, 250, 252);
-  doc.rect(14, y, 182, 22, 'F');
-  doc.setLineWidth(0.3);
-  doc.setDrawColor(203, 213, 225);
-  doc.rect(14, y, 182, 22);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text(`Cliente: ${client.name.toUpperCase()}`, 18, y + 6);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.text(`Teléfono: ${client.phone || 'N/A'} | Email: ${client.email || 'N/A'}`, 18, y + 12);
-  doc.text(`Condición de Pago Autorizada: ${client.creditDays || 15} días de plazo`, 18, y + 17);
 
   const totalSalesAmount = weighings.reduce((sum, w) => sum + (w.totalAmount || 0), 0);
   const totalPaymentsAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalPendingBalance = weighings.reduce((sum, w) => sum + (w.pendingAmount || 0), 0);
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  if (totalPendingBalance > 0) {
-    doc.setTextColor(190, 18, 60); // Red
-  } else {
-    doc.setTextColor(16, 185, 129); // Emerald
-  }
-  doc.text(`SALDO PENDIENTE: S/ ${totalPendingBalance.toFixed(2)}`, 115, y + 12);
-  doc.setTextColor(0, 0, 0);
+  const documentCode = `EC-${(client.id || 'CLI').slice(-6).toUpperCase()}-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`;
+  const currentDateStr = new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  y += 28;
+  let y = 0;
 
-  // TABLA 1: HISTORIAL DE COMPRAS / TICKETS DE PESAJE
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text('1. Historial de Compras / Tickets de Pesaje', 14, y);
-  y += 5;
+  // 1. Top Corporate Bank Header Banner
+  doc.setFillColor(15, 23, 42); // Navy Dark Slate (#0f172a)
+  doc.rect(0, 0, 210, 26, 'F');
 
-  doc.setFontSize(7.5);
-  doc.setFillColor(30, 41, 59); // Dark slate header
   doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(companyName.toUpperCase(), 14, 11);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(148, 163, 184); // Slate 400
+  doc.text(`SISTEMA BANCARIO & COMERCIAL • ESTADO DE CUENTA Y CONCILIACIÓN DE PAGOS`, 14, 17);
+  doc.text(`${taxId}  |  Teléfono: ${phone}  |  ${address.substring(0, 45)}`, 14, 22);
+
+  // 2. Metadata Ribbon
+  y = 29;
+  doc.setFillColor(241, 245, 249); // Slate 100
+  doc.rect(14, y, 182, 10, 'F');
+  doc.setLineWidth(0.2);
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(14, y, 182, 10);
+
+  doc.setTextColor(30, 41, 59);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text(`N° DOCUMENTO: ${documentCode}`, 18, y + 6.5);
+  doc.text(`FECHA DE EMISIÓN: ${currentDateStr}`, 92, y + 6.5);
+  doc.text(`MONEDA: SOLES (S/)`, 155, y + 6.5);
+
+  y += 14;
+
+  // 3. Client & Bank Account Summary Box
+  doc.setFillColor(255, 255, 255);
+  doc.rect(14, y, 182, 34);
+  doc.setFillColor(248, 250, 252);
+  doc.rect(14, y, 98, 34, 'F');
+
+  // Left Column - Client Info
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('TITULAR DE LA CUENTA COMERCIAL', 18, y + 6);
+
+  doc.setFontSize(10);
+  doc.setTextColor(15, 23, 42);
+  doc.text(client.name.toUpperCase(), 18, y + 12);
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(51, 65, 85);
+  doc.text(`Código de Cliente: ${client.id}`, 18, y + 18);
+  doc.text(`Teléfono / Contacto: ${client.phone || 'N/A'}`, 18, y + 23);
+  doc.text(`Dirección / Email: ${(client.address || client.email || 'Cliente Frecuente').substring(0, 38)}`, 18, y + 28);
+
+  // Right Column - Financial Summary Grid
+  const summaryX = 116;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('RESUMEN DE CUENTA CORRIENTE', summaryX, y + 6);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(30, 41, 59);
+  doc.text(`Total Compras Registradas:`, summaryX, y + 12);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`S/ ${totalSalesAmount.toFixed(2)}`, 192, y + 12, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Total Abonos Realizados:`, summaryX, y + 18);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(5, 150, 105); // Emerald
+  doc.text(`S/ ${totalPaymentsAmount.toFixed(2)}`, 192, y + 18, { align: 'right' });
+
+  // Highlight Box for Pending Balance
+  doc.setFillColor(totalPendingBalance > 0 ? 254 : 236, totalPendingBalance > 0 ? 242 : 253, totalPendingBalance > 0 ? 242 : 245);
+  doc.rect(summaryX - 2, y + 21, 78, 10, 'F');
+  doc.setDrawColor(totalPendingBalance > 0 ? 252 : 167, totalPendingBalance > 0 ? 165 : 243, totalPendingBalance > 0 ? 165 : 208);
+  doc.rect(summaryX - 2, y + 21, 78, 10);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(totalPendingBalance > 0 ? 185 : 4, totalPendingBalance > 0 ? 28 : 120, totalPendingBalance > 0 ? 28 : 87);
+  doc.text(`SALDO PENDIENTE:`, summaryX, y + 27.5);
+  doc.text(`S/ ${totalPendingBalance.toFixed(2)}`, 192, y + 27.5, { align: 'right' });
+
+  y += 39;
+
+  // 4. SECTION 1: DETALLE DE COMPRAS / CARGAS AL CLIENTE (DÉBITOS)
+  doc.setFillColor(30, 41, 59); // Slate 800 Banner
+  doc.rect(14, y, 182, 7, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('I. HISTORIAL DETALLADO DE COMPRAS Y REGISTRO DE PESAJES (DÉBITOS)', 18, y + 5);
+
+  y += 7;
+
+  // Table Headers - Section 1
+  doc.setFillColor(226, 232, 240); // Slate 200
   doc.rect(14, y, 182, 6, 'F');
-  doc.text('Ticket #', 16, y + 4);
-  doc.text('Fecha', 42, y + 4);
-  doc.text('Aves', 68, y + 4);
-  doc.text('Peso Neto', 85, y + 4);
-  doc.text('Total S/', 115, y + 4);
-  doc.text('Abonado S/', 140, y + 4);
-  doc.text('Saldo S/', 165, y + 4);
-  doc.text('Estado', 184, y + 4);
+  doc.setTextColor(30, 41, 59);
+  doc.setFontSize(7.5);
+  doc.text('Ticket N°', 16, y + 4.2);
+  doc.text('Fecha', 40, y + 4.2);
+  doc.text('Aves', 65, y + 4.2);
+  doc.text('Peso Neto', 82, y + 4.2);
+  doc.text('Precio S/', 105, y + 4.2);
+  doc.text('Monto Total', 128, y + 4.2);
+  doc.text('Abonado S/', 152, y + 4.2);
+  doc.text('Saldo S/', 173, y + 4.2);
+  doc.text('Estado', 188, y + 4.2);
 
   y += 6;
-  doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 0, 0);
 
   if (weighings.length === 0) {
     doc.text('No hay registros de compras registrados para este cliente.', 16, y + 5);
     y += 8;
   } else {
     weighings.forEach((w) => {
-      if (y > 270) {
+      if (y > 260) {
         doc.addPage();
-        y = 15;
+        y = 20;
       }
-      doc.text(w.ticketNumber, 16, y + 4.5);
-      doc.text(new Date(w.createdAt).toLocaleDateString('es-ES'), 42, y + 4.5);
-      doc.text(`${w.chickenCount}`, 68, y + 4.5);
-      doc.text(`${w.netWeight.toFixed(1)} kg`, 85, y + 4.5);
-      doc.text(`S/ ${w.totalAmount.toFixed(2)}`, 115, y + 4.5);
-      doc.text(`S/ ${w.paidAmount.toFixed(2)}`, 140, y + 4.5);
-      doc.text(`S/ ${w.pendingAmount.toFixed(2)}`, 165, y + 4.5);
-      doc.text((w.paymentStatus || 'pendiente').toUpperCase(), 184, y + 4.5);
+      doc.text(w.ticketNumber, 16, y + 4);
+      doc.text(new Date(w.createdAt).toLocaleDateString('es-ES'), 40, y + 4);
+      doc.text(`${w.chickenCount}`, 65, y + 4);
+      doc.text(`${w.netWeight.toFixed(1)} kg`, 82, y + 4);
+      doc.text(`S/ ${w.unitPrice.toFixed(2)}`, 105, y + 4);
+      doc.text(`S/ ${w.totalAmount.toFixed(2)}`, 128, y + 4);
+      doc.text(`S/ ${w.paidAmount.toFixed(2)}`, 152, y + 4);
+      
+      doc.setFont('helvetica', 'bold');
+      if (w.pendingAmount > 0) doc.setTextColor(190, 18, 60);
+      else doc.setTextColor(16, 185, 129);
+      doc.text(`S/ ${w.pendingAmount.toFixed(2)}`, 173, y + 4);
+      
+      doc.setFontSize(7);
+      doc.text((w.paymentStatus || 'pendiente').toUpperCase(), 188, y + 4);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
 
       doc.setLineWidth(0.1);
       doc.setDrawColor(226, 232, 240);
-      doc.line(14, y + 6, 196, y + 6);
-      y += 6.5;
+      doc.line(14, y + 5.5, 196, y + 5.5);
+      y += 6;
     });
   }
 
-  y += 6;
+  y += 4;
 
-  // TABLA 2: HISTORIAL DE ABONOS Y PAGOS REALIZADOS
-  if (y > 230) {
+  // 5. SECTION 2: DETALLE DE ABONOS Y PAGOS REALIZADOS (CRÉDITOS)
+  if (y > 220) {
     doc.addPage();
-    y = 15;
+    y = 20;
   }
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text('2. Historial de Abonos y Pagos Realizados (Vouchers)', 14, y);
-  y += 5;
-
-  doc.setFontSize(7.5);
-  doc.setFillColor(16, 185, 129); // Emerald header for payments
+  doc.setFillColor(5, 150, 105); // Emerald 600 Banner
+  doc.rect(14, y, 182, 7, 'F');
   doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('II. HISTORIAL DETALLADO DE ABONOS Y DEPÓSITOS REGISTRADOS (CRÉDITOS)', 18, y + 5);
+
+  y += 7;
+
+  // Table Headers - Section 2
+  doc.setFillColor(209, 250, 229); // Emerald 100
   doc.rect(14, y, 182, 6, 'F');
-  doc.text('Ref / Comprobante', 16, y + 4);
-  doc.text('Fecha y Hora', 55, y + 4);
-  doc.text('Método', 95, y + 4);
-  doc.text('Notas / Concepto', 125, y + 4);
-  doc.text('Monto Abonado', 170, y + 4);
+  doc.setTextColor(6, 78, 59);
+  doc.setFontSize(7.5);
+  doc.text('Ref / Voucher N°', 16, y + 4.2);
+  doc.text('Fecha y Hora', 58, y + 4.2);
+  doc.text('Medio de Pago', 98, y + 4.2);
+  doc.text('Notas / Concepto', 130, y + 4.2);
+  doc.text('Monto Abonado S/', 170, y + 4.2);
 
   y += 6;
-  doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 0, 0);
 
   if (payments.length === 0) {
-    doc.text('No hay abonos ni vouchers registrados para este cliente.', 16, y + 5);
+    doc.text('No hay abonos ni vouchers registrados para este cliente a la fecha.', 16, y + 5);
     y += 8;
   } else {
     payments.forEach((p) => {
-      if (y > 270) {
+      if (y > 260) {
         doc.addPage();
-        y = 15;
+        y = 20;
       }
-      doc.text((p.reference || p.id || 'N/A').substring(0, 20), 16, y + 4.5);
-      doc.text(new Date(p.createdAt).toLocaleString('es-ES'), 55, y + 4.5);
-      doc.text((p.method || 'yape').toUpperCase(), 95, y + 4.5);
-      doc.text((p.notes || 'Abono de cuenta').substring(0, 26), 125, y + 4.5);
+      doc.text((p.reference || p.id || 'N/A').substring(0, 22), 16, y + 4);
+      doc.text(new Date(p.createdAt).toLocaleString('es-ES'), 58, y + 4);
+      doc.text((p.method || 'yape').toUpperCase(), 98, y + 4);
+      doc.text((p.notes || 'Abono en cuenta corriente').substring(0, 28), 130, y + 4);
+
       doc.setFont('helvetica', 'bold');
-      doc.text(`S/ ${p.amount.toFixed(2)}`, 170, y + 4.5);
+      doc.setTextColor(5, 150, 105);
+      doc.text(`S/ ${p.amount.toFixed(2)}`, 170, y + 4);
       doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
 
       doc.setLineWidth(0.1);
       doc.setDrawColor(226, 232, 240);
-      doc.line(14, y + 6, 196, y + 6);
-      y += 6.5;
+      doc.line(14, y + 5.5, 196, y + 5.5);
+      y += 6;
     });
   }
 
   y += 8;
 
-  // RESUMEN CONSOLIDADO FINAL
-  if (y > 240) {
+  // 6. Bank Settlement & Reconciliation Summary
+  if (y > 230) {
     doc.addPage();
-    y = 15;
+    y = 20;
   }
 
-  doc.setFillColor(15, 23, 42); // Dark Navy Box
-  doc.rect(14, y, 182, 22, 'F');
+  doc.setFillColor(15, 23, 42); // Navy Dark Box
+  doc.rect(14, y, 182, 26, 'F');
   doc.setTextColor(255, 255, 255);
 
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Total Compras Realizadas: S/ ${totalSalesAmount.toFixed(2)}`, 20, y + 7);
-  doc.text(`Total Abonos / Pagos Registrados: S/ ${totalPaymentsAmount.toFixed(2)}`, 20, y + 15);
+  doc.text(`(+) Total Consumo Compras Realizadas:`, 20, y + 7);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`S/ ${totalSalesAmount.toFixed(2)}`, 90, y + 7, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.text(`(-) Total Abonos y Depósitos Recibidos:`, 20, y + 14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(110, 231, 183);
+  doc.text(`S/ ${totalPaymentsAmount.toFixed(2)}`, 90, y + 14, { align: 'right' });
+
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(148, 163, 184);
+  doc.line(20, y + 17, 92, y + 17);
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   if (totalPendingBalance > 0) {
-    doc.setTextColor(252, 165, 165); // Light red text
+    doc.setTextColor(252, 165, 165);
   } else {
-    doc.setTextColor(110, 231, 183); // Light emerald text
+    doc.setTextColor(110, 231, 183);
   }
-  doc.text(`SALDO PENDIENTE ACTUAL: S/ ${totalPendingBalance.toFixed(2)}`, 110, y + 12);
+  doc.text(`(=) SALDO LÍQUIDO A LA FECHA: S/ ${totalPendingBalance.toFixed(2)}`, 20, y + 22);
 
-  doc.save(`Estado_Cuenta_${client.name.replace(/\s+/g, '_')}.pdf`);
+  // Right side of summary: Official payment notice
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(226, 232, 240);
+  doc.text(`OPCIONES DE PAGO HABILITADAS:`, 105, y + 7);
+  doc.text(`• Cuentas Bancarias / Depósitos (BCP, BBVA, Interbank)`, 105, y + 12);
+  doc.text(`• Billeteras Digitales (Yape / Plin al ${phone})`, 105, y + 17);
+  doc.text(`• Reportar comprobante al WhatsApp comercial: ${phone}`, 105, y + 22);
+
+  // 7. Page Numbers on Page Footer
+  const totalPages = doc.getNumberOfPages();
+  for (let page = 1; page <= totalPages; page++) {
+    doc.setPage(page);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Estado de Cuenta Oficial • ${companyName} • Emitido el ${currentDateStr}`, 14, 290);
+    doc.text(`Página ${page} de ${totalPages}`, 196, 290, { align: 'right' });
+  }
+
+  doc.save(`Estado_Cuenta_Bancario_${client.name.replace(/\s+/g, '_')}.pdf`);
 }
 
 export function generateMonthlyReportPDF(monthName: string, company: Company, weighings: WeighingRecord[]) {

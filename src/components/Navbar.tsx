@@ -73,7 +73,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'clientes', label: 'Clientes', icon: Users, roles: ['admin', 'empresa'] },
     { id: 'inventario', label: 'Galpones (Kardex)', icon: Package, roles: ['admin', 'empresa', 'operador'] },
     { id: 'reportes', label: 'Reportes', icon: BarChart3, roles: ['admin', 'empresa'] },
-    { id: 'admin', label: 'Adm', icon: ShieldCheck, roles: ['admin'] },
+    { id: 'admin', label: currentUser?.role === 'empresa' ? 'Mi Empresa' : 'Ajustes', icon: ShieldCheck, roles: ['admin', 'empresa'] },
     { id: 'mi_portal', label: 'Mi Portal', icon: Scale, roles: ['cliente'] },
   ];
 

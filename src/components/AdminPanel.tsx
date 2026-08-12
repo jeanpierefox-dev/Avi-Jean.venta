@@ -24,7 +24,9 @@ import {
   RotateCcw,
   Crown,
   Shield,
-  UserCheck
+  UserCheck,
+  Phone,
+  MessageCircle
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -74,10 +76,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   const [userRole, setUserRole] = useState<UserRole>('empresa');
   const [userCompanyId, setUserCompanyId] = useState(companies[0]?.id || '');
   const [userAccessLevel, setUserAccessLevel] = useState<AccessLevel>('operador');
+  const [empresaCreationMode, setEmpresaCreationMode] = useState<'new_company' | 'existing_company'>('new_company');
   const [empresaCompName, setEmpresaCompName] = useState('');
   const [empresaTaxId, setEmpresaTaxId] = useState('');
   const [empresaPhone, setEmpresaPhone] = useState('');
   const [empresaAddress, setEmpresaAddress] = useState('');
+
+  // Quick Customer Service Phone & Company Name State
+  const targetCompanyForPhone = activeCompany || companies[0];
+  const [currentPhoneInput, setCurrentPhoneInput] = useState(targetCompanyForPhone?.phone || '+51 987 654 321');
+  const [currentNameInput, setCurrentNameInput] = useState(targetCompanyForPhone?.name || '');
+  const [phoneSavedSuccess, setPhoneSavedSuccess] = useState(false);
 
   // User Edit Modal State
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
@@ -187,17 +196,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
     const finalAccessLevel = isSuperAdmin ? userAccessLevel : 'operador';
     let finalCompanyId = isSuperAdmin ? userCompanyId : (currentUser?.companyId || activeCompany?.id || '');
 
-    // If creating a new empresa user, create their company record automatically so they can complete profile and logo
-    if (finalRole === 'empresa' && (!finalCompanyId || finalCompanyId === 'new' || isSuperAdmin)) {
-      const newComp = await addCompany({
-        name: empresaCompName.trim() || `Empresa ${userName}`,
-        taxId: empresaTaxId.trim() || '',
-        phone: empresaPhone.trim() || '',
-        address: empresaAddress.trim() || '',
-        active: true,
-      });
-      finalCompanyId = newComp.id;
-      setActiveCompanyId(newComp.id);
+    // Explicit company logic when creating an empresa user
+    if (finalRole === 'empresa') {
+      if (empresaCreationMode === 'new_company') {
+        if (!empresaCompName.trim()) {
+          alert('Por favor ingrese el Nombre Comercial de la Empresa.');
+          return;
+        }
+        if (!empresaPhone.trim()) {
+          alert('Por favor ingrese el Teléfono de Atención al Cliente para la empresa.');
+          return;
+        }
+        const newComp = await addCompany({
+          name: empresaCompName.trim(),
+          taxId: empresaTaxId.trim() || '20601234567',
+          phone: empresaPhone.trim(),
+          address: empresaAddress.trim() || 'Lima, Perú',
+          active: true,
+        });
+        finalCompanyId = newComp.id;
+        setActiveCompanyId(newComp.id);
+      } else {
+        if (!userCompanyId) {
+          alert('Por favor seleccione la empresa a la cual asignará este usuario.');
+          return;
+        }
+        finalCompanyId = userCompanyId;
+      }
     }
 
     const cleanUsername = (userUsername || userName.toLowerCase().replace(/\s+/g, '_') || 'usuario').trim();
@@ -597,7 +622,83 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
 
       {/* SUBTAB 1: EMPRESAS & LOGO MANAGEMENT */}
       {activeSubTab === 'empresas' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+
+          {/* Quick Customer Service Phone Number & Company Data Editor */}
+          <div className="bg-white border border-emerald-300 p-5 rounded-3xl shadow-sm space-y-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl">
+                  <Phone className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Teléfono / WhatsApp de Atención al Cliente — {activeCompany?.name || 'Mi Empresa'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Modifique aquí el número de atención al cliente. Se aplicará automáticamente en el portal de clientes, tickets e informes.
+                  </p>
+                </div>
+              </div>
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-mono font-extrabold px-3 py-1 rounded-full border border-emerald-300">
+                Número Activo: {activeCompany?.phone || '+51 987 654 321'}
+              </span>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const targetComp = activeCompany || companies[0];
+                if (!targetComp) return;
+                await updateCompany(targetComp.id, {
+                  phone: currentPhoneInput,
+                  name: currentNameInput || targetComp.name,
+                });
+                setPhoneSavedSuccess(true);
+                setTimeout(() => setPhoneSavedSuccess(false), 3500);
+              }}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1"
+            >
+              <div className="sm:col-span-1">
+                <label className="block text-[10px] font-extrabold text-slate-700 uppercase mb-1">Nombre Comercial de la Empresa</label>
+                <input
+                  type="text"
+                  value={currentNameInput}
+                  onChange={(e) => setCurrentNameInput(e.target.value)}
+                  placeholder="ej. Avícola Galpón Real S.A.C."
+                  className="bg-slate-50 border border-slate-300 text-slate-900 font-extrabold text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-emerald-600 w-full"
+                />
+              </div>
+
+              <div className="sm:col-span-1">
+                <label className="block text-[10px] font-extrabold text-slate-700 uppercase mb-1">Teléfono / WhatsApp de Atención al Cliente *</label>
+                <input
+                  type="text"
+                  required
+                  value={currentPhoneInput}
+                  onChange={(e) => setCurrentPhoneInput(e.target.value)}
+                  placeholder="+51 987 654 321"
+                  className="bg-slate-50 border border-slate-300 text-emerald-800 font-bold font-mono text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-emerald-600 w-full"
+                />
+              </div>
+
+              <div className="sm:col-span-1 flex items-end">
+                <button
+                  type="submit"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-transform active:scale-95 flex items-center justify-center space-x-1.5 cursor-pointer"
+                >
+                  <Phone className="w-4 h-4" />
+                  <span>Guardar Datos y Teléfono de Atención</span>
+                </button>
+              </div>
+            </form>
+
+            {phoneSavedSuccess && (
+              <p className="text-xs font-bold text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 animate-fade-in">
+                ✓ ¡Número de Atención al Cliente guardado con éxito! Actualizado a <strong className="font-mono">{currentPhoneInput}</strong> para tickets, comprobantes y el Portal del Cliente.
+              </p>
+            )}
+          </div>
           <div className="flex justify-between items-center">
             <h2 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
               <Building2 className="w-4 h-4 text-purple-600" />
@@ -1239,47 +1340,106 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
                 </div>
               </div>
 
-              {userRole === 'empresa' && currentUser?.role === 'admin' && (
-                <div className="p-3.5 bg-purple-50/80 rounded-2xl border border-purple-200/90 space-y-2.5">
-                  <div className="flex items-center space-x-2 text-purple-900 font-extrabold text-xs">
-                    <Building2 className="w-4 h-4 text-purple-600" />
-                    <span>Datos de la Empresa Comercial a Registrar</span>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 mb-1 font-semibold">Nombre Comercial de la Empresa *</label>
-                    <input
-                      type="text"
-                      required={userRole === 'empresa'}
-                      value={empresaCompName}
-                      onChange={(e) => setEmpresaCompName(e.target.value)}
-                      placeholder="ej. Avícola El Galpón S.A.C."
-                      className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-600 font-bold"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-slate-700 mb-1 font-semibold">RUC / ID Fiscal</label>
-                      <input
-                        type="text"
-                        value={empresaTaxId}
-                        onChange={(e) => setEmpresaTaxId(e.target.value)}
-                        placeholder="20601234567"
-                        className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-600 font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-slate-700 mb-1 font-semibold">Teléfono Contacto</label>
-                      <input
-                        type="text"
-                        value={empresaPhone}
-                        onChange={(e) => setEmpresaPhone(e.target.value)}
-                        placeholder="+51 987654321"
-                        className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-600 font-medium"
-                      />
+              {userRole === 'empresa' && (
+                <div className="p-3.5 bg-purple-50/80 rounded-2xl border border-purple-200/90 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-purple-900 font-extrabold text-xs">
+                      <Building2 className="w-4 h-4 text-purple-600" />
+                      <span>Configuración de Empresa Comercial</span>
                     </div>
                   </div>
+
+                  {/* Mode Selector Radio */}
+                  <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setEmpresaCreationMode('new_company')}
+                      className={`p-2 rounded-xl border text-center transition-all ${
+                        empresaCreationMode === 'new_company'
+                          ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      + Registrar Nueva Empresa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEmpresaCreationMode('existing_company')}
+                      className={`p-2 rounded-xl border text-center transition-all ${
+                        empresaCreationMode === 'existing_company'
+                          ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      Asignar Existente
+                    </button>
+                  </div>
+
+                  {empresaCreationMode === 'new_company' ? (
+                    <div className="space-y-2.5 pt-1">
+                      <div>
+                        <label className="block text-slate-700 mb-1 font-semibold">Nombre Comercial de la Empresa *</label>
+                        <input
+                          type="text"
+                          required={userRole === 'empresa' && empresaCreationMode === 'new_company'}
+                          value={empresaCompName}
+                          onChange={(e) => setEmpresaCompName(e.target.value)}
+                          placeholder="ej. Avícola San Fernando S.A.C."
+                          className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-600 font-bold"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-slate-700 mb-1 font-semibold">Teléfono / WhatsApp *</label>
+                          <input
+                            type="text"
+                            required={userRole === 'empresa' && empresaCreationMode === 'new_company'}
+                            value={empresaPhone}
+                            onChange={(e) => setEmpresaPhone(e.target.value)}
+                            placeholder="+51 987 654 321"
+                            className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-600 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-700 mb-1 font-semibold">RUC / ID Fiscal</label>
+                          <input
+                            type="text"
+                            value={empresaTaxId}
+                            onChange={(e) => setEmpresaTaxId(e.target.value)}
+                            placeholder="20601234567"
+                            className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-600 font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-700 mb-1 font-semibold">Dirección Comercial</label>
+                        <input
+                          type="text"
+                          value={empresaAddress}
+                          onChange={(e) => setEmpresaAddress(e.target.value)}
+                          placeholder="ej. Av. Panamericana Sur Km 35"
+                          className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-600 font-medium"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pt-1">
+                      <label className="block text-slate-700 mb-1 font-semibold">Seleccionar Empresa Registrada *</label>
+                      <select
+                        value={userCompanyId}
+                        onChange={(e) => setUserCompanyId(e.target.value)}
+                        className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-600 font-bold"
+                      >
+                        {companies.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} {c.phone ? `(${c.phone})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 
