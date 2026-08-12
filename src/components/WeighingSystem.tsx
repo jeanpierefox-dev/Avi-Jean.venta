@@ -752,6 +752,8 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
         </div>
 
       </div>
+    </div>
+  </div>
 
       {/* Ticket Modal */}
       {createdTicket && (

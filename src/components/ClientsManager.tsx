@@ -136,7 +136,7 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
                 <span className="text-xs text-slate-400 font-medium">• Directorio Empresarial</span>
               </div>
               <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight uppercase">
-                Cartera de Clientes y Límites de Crédito
+                Cartera de Clientes y Directorio Comercial
               </h1>
             </div>
           </div>
