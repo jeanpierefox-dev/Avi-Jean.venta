@@ -40,7 +40,7 @@ interface AccountsReceivableProps {
 export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelectTab }) => {
   const { activeCompany, currentUser } = useAuth();
 
-  const { weighings, clients, payments, addPayment, deleteWeighing, checkOverduePayments } = useData();
+  const { weighings, clients, payments, addPayment, addWeighing, deleteWeighing, checkOverduePayments } = useData();
 
   const [activeTab, setActiveTab] = useState<'cobros' | 'reporte_pagos'>('cobros');
   const [filterStatus, setFilterStatus] = useState<string>('todos');
@@ -49,6 +49,14 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   const [paymentsSearch, setPaymentsSearch] = useState<string>('');
   const [activeZoomImage, setActiveZoomImage] = useState<string | null>(null);
   const [previewTicket, setPreviewTicket] = useState<WeighingRecord | null>(null);
+
+  // Initial Debt / Cuentas Anteriores Modal state
+  const [showInitialDebtModal, setShowInitialDebtModal] = useState(false);
+  const [initialDebtClientId, setInitialDebtClientId] = useState('');
+  const [initialDebtClientCustomName, setInitialDebtClientCustomName] = useState('');
+  const [initialDebtAmount, setInitialDebtAmount] = useState<number | string>('');
+  const [initialDebtDueDate, setInitialDebtDueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [initialDebtNotes, setInitialDebtNotes] = useState('');
 
   // Payment modal state
   const [selectedWeighing, setSelectedWeighing] = useState<WeighingRecord | null>(null);
@@ -59,6 +67,57 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
   const [paymentNotes, setPaymentNotes] = useState('');
   const [voucherUrl, setVoucherUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSaveInitialDebt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const numericAmount = typeof initialDebtAmount === 'number' ? initialDebtAmount : (parseFloat(String(initialDebtAmount)) || 0);
+    if (numericAmount <= 0) {
+      alert('Por favor ingrese un monto de saldo pendiente válido mayor a 0.');
+      return;
+    }
+
+    let selectedClient = companyClients.find(c => c.id === initialDebtClientId);
+    let clientName = selectedClient ? selectedClient.name : initialDebtClientCustomName.trim();
+
+    if (!clientName) {
+      alert('Por favor seleccione un cliente o ingrese el nombre del cliente.');
+      return;
+    }
+
+    let clientId = selectedClient ? selectedClient.id : 'cli_' + Date.now();
+
+    setIsSubmitting(true);
+    try {
+      await addWeighing({
+        companyId: currentCompanyId,
+        clientId: clientId,
+        clientName: clientName,
+        chickenCount: 0,
+        grossWeight: 0,
+        tareWeight: 0,
+        netWeight: 0,
+        unitPrice: 0,
+        totalAmount: numericAmount,
+        paidAmount: 0,
+        paymentType: 'credito',
+        dueDate: initialDebtDueDate || new Date().toISOString().split('T')[0],
+        notes: `SALDO ANTERIOR PREVIO AL SISTEMA: ${initialDebtNotes || 'Cuenta pendiente registrada antes de iniciar ventas.'}`,
+        galponName: 'Saldo Anterior',
+      });
+
+      alert(`¡Cuenta pendiente de S/ ${numericAmount.toFixed(2)} para ${clientName} registrada exitosamente!`);
+      setShowInitialDebtModal(false);
+      setInitialDebtAmount('');
+      setInitialDebtNotes('');
+      setInitialDebtClientId('');
+      setInitialDebtClientCustomName('');
+    } catch (err) {
+      console.error('Error saving initial debt:', err);
+      alert('Ocurrió un error al registrar la cuenta pendiente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const currentCompanyId = activeCompany?.id || currentUser?.companyId || '';
   const companyClients = clients.filter(c => c && typeof c === 'object' && c.id && (!currentCompanyId || c.companyId === currentCompanyId));
@@ -244,6 +303,14 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
           </div>
 
           <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowInitialDebtModal(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-3.5 py-2.5 rounded-2xl text-xs flex items-center space-x-1.5 shadow-md transition-transform active:scale-95 cursor-pointer border border-indigo-400 shrink-0"
+            >
+              <Receipt className="w-4 h-4 text-amber-300" />
+              <span>➕ Registrar Deuda Anterior</span>
+            </button>
+
             {onSelectTab && (
               <button
                 onClick={() => onSelectTab('dashboard')}
@@ -907,6 +974,132 @@ export const AccountsReceivable: React.FC<AccountsReceivableProps> = ({ onSelect
           record={previewTicket}
           onClose={() => setPreviewTicket(null)}
         />
+      )}
+
+      {/* Modal para Registrar Cuentas Pendientes Anteriores (Saldo Previo al Sistema) */}
+      {showInitialDebtModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white border border-slate-200 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl">
+                  <Receipt className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-900">
+                    Registrar Cuenta Pendiente Anterior
+                  </h2>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Agregue saldos o deudas acumuladas de clientes previas al uso del sistema.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowInitialDebtModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveInitialDebt} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-800 font-extrabold mb-1 uppercase text-[11px] tracking-wider">
+                  Seleccionar Cliente Existente *
+                </label>
+                <select
+                  value={initialDebtClientId}
+                  onChange={(e) => {
+                    setInitialDebtClientId(e.target.value);
+                    if (e.target.value) setInitialDebtClientCustomName('');
+                  }}
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-bold rounded-xl px-3.5 py-2.5 text-xs outline-none focus:border-indigo-600"
+                >
+                  <option value="">-- Seleccionar de la lista ({companyClients.length} clientes) --</option>
+                  {companyClients.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.phone ? `(${c.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {!initialDebtClientId && (
+                <div>
+                  <label className="block text-slate-800 font-extrabold mb-1 uppercase text-[11px] tracking-wider">
+                    O Escriba Nombre de Nuevo Cliente *
+                  </label>
+                  <input
+                    type="text"
+                    value={initialDebtClientCustomName}
+                    onChange={(e) => setInitialDebtClientCustomName(e.target.value)}
+                    placeholder="ej. Distribuidora Los Olivos"
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-bold rounded-xl px-3.5 py-2.5 text-xs outline-none focus:border-indigo-600"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-800 font-extrabold mb-1 uppercase text-[11px] tracking-wider">
+                    Monto Pendiente (S/) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={initialDebtAmount}
+                    onChange={(e) => setInitialDebtAmount(e.target.value)}
+                    placeholder="1200.00"
+                    className="w-full bg-slate-50 border-2 border-indigo-300 focus:border-indigo-600 text-indigo-700 font-black font-mono text-base rounded-xl px-3.5 py-2.5 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-800 font-extrabold mb-1 uppercase text-[11px] tracking-wider">
+                    Fecha de Vencimiento
+                  </label>
+                  <input
+                    type="date"
+                    value={initialDebtDueDate}
+                    onChange={(e) => setInitialDebtDueDate(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-bold rounded-xl px-3.5 py-2.5 text-xs outline-none focus:border-indigo-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-800 font-extrabold mb-1 uppercase text-[11px] tracking-wider">
+                  Observaciones / Concepto de Deuda
+                </label>
+                <input
+                  type="text"
+                  value={initialDebtNotes}
+                  onChange={(e) => setInitialDebtNotes(e.target.value)}
+                  placeholder="ej. Saldo acumulado de despacho semanal previo"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-medium rounded-xl px-3.5 py-2.5 text-xs outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div className="flex items-center space-x-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowInitialDebtModal(false)}
+                  className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 rounded-2xl transition-transform active:scale-95 shadow-md uppercase tracking-wider text-xs"
+                >
+                  {isSubmitting ? 'Guardando...' : 'Guardar Deuda'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
     </div>

@@ -41,6 +41,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
   const [showResetModal, setShowResetModal] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
+  // Super Client / Personalized App Logo State
+  const [userLogoInput, setUserLogoInput] = useState(currentUser?.appLogoUrl || '');
+  const [userLogoSaved, setUserLogoSaved] = useState(false);
+
   // Company Creation Form
   const [showCompModal, setShowCompModal] = useState(false);
   const [compName, setCompName] = useState('');
@@ -505,6 +509,89 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
             <RotateCcw className="w-4 h-4" />
             <span>Restaurar Sistema (Conservar Solo Admin)</span>
           </button>
+        </div>
+
+        {/* User App Logo Card (Super Client / Personalized User Logo) */}
+        <div className="bg-white border border-purple-200 p-5 rounded-3xl shadow-sm space-y-3 col-span-1 md:col-span-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl">
+                <Image className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Logo de la App para Súper Cliente / Mi Usuario
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Personalice el logo que verá exclusivamente su usuario ({currentUser?.displayName}) en el encabezado de la app.
+                </p>
+              </div>
+            </div>
+            {currentUser?.appLogoUrl && (
+              <img src={currentUser.appLogoUrl} alt="Logo Súper Cliente" className="w-10 h-10 object-contain rounded-full border border-purple-300 bg-white" />
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+            <input
+              type="text"
+              value={userLogoInput}
+              onChange={(e) => setUserLogoInput(e.target.value)}
+              placeholder="Pegue la URL de la imagen de su logo..."
+              className="bg-slate-50 border border-slate-300 text-slate-900 font-bold text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-purple-600 w-full"
+            />
+            <label className="bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs px-3.5 py-2.5 rounded-xl border border-purple-300 cursor-pointer flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap">
+              <Upload className="w-4 h-4" />
+              <span>Subir Imagen</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setUserLogoInput(reader.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="hidden"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={async () => {
+                if (currentUser) {
+                  await updateUserProfile(currentUser.uid, { appLogoUrl: userLogoInput });
+                  setUserLogoSaved(true);
+                  setTimeout(() => setUserLogoSaved(false), 3000);
+                }
+              }}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shrink-0 shadow-xs active:scale-95 transition-transform"
+            >
+              Guardar Logo Mi Usuario
+            </button>
+            {currentUser?.appLogoUrl && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (currentUser) {
+                    setUserLogoInput('');
+                    await updateUserProfile(currentUser.uid, { appLogoUrl: '' });
+                  }
+                }}
+                className="bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs px-3 py-2.5 rounded-xl border border-rose-200 shrink-0"
+              >
+                Quitar
+              </button>
+            )}
+          </div>
+          {userLogoSaved && (
+            <p className="text-xs font-bold text-emerald-600 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+              ✓ Logo del Súper Cliente guardado exitosamente. Se mostrará en el encabezado de su perfil.
+            </p>
+          )}
         </div>
       </div>
 

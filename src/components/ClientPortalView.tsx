@@ -128,7 +128,6 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
       `📅 *Fecha:* ${new Date().toLocaleDateString('es-ES')}%0A` +
       `----------------------------------%0A` +
       `⚠️ *SALDO TOTAL PENDIENTE:* S/ ${totalPendingDebt.toFixed(2)}%0A` +
-      `💳 *Límite de Crédito:* S/ ${clientInfo.creditLimit.toFixed(2)}%0A` +
       `📋 *Tickets con Saldo:* ${pendingWeighings.length} compras%0A` +
       `----------------------------------%0A` +
       `¡Muchas gracias por su preferencia!`;
@@ -380,22 +379,6 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
           </div>
           <p className="text-[11px] text-slate-500 font-medium mt-1">
             {clientPayments.length} comprobante(s) registrado(s)
-          </p>
-        </div>
-
-        {/* Límite de Crédito */}
-        <div className="bg-white border border-slate-200 p-5 rounded-3xl shadow-2xs">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Límite de Crédito</span>
-            <span className="p-1.5 bg-amber-50 text-amber-700 rounded-xl">
-              <ShieldCheck className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
-            S/ {(clientInfo?.creditLimit || 5000).toFixed(2)}
-          </div>
-          <p className="text-[11px] text-slate-500 font-medium mt-1">
-            {clientInfo?.creditDays || 15} días de plazo autorizado
           </p>
         </div>
 

@@ -59,7 +59,7 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
     {
       id: 'clientes',
       title: 'Directorio de Clientes',
-      subtitle: 'Límites de crédito y registro comercial',
+      subtitle: 'Gestión y directorio comercial',
       icon: Briefcase,
       badge: `${clients.length} Clientes`,
       accentColor: 'from-cyan-600 to-blue-600',
@@ -167,9 +167,9 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
 
           <div className="flex items-center justify-center shrink-0" title={activeCompany ? `Logo: ${activeCompany.name}` : "Logo Sistema"}>
             <img 
-              src={activeCompany?.logoUrl || systemLogo} 
+              src={currentUser?.appLogoUrl || activeCompany?.logoUrl || systemLogo} 
               alt={activeCompany?.name || "Logo Empresa"} 
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-md object-cover shrink-0"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-md object-cover shrink-0 bg-white"
             />
           </div>
         </div>

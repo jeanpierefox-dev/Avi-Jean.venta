@@ -105,7 +105,6 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
         companyId: currentCompanyId,
         name: quickClientName,
         phone: quickClientPhone,
-        creditLimit: typeof quickClientLimit === 'number' ? quickClientLimit : (parseFloat(quickClientLimit) || 0),
         creditDays: 15,
         currentBalance: 0,
       });
@@ -389,7 +388,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   )}
                   {companyClients.map((cli) => (
                     <option key={cli.id} value={cli.id}>
-                      {cli.name} (Límite S/ {cli.creditLimit})
+                      {cli.name} {cli.phone ? `(${cli.phone})` : ''}
                     </option>
                   ))}
                 </select>
@@ -659,140 +658,97 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
               )}
             </div>
 
-            {/* Observaciones Input & Bottom Action Buttons */}
-            <div className="pt-2 border-t border-slate-100 space-y-2.5">
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Observaciones del pesaje (opcional)..."
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none focus:border-blue-500"
-              />
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={handlePreviewTicket}
-                  disabled={totalNetWeight <= 0 || !selectedClient}
-                  className="bg-slate-100 hover:bg-slate-200 text-blue-700 font-bold rounded-xl py-2 text-xs flex items-center justify-center space-x-1 border border-blue-200"
-                >
-                  <Eye className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Ver Ticket</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleSubmitWeighing}
-                  disabled={isSubmitting || totalNetWeight <= 0 || !selectedClient}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl py-2 text-xs uppercase flex items-center justify-center space-x-1 shadow-2xs"
-                >
-                  <Receipt className="w-3.5 h-3.5" />
-                  <span>{isSubmitting ? 'Guardando...' : 'Generar Ticket'}</span>
-                </button>
-              </div>
+        {/* Step 3: Resumen Total Unificado & Emisión de Ticket (SIN REDUNDANCIAS) */}
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-md space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div className="flex items-center space-x-2">
+              <Receipt className="w-4 h-4 text-blue-600" />
+              <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-wider">
+                3. Resumen Total y Generar Ticket
+              </h3>
             </div>
-
+            <span className="text-[10px] font-mono text-slate-500 font-bold">
+              {scaleEntries.length} {scaleEntries.length === 1 ? 'pesa registrada' : 'pesas registradas'}
+            </span>
           </div>
 
-        </div>
-
-        {/* RIGHT COLUMN: Real-Time Total Calculations & Ticket Generator */}
-        <div className="lg:col-span-5 space-y-6">
-          
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm space-y-4 sticky top-20">
-
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center space-x-2.5">
-                <Receipt className="w-5 h-5 text-blue-600" />
-                <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
-                    Resumen Total de Pesas ({scaleEntries.length} {scaleEntries.length === 1 ? 'pesa' : 'pesas'})
-                  </h3>
-                  <p className="text-[11px] text-slate-500 font-medium">
-                    Cálculo automático de balanza en Soles (S/)
-                  </p>
-                </div>
-              </div>
-
-              <span className="text-[10px] font-mono px-2.5 py-1 bg-blue-50 text-blue-700 font-extrabold rounded-xl border border-blue-200 uppercase">
-                {paymentType}
-              </span>
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-3 gap-2.5 text-xs text-center">
+            <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-2xl">
+              <span className="text-[10px] font-bold text-slate-500 uppercase block">Total Aves</span>
+              <span className="text-base font-black text-slate-900 font-mono">{totalChickens}</span>
             </div>
 
-            {/* Grid de métricas completas de pesaje */}
-            <div className="grid grid-cols-2 gap-2.5 text-xs">
-              <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Pollos</span>
-                <span className="text-base sm:text-lg font-black text-slate-900 font-mono">{totalChickens} <span className="text-xs font-normal text-slate-500">aves</span></span>
-              </div>
-
-              <div className="bg-blue-50/80 border border-blue-200/90 p-3 rounded-2xl">
-                <span className="text-[10px] font-extrabold text-blue-800 uppercase tracking-wider block">Peso Neto Total</span>
-                <span className="text-base sm:text-lg font-black text-blue-900 font-mono">{totalNetWeight.toFixed(1)} <span className="text-xs font-normal text-blue-700">kg</span></span>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-2xl">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Peso Bruto</span>
-                <span className="text-xs font-bold text-slate-800 font-mono">{totalGrossWeight.toFixed(1)} kg</span>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-2xl">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Promedio / Ave</span>
-                <span className="text-xs font-bold text-slate-800 font-mono">{averageWeightPerChicken.toFixed(2)} kg/a</span>
-              </div>
-
-              <div className="col-span-2 bg-emerald-50/60 border border-emerald-200/80 p-2.5 rounded-2xl flex justify-between items-center">
-                <span className="text-[11px] font-extrabold text-emerald-900 uppercase">Precio por Kilo:</span>
-                <span className="text-sm font-black text-emerald-800 font-mono">S/ {numericUnitPrice.toFixed(2)} / kg</span>
-              </div>
+            <div className="bg-blue-50 border border-blue-200 p-2.5 rounded-2xl">
+              <span className="text-[10px] font-extrabold text-blue-800 uppercase block">Peso Neto Total</span>
+              <span className="text-base font-black text-blue-900 font-mono">{totalNetWeight.toFixed(1)} <span className="text-xs font-normal">kg</span></span>
             </div>
 
-            {/* Banner Destacado del Monto Total a Cobrar */}
-            <div className="bg-slate-900 border-2 border-blue-600 p-4 rounded-2xl text-center space-y-1 shadow-xs text-white">
-              <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-blue-300 block">
-                MONTO TOTAL A COBRAR EN SOLES
-              </span>
-              <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
-                S/ {totalAmountToCharge.toFixed(2)}
-              </div>
-              <p className="text-[10px] text-slate-300 font-mono">
-                {totalNetWeight.toFixed(1)} kg × S/ {numericUnitPrice.toFixed(2)} / kg
-              </p>
+            <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-2xl">
+              <span className="text-[10px] font-bold text-slate-500 uppercase block">Prom. Ave</span>
+              <span className="text-base font-bold text-slate-800 font-mono">{averageWeightPerChicken.toFixed(2)} <span className="text-xs font-normal">kg</span></span>
             </div>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="space-y-2.5 pt-1">
-              <button
-                type="button"
-                onClick={handlePreviewTicket}
-                disabled={totalNetWeight <= 0 || !selectedClient}
-                className="w-full bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-blue-700 font-extrabold rounded-xl py-3 text-xs uppercase tracking-wider flex items-center justify-center space-x-2 border border-blue-200 transition-all shadow-2xs cursor-pointer"
-              >
-                <Eye className="w-4 h-4 text-blue-600" />
-                <span>Visualizar Ticket (Previa)</span>
-              </button>
+          {/* Banner Principal del Monto Total a Cobrar */}
+          <div className="bg-slate-900 border-2 border-blue-600 p-4 rounded-2xl text-center space-y-1 text-white shadow-sm">
+            <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-blue-300 block">
+              MONTO TOTAL A COBRAR EN SOLES
+            </span>
+            <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
+              S/ {totalAmountToCharge.toFixed(2)}
+            </div>
+            <p className="text-[10px] text-slate-300 font-mono">
+              {totalNetWeight.toFixed(1)} kg × S/ {numericUnitPrice.toFixed(2)} / kg
+            </p>
+          </div>
 
-              <button
-                type="button"
-                onClick={handleSubmitWeighing}
-                disabled={isSubmitting || totalNetWeight <= 0 || !selectedClient}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold rounded-2xl py-3.5 text-xs uppercase tracking-wider shadow-md flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer"
-              >
-                <Receipt className="w-4.5 h-4.5" />
-                <span>{isSubmitting ? 'Generando Ticket...' : 'GENERAR TICKET Y REGISTRAR VENTA'}</span>
-              </button>
+          {/* Observaciones Input */}
+          <div>
+            <input
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Observaciones del pesaje (opcional)..."
+              className="w-full bg-slate-50 border border-slate-300 rounded-2xl px-4 py-2.5 text-xs text-slate-900 outline-none focus:border-blue-600 font-medium"
+            />
+          </div>
 
+          {/* ÚNICOS BOTONES DE ACCIÓN (Sin Duplicados) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handlePreviewTicket}
+              disabled={totalNetWeight <= 0 || !selectedClient}
+              className="bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-blue-700 font-extrabold rounded-2xl py-3.5 text-xs uppercase tracking-wider flex items-center justify-center space-x-2 border border-blue-200 transition-all cursor-pointer"
+            >
+              <Eye className="w-4 h-4 text-blue-600" />
+              <span>Visualizar Ticket (Previa)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSubmitWeighing}
+              disabled={isSubmitting || totalNetWeight <= 0 || !selectedClient}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold rounded-2xl py-3.5 text-xs uppercase tracking-wider shadow-md flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer"
+            >
+              <Receipt className="w-4 h-4" />
+              <span>{isSubmitting ? 'Guardando...' : 'Generar Ticket Final'}</span>
+            </button>
+          </div>
+
+          {scaleEntries.length > 0 && (
+            <div className="text-center pt-1">
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl py-2 text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                className="text-[11px] font-bold text-slate-500 hover:text-rose-600 transition-colors inline-flex items-center space-x-1"
               >
-                <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-                <span>Limpiar Formulario para Nuevo Pesaje</span>
+                <RefreshCw className="w-3 h-3" />
+                <span>Limpiar pesas para un nuevo registro</span>
               </button>
             </div>
-          </div>
-
+          )}
         </div>
 
       </div>
@@ -824,8 +780,8 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
 
             <form onSubmit={handleCreateQuickClient} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-700 mb-1 font-semibold">
-                  Nombre Completo del Cliente *
+                <label className="block text-slate-800 font-extrabold mb-1 uppercase text-[11px] tracking-wider">
+                  Nombre Completo / Razón Social *
                 </label>
                 <input
                   type="text"
@@ -833,12 +789,12 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   value={quickClientName}
                   onChange={(e) => setQuickClientName(e.target.value)}
                   placeholder="ej. Distribuidora San Juan / Pollería El Rancho"
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 font-bold"
+                  className="w-full bg-slate-50 border-2 border-slate-300 focus:border-blue-600 text-slate-900 rounded-2xl px-4 py-3 outline-none font-bold text-sm shadow-2xs"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 mb-1 font-semibold">
+                <label className="block text-slate-800 font-bold mb-1 uppercase text-[10px] tracking-wider">
                   Teléfono / WhatsApp
                 </label>
                 <input
@@ -846,20 +802,7 @@ export const WeighingSystem: React.FC<WeighingSystemProps> = ({ onSelectTab }) =
                   value={quickClientPhone}
                   onChange={(e) => setQuickClientPhone(e.target.value)}
                   placeholder="+51 987 654 321"
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 mb-1 font-semibold">
-                  Límite de Crédito Inicial (S/)
-                </label>
-                <input
-                  type="number"
-                  value={quickClientLimit}
-                  onChange={(e) => setQuickClientLimit(e.target.value)}
-                  placeholder="5000"
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 font-mono"
+                  className="w-full bg-slate-50 border border-slate-300 focus:border-blue-600 text-slate-900 rounded-xl px-3.5 py-2.5 text-xs outline-none font-medium"
                 />
               </div>
 

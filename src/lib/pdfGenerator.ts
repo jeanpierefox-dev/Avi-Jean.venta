@@ -574,7 +574,7 @@ export function generateStatementPDF(client: Client, weighings: WeighingRecord[]
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.text(`Teléfono: ${client.phone || 'N/A'} | Email: ${client.email || 'N/A'}`, 18, y + 12);
-  doc.text(`Límite de Crédito: S/ ${client.creditLimit.toFixed(2)} | Días Crédito: ${client.creditDays} días`, 18, y + 17);
+  doc.text(`Condición de Pago Autorizada: ${client.creditDays || 15} días de plazo`, 18, y + 17);
 
   const totalSalesAmount = weighings.reduce((sum, w) => sum + (w.totalAmount || 0), 0);
   const totalPaymentsAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);

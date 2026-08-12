@@ -13,17 +13,32 @@ import { ClientPortalView } from './components/ClientPortalView';
 import { ApiDocsModal } from './components/ApiDocsModal';
 import { NotificationsPopover } from './components/NotificationsPopover';
 import { CompanySelectorModal } from './components/CompanySelectorModal';
+import { TicketModal } from './components/TicketModal';
+import { WeighingRecord } from './types';
 import { Scale, Lock, ShieldCheck, Building2, User, RefreshCw, Eye } from 'lucide-react';
 import systemLogo from './assets/images/jbalance_white_bg_logo_1785736789139.jpg';
 
 function MainAppContent() {
   const { currentUser, login, quickDemoLogin, companies, activeCompany, setActiveCompanyId } = useAuth();
-  const { appName } = useData();
+  const { appName, weighings } = useData();
 
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [showApiDocs, setShowApiDocs] = useState<boolean>(false);
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [showCompanySelector, setShowCompanySelector] = useState<boolean>(false);
+  const [urlTicketRecord, setUrlTicketRecord] = useState<WeighingRecord | null>(null);
+
+  // Check URL query parameters for direct ticket link (e.g. ?ticket=TK-1001)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ticketParam = params.get('ticket');
+    if (ticketParam && weighings.length > 0) {
+      const found = weighings.find(w => w.ticketNumber?.toLowerCase() === ticketParam.toLowerCase());
+      if (found) {
+        setUrlTicketRecord(found);
+      }
+    }
+  }, [weighings]);
 
   // Route ALL users directly to main menu ('dashboard') when logged in
   useEffect(() => {
@@ -228,6 +243,11 @@ function MainAppContent() {
       {/* Notifications Drawer */}
       {showNotifications && (
         <NotificationsPopover onClose={() => setShowNotifications(false)} />
+      )}
+
+      {/* Shared Ticket Direct View Modal via WhatsApp link */}
+      {urlTicketRecord && (
+        <TicketModal record={urlTicketRecord} onClose={() => setUrlTicketRecord(null)} />
       )}
     </div>
   );

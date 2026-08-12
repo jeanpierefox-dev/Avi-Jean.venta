@@ -14,6 +14,7 @@ export interface UserProfile {
   permissions?: string[];
   phone?: string;
   password?: string;
+  appLogoUrl?: string; // Logo de la aplicación personalizado por usuario/súper cliente
   createdAt: string;
 }
 
@@ -36,8 +37,8 @@ export interface Client {
   phone?: string;
   email?: string;
   address?: string;
-  creditLimit: number; // Monto límite de crédito
-  creditDays: number; // Días de crédito autorizados
+  creditLimit?: number; // Monto límite de crédito (opcional)
+  creditDays?: number; // Días de crédito autorizados
   currentBalance?: number; // Saldo pendiente total actual
   createdAt: string;
 }

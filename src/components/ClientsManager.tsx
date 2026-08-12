@@ -241,25 +241,13 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
                 </div>
 
                 {/* Financial Summary */}
-                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500 font-medium">Límite de Crédito:</span>
-                    <span className="font-bold text-slate-800">S/ {client.creditLimit.toFixed(2)}</span>
-                  </div>
-
+                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-slate-500 font-medium">Saldo Pendiente:</span>
-                    <span className={`font-mono ${totalDebt > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                    <span className="text-slate-600 font-medium">Saldo Pendiente:</span>
+                    <span className={`font-mono text-sm ${totalDebt > 0 ? 'text-rose-600 font-black' : 'text-emerald-600'}`}>
                       S/ {totalDebt.toFixed(2)}
                     </span>
                   </div>
-
-                  {isOverLimit && (
-                    <div className="flex items-center space-x-1 text-[10px] text-rose-700 font-semibold bg-rose-50 p-1.5 rounded-lg border border-rose-200">
-                      <AlertCircle className="w-3 h-3 text-rose-600" />
-                      <span>¡Superó el límite de crédito configurado!</span>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -286,90 +274,73 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({ onSelectTab }) =
 
             <form onSubmit={handleSaveClient} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-700 mb-1 font-semibold">Nombre / Razón Social *</label>
+                <label className="block text-slate-800 font-extrabold mb-1 uppercase text-[11px] tracking-wider">
+                  Nombre Completo / Razón Social *
+                </label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="ej. Distribuidora San Juan"
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 outline-none focus:border-blue-500 font-medium"
+                  placeholder="ej. Distribuidora San Juan / Pollería El Rancho"
+                  className="w-full bg-slate-50 border-2 border-slate-300 focus:border-blue-600 text-slate-900 font-bold rounded-2xl px-4 py-3 text-sm outline-none transition-all shadow-2xs"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 mb-1 font-semibold">Teléfono</label>
+                  <label className="block text-slate-800 font-bold mb-1 uppercase text-[10px] tracking-wider">
+                    Teléfono / WhatsApp
+                  </label>
                   <input
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+51 987-654-321"
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 outline-none focus:border-blue-500"
+                    placeholder="+51 987 654 321"
+                    className="w-full bg-slate-50 border border-slate-300 focus:border-blue-600 text-slate-900 font-semibold rounded-xl px-3.5 py-2.5 text-xs outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 mb-1 font-semibold">Email</label>
+                  <label className="block text-slate-800 font-bold mb-1 uppercase text-[10px] tracking-wider">
+                    Email / Correo
+                  </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="compras@..."
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 outline-none focus:border-blue-500"
+                    placeholder="cliente@ejemplo.com"
+                    className="w-full bg-slate-50 border border-slate-300 focus:border-blue-600 text-slate-900 font-semibold rounded-xl px-3.5 py-2.5 text-xs outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-700 mb-1 font-semibold">Dirección</label>
+                <label className="block text-slate-800 font-bold mb-1 uppercase text-[10px] tracking-wider">
+                  Dirección / Ubicación
+                </label>
                 <input
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Mercado Mayorista Galpón B"
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 outline-none focus:border-blue-500"
+                  placeholder="ej. Mercado Mayorista Stand B-12"
+                  className="w-full bg-slate-50 border border-slate-300 focus:border-blue-600 text-slate-900 font-semibold rounded-xl px-3.5 py-2.5 text-xs outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-700 mb-1 font-semibold">Límite de Crédito (S/)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={creditLimit}
-                    onChange={(e) => setCreditLimit(e.target.value)}
-                    placeholder="3000.00"
-                    className="w-full bg-slate-50 border border-slate-300 text-emerald-700 font-bold rounded-xl px-3 py-2 outline-none focus:border-blue-500 font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 mb-1 font-semibold">Días de Crédito</label>
-                  <input
-                    type="number"
-                    value={creditDays}
-                    onChange={(e) => setCreditDays(e.target.value)}
-                    placeholder="15"
-                    className="w-full bg-slate-50 border border-slate-300 text-amber-700 font-bold rounded-xl px-3 py-2 outline-none focus:border-blue-500 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3 pt-2">
+              <div className="flex items-center space-x-3 pt-3">
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl transition-colors"
+                  className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl transition-colors text-xs"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition-colors shadow-xs"
+                  className="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 rounded-2xl transition-transform active:scale-95 shadow-md text-xs uppercase tracking-wider"
                 >
-                  Guardar
+                  {editingClient ? 'Guardar Cambios' : 'Crear Cliente'}
                 </button>
               </div>
             </form>
