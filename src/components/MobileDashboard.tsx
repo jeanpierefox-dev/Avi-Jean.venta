@@ -167,7 +167,11 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({ onSelectTab })
 
           <div className="flex items-center justify-center shrink-0" title={activeCompany ? `Logo: ${activeCompany.name}` : "Logo Sistema"}>
             <img 
-              src={currentUser?.appLogoUrl || activeCompany?.logoUrl || systemLogo} 
+              src={
+                currentUser?.role === 'admin' 
+                  ? (currentUser?.appLogoUrl || systemLogo) 
+                  : (activeCompany?.logoUrl || systemLogo)
+              } 
               alt={activeCompany?.name || "Logo Empresa"} 
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-md object-cover shrink-0 bg-white"
             />

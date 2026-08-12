@@ -544,7 +544,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
           </button>
         </div>
 
-        {/* User App Logo Card (Super Client / Personalized User Logo) */}
+        {/* User / Company App Logo Card (Isolated by Role) */}
         <div className="bg-white border border-purple-200 p-5 rounded-3xl shadow-sm space-y-3 col-span-1 md:col-span-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -553,15 +553,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
               </div>
               <div>
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Logo de la App para Súper Cliente / Mi Usuario
+                  {currentUser?.role === 'empresa' 
+                    ? `Logo Oficial de la Empresa (${activeCompany?.name || 'Mi Empresa'})`
+                    : 'Logo de la App para Administrador de Plataforma'}
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium">
-                  Personalice el logo que verá exclusivamente su usuario ({currentUser?.displayName}) en el encabezado de la app.
+                  {currentUser?.role === 'empresa'
+                    ? `Cambie el logo exclusivamente para su empresa (${activeCompany?.name}). Este logo se aplicará únicamente en sus tickets y portal, manteniendo el logo predeterminado en el Administrador y en nuevos usuarios.`
+                    : 'Personalice el logo predeterminado para su cuenta de Administrador de Sistema.'}
                 </p>
               </div>
             </div>
-            {currentUser?.appLogoUrl && (
-              <img src={currentUser.appLogoUrl} alt="Logo Súper Cliente" className="w-10 h-10 object-contain rounded-full border border-purple-300 bg-white" />
+            {(currentUser?.role === 'empresa' ? activeCompany?.logoUrl : currentUser?.appLogoUrl) && (
+              <img 
+                src={(currentUser?.role === 'empresa' ? activeCompany?.logoUrl : currentUser?.appLogoUrl) || ''} 
+                alt="Logo Actual" 
+                className="w-10 h-10 object-contain rounded-full border border-purple-300 bg-white" 
+              />
             )}
           </div>
 
@@ -595,34 +603,41 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onSelectTab }) => {
             <button
               type="button"
               onClick={async () => {
-                if (currentUser) {
+                if (currentUser?.role === 'empresa' && activeCompany) {
+                  await updateCompany(activeCompany.id, { logoUrl: userLogoInput });
+                  setUserLogoSaved(true);
+                  setTimeout(() => setUserLogoSaved(false), 3000);
+                } else if (currentUser) {
                   await updateUserProfile(currentUser.uid, { appLogoUrl: userLogoInput });
                   setUserLogoSaved(true);
                   setTimeout(() => setUserLogoSaved(false), 3000);
                 }
               }}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shrink-0 shadow-xs active:scale-95 transition-transform"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shrink-0 shadow-xs active:scale-95 transition-transform cursor-pointer"
             >
-              Guardar Logo Mi Usuario
+              {currentUser?.role === 'empresa' ? 'Guardar Logo de mi Empresa' : 'Guardar Logo Administrador'}
             </button>
-            {currentUser?.appLogoUrl && (
+            {(currentUser?.role === 'empresa' ? activeCompany?.logoUrl : currentUser?.appLogoUrl) && (
               <button
                 type="button"
                 onClick={async () => {
-                  if (currentUser) {
+                  if (currentUser?.role === 'empresa' && activeCompany) {
+                    setUserLogoInput('');
+                    await updateCompany(activeCompany.id, { logoUrl: '' });
+                  } else if (currentUser) {
                     setUserLogoInput('');
                     await updateUserProfile(currentUser.uid, { appLogoUrl: '' });
                   }
                 }}
-                className="bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs px-3 py-2.5 rounded-xl border border-rose-200 shrink-0"
+                className="bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs px-3 py-2.5 rounded-xl border border-rose-200 shrink-0 cursor-pointer"
               >
-                Quitar
+                Restaurar Predeterminado
               </button>
             )}
           </div>
           {userLogoSaved && (
             <p className="text-xs font-bold text-emerald-600 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
-              ✓ Logo del Súper Cliente guardado exitosamente. Se mostrará en el encabezado de su perfil.
+              ✓ Logo guardado exitosamente de forma aislada para su cuenta / empresa.
             </p>
           )}
         </div>

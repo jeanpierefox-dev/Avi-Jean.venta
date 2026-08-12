@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import systemLogo from '../assets/images/jbalance_white_bg_logo_1785736789139.jpg';
+import { AppSupportModal } from './AppSupportModal';
 import { 
   Scale, 
   Users, 
@@ -18,7 +19,9 @@ import {
   Sparkles,
   Menu,
   X,
-  LayoutGrid
+  LayoutGrid,
+  MessageCircle,
+  HelpCircle
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -43,8 +46,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Isolated logo logic:
+  // - Admin user: Admin logo or system default
+  // - Company/Client user: Active company logo or system default
+  const headerLogoSrc = (() => {
+    if (currentUser?.role === 'admin') {
+      return currentUser?.appLogoUrl || systemLogo;
+    }
+    if (currentUser?.role === 'empresa' || currentUser?.role === 'cliente') {
+      return activeCompany?.logoUrl || systemLogo;
+    }
+    return systemLogo;
+  })();
 
   // Set Favicon dynamically to System Logo
   useEffect(() => {
@@ -88,7 +105,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center space-x-2 shrink-0">
             <div className="relative group cursor-pointer" onClick={() => setActiveTab('dashboard')}>
               <img 
-                src={currentUser?.appLogoUrl || activeCompany?.logoUrl || systemLogo} 
+                src={headerLogoSrc} 
                 alt="Logo Principal" 
                 className="w-10 h-10 sm:w-11 sm:h-11 object-cover rounded-full shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300 bg-white"
               />
@@ -231,6 +248,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
+            {/* Soporte General App Button (WhatsApp) */}
+            <button
+              onClick={() => setIsSupportModalOpen(true)}
+              title="Soporte Técnico General / WhatsApp"
+              className="bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 text-emerald-300 font-extrabold text-[11px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-xl transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
+            >
+              <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 fill-emerald-500/20 shrink-0" />
+              <span className="hidden lg:inline">Soporte WhatsApp</span>
+            </button>
+
             {/* API Docs Button */}
             <button
               onClick={onOpenApiDocs}
@@ -300,13 +327,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
             <button
               onClick={() => {
-                onOpenApiDocs();
+                setIsSupportModalOpen(true);
                 setMobileMenuOpen(false);
               }}
-              className="flex items-center space-x-2 text-xs text-amber-400 hover:underline font-bold"
+              className="flex items-center space-x-2 text-xs text-emerald-400 font-bold bg-emerald-950/80 px-2.5 py-1.5 rounded-lg border border-emerald-800"
             >
-              <Code2 className="w-4 h-4" />
-              <span>Documentación API</span>
+              <MessageCircle className="w-4 h-4" />
+              <span>Soporte WhatsApp App</span>
             </button>
 
             <button
@@ -321,6 +348,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
         </div>
+      )}
+
+      {/* General App Support Modal */}
+      {isSupportModalOpen && (
+        <AppSupportModal onClose={() => setIsSupportModalOpen(false)} />
       )}
     </header>
   );

@@ -321,40 +321,102 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({ onSelectTab 
         </div>
       </div>
 
-      {/* Atención al Cliente / Soporte Comercial Card */}
+      {/* Área de Soporte para el Usuario Cliente & Soporte General de la App */}
       {(() => {
         const supportCompany = companies.find(c => c.id === matchedCompanyId) || activeCompany;
-        const supportPhone = supportCompany?.phone || generalSupportPhone || '+51 987 654 321';
-        const cleanPhone = supportPhone.replace(/\D/g, '');
+        const companyPhone = supportCompany?.phone || generalSupportPhone || '+51 987 654 321';
+        const cleanCompanyPhone = companyPhone.replace(/\D/g, '');
+        const cleanGeneralPhone = (generalSupportPhone || '+51 987 654 321').replace(/\D/g, '');
+
         return (
-          <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 text-white p-4 rounded-3xl shadow-md border border-blue-800/50 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center space-x-3.5">
-              <div className="p-3 bg-blue-600/30 border border-blue-400/30 text-blue-300 rounded-2xl shrink-0">
-                <Phone className="w-5 h-5 text-blue-300" />
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-lg space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-2xl">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                    Área de Atención al Cliente & Soporte Técnico
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    Canales de atención directa para consultas sobre sus comprobantes, despachos y sistema.
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-blue-300 font-extrabold block">
-                  Atención al Cliente & Soporte Comercial
-                </span>
-                <h3 className="text-sm sm:text-base font-extrabold text-white">
-                  {supportCompany?.name || 'Oficina de Ventas'}
-                </h3>
-                <p className="text-xs text-slate-300 font-medium">
-                  Teléfono / WhatsApp: <strong className="text-emerald-400 font-mono font-bold">{supportPhone}</strong>
-                </p>
-              </div>
+              <span className="text-[10px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider hidden sm:inline-block">
+                ● Soporte Activo WhatsApp
+              </span>
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0">
-              <a
-                href={`https://api.whatsapp.com/send?phone=${cleanPhone}&text=Hola%20${encodeURIComponent(supportCompany?.name || '')},%20tengo%20una%20consulta%20sobre%20mi%20cuenta.`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2.5 rounded-2xl text-xs flex items-center space-x-2 shadow-sm transition-transform active:scale-95"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Contactar por WhatsApp</span>
-              </a>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              
+              {/* 1. Soporte Individual de su Empresa Proveedora */}
+              <div className="bg-gradient-to-br from-blue-950/80 via-slate-900 to-indigo-950/90 border border-blue-800/60 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-blue-300 font-extrabold block">
+                      Atención Comercial de su Empresa
+                    </span>
+                    <span className="text-[10px] bg-blue-900/80 text-blue-200 border border-blue-700/50 px-2 py-0.5 rounded-md font-mono">
+                      Oficina Ventas
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-extrabold text-white">
+                    {supportCompany?.name || 'Oficina Comercial'}
+                  </h4>
+                  <p className="text-xs text-slate-300 font-medium mt-1">
+                    WhatsApp Comercial: <strong className="text-emerald-400 font-mono font-bold">{companyPhone}</strong>
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Atención directa para cotizaciones, cobranzas y programación de desposte de aves.
+                  </p>
+                </div>
+
+                <a
+                  href={`https://api.whatsapp.com/send?phone=${cleanCompanyPhone}&text=${encodeURIComponent(`Hola ${supportCompany?.name || 'Atención al Cliente'}, soy el cliente ${clientInfo.name} y tengo una consulta sobre mis despajes/estado de cuenta.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-sm transition-transform active:scale-95 cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4 fill-current" />
+                  <span>Contactar a {supportCompany?.name || 'mi Empresa'} por WhatsApp</span>
+                </a>
+              </div>
+
+              {/* 2. Soporte General Técnico de la App */}
+              <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/60 border border-slate-700/80 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-extrabold block">
+                      Soporte General de la Plataforma
+                    </span>
+                    <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800/60 px-2 py-0.5 rounded-md font-mono">
+                      Plataforma App
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-extrabold text-white">
+                    Soporte Técnico General JBalance
+                  </h4>
+                  <p className="text-xs text-slate-300 font-medium mt-1">
+                    Línea General App: <strong className="text-emerald-400 font-mono font-bold">{generalSupportPhone || '+51 987 654 321'}</strong>
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Asistencia técnica general del sistema, solución de dudas sobre la app y acceso al portal.
+                  </p>
+                </div>
+
+                <a
+                  href={`https://api.whatsapp.com/send?phone=${cleanGeneralPhone}&text=${encodeURIComponent('Hola Soporte General de la App JBalance, requiero ayuda técnica con mi acceso o la aplicación.')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-600 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-sm transition-transform active:scale-95 cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4 text-emerald-400" />
+                  <span>WhatsApp de Soporte General App</span>
+                </a>
+              </div>
+
             </div>
           </div>
         );
